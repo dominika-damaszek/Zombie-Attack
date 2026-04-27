@@ -137,7 +137,10 @@ const Dashboard = () => {
           <div className="bg-slate-800 px-5 py-3 rounded-xl border border-slate-700 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Players</p>
             <p className="text-xl font-black text-slate-200">
-              {liveGroups.reduce((acc, g) => acc + (g.player_count || 0), 0)}
+              {liveGroups.reduce((acc, g) => {
+                 const stats = groupStats[g.id];
+                 return acc + (stats?.players?.length || g.player_count || 0);
+              }, 0)}
             </p>
           </div>
           <button

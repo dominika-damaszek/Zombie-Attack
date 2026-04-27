@@ -8,7 +8,14 @@ import { API_URLS } from '../services/api';
 const WaitingRoom = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { groupData, playerData } = location.state || {};
+  const { groupData, playerData } = location.state || (() => {
+    try {
+      const raw = localStorage.getItem('player_session');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  })();
   const pollingRef = useRef(null);
 
   const [currentGroupData, setCurrentGroupData] = useState(groupData);
