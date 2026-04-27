@@ -12,23 +12,38 @@ export function useGameWebSocket(groupId, playerId) {
   useEffect(() => {
     if (!groupId || !playerId) return;
 
-    const socket = new WebSocket(`${WS_BASE}/${groupId}/${playerId}`);
-    ws.current = socket;
+    let socket;
+    let reconnectTimer;
 
-    socket.onopen = () => setConnected(true);
-    socket.onclose = () => setConnected(false);
-    socket.onerror = (e) => console.error('WS Error', e);
-    socket.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        setLastMessage(msg);
-      } catch (e) {
-        console.error('WS parse error', e);
-      }
+    const connect = () => {
+      socket = new WebSocket(`${WS_BASE}/${groupId}/${playerId}`);
+      ws.current = socket;
+
+      socket.onopen = () => setConnected(true);
+      socket.onclose = () => {
+        setConnected(false);
+        // Attempt to auto-reconnect after 3 seconds
+        reconnectTimer = setTimeout(connect, 3000);
+      };
+      socket.onerror = (e) => console.error('WS Error', e);
+      socket.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          setLastMessage(msg);
+        } catch (e) {
+          console.error('WS parse error', e);
+        }
+      };
     };
 
+    connect();
+
     return () => {
-      socket.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (socket) {
+        socket.onclose = null; // Prevent reconnect loop on intentional unmount
+        socket.close();
+      }
     };
   }, [groupId, playerId]);
 

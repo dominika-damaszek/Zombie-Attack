@@ -59,6 +59,13 @@ const WaitingRoom = () => {
           const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
           const newGroupData = await res.json();
           setCurrentGroupData(newGroupData); // Switches WS instantly
+          
+          // Save the NEW group to local storage so a refresh doesn't drop them back into the empty main lobby!
+          localStorage.setItem('player_session', JSON.stringify({
+             groupData: newGroupData,
+             playerData: playerData
+          }));
+
           // Immediately check new group state — game may already be started
           await fetchGameState(newGroupData.group_id, newGroupData, playerData);
         } catch (e) {
@@ -79,7 +86,26 @@ const WaitingRoom = () => {
   // Polling fallback — always uses latest currentGroupData via closure on the effect dependency
   useEffect(() => {
     if (!currentGroupData?.group_id) return;
-    const id = setInterval(() => {
+    const id = setInterval(async () => {
+      // If we are in the lobby, we should proactively check if we were assigned a new group but missed the WS event
+      if (currentGroupData.group_number === 0) {
+        try {
+          const pRes = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+          const latestGroup = await pRes.json();
+          if (latestGroup.group_id !== currentGroupData.group_id) {
+             localStorage.setItem('player_session', JSON.stringify({
+                groupData: latestGroup,
+                playerData: playerData
+             }));
+             setCurrentGroupData(latestGroup);
+             // Return early; the effect will re-run with the new currentGroupData
+             return;
+          }
+        } catch (e) {
+           console.error(e);
+        }
+      }
+      
       fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
     }, 4000);
     pollingRef.current = id;
