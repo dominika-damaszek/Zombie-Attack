@@ -3,8 +3,16 @@ import websockets
 import asyncio
 import json
 
-API = "http://localhost:8000"
-WS_API = "ws://localhost:8000/api/game/ws"
+import os
+
+# Configuration
+API = os.getenv("API_URL", "http://127.0.0.1:8000")
+if API.endswith('/'):
+    API = API[:-1]
+
+# Derive WS_API from API URL
+WS_BASE = API.replace("http", "ws")
+WS_API = f"{WS_BASE}/api/game/ws"
 PIN = "1234"
 
 async def test_bot(join_code):

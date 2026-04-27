@@ -4,10 +4,20 @@ import websockets
 import json
 import sys
 
-# ALWAYS use 127.0.0.1 on Windows to prevent Python WebSockets from resolving ::1 and getting 404s
-API = "http://127.0.0.1:8000"
-WS_API = "ws://127.0.0.1:8000/api/game/ws"
+import os
+
+# Configuration
+API = os.getenv("API_URL", "http://127.0.0.1:8000")
+if API.endswith('/'):
+    API = API[:-1]
+
+# Derive WS_API from API URL
+WS_BASE = API.replace("http", "ws")
+WS_API = f"{WS_BASE}/api/game/ws"
 PIN = "1234"
+
+print(f"Using API: {API}")
+print(f"Using WS: {WS_API}")
 
 async def bot_flow(bot_id, join_code):
     # Stagger bot creation slightly to prevent SQLite database locking
