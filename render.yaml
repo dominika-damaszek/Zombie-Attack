@@ -11,7 +11,7 @@ services:
         value: sqlite:///./zombieware.db # Change this if using an external DB
 
   # React Frontend Static Site
-  - type: static
+  - type: static_site
     name: zombie-attack-frontend
     runtime: static
     rootDir: frontend
