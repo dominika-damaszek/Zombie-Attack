@@ -232,7 +232,7 @@ const Dashboard = () => {
                         <Shield size={10} /> {survivors} Survivors
                       </span>
                       <span className="text-rose-400 flex items-center gap-1">
-                        {zombies} Zombies <Skull size={10} />
+                        {zombies} Zombies <img src="/zombie-logo.svg" alt="Zombie" className="w-3 h-3 contrast-125" />
                       </span>
                     </div>
                     <div className="h-2.5 rounded-full bg-slate-700 overflow-hidden">
