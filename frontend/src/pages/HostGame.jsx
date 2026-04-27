@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Users, UsersRound, Send, ChevronRight } from 'lucide-react';
@@ -72,6 +72,29 @@ const HostGame = ({ setHasSession }) => {
   const [gameMode, setGameMode] = useState('module_1'); // default matches first track
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const response = await axios.get(`${API_URLS.SESSION}/my?token=${token}`);
+        if (response.data && response.data.length > 0) {
+          // Found active sessions!
+          const activeSession = response.data.find(s => s.status === 'active') || response.data[0];
+          localStorage.setItem('session_id', activeSession.id);
+          localStorage.setItem('session_data', JSON.stringify(activeSession));
+          if (setHasSession) setHasSession(true);
+          navigate('/dashboard', { state: { session: activeSession } });
+        }
+      } catch (e) {
+        console.error("Failed to fetch existing sessions", e);
+      }
+    };
+    
+    checkActiveSession();
+  }, [navigate, setHasSession]);
 
   const handleTrackChange = (track) => {
     setTrackType(track);
