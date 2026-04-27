@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Skull, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -10,7 +10,11 @@ const Home = () => {
       <div className="relative">
         <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 rounded-full"></div>
         <div className="bg-slate-800/80 p-8 rounded-[3rem] border border-slate-700 shadow-2xl relative">
-          <Skull size={96} className="text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]" />
+          <img 
+            src="/zombie-logo.svg" 
+            alt="Zombie Attack Logo" 
+            className="w-24 h-24 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]" 
+          />
         </div>
       </div>
 
