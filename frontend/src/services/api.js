@@ -1,4 +1,10 @@
 let API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+// Production Fallback: Ensure we don't try to connect to the frontend URL if things go wrong
+if (API_BASE_URL.includes('zombie-attack-frontend.onrender.com') || API_BASE_URL === 'https://zombie-attack.onrender.com') {
+    console.warn("VITE_API_URL incorrectly pointing to frontend. Using hardcoded backend fallback.");
+    API_BASE_URL = 'https://zombie-attack-backend.onrender.com';
+}
 if (API_BASE_URL.endsWith('/')) {
   API_BASE_URL = API_BASE_URL.slice(0, -1);
 }
