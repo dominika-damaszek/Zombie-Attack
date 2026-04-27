@@ -27,3 +27,9 @@ services:
           name: zombie-attack-backend
           type: web
           property: url
+
+    # SPA Rewrites (Critical for React routing)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
