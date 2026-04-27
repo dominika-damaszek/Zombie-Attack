@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Clock, Users, CheckCircle2, Loader2, Target } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 
-const API = 'http://localhost:8000';
+import { API_URLS } from '../services/api';
 
 const WaitingRoom = () => {
   const location = useLocation();
@@ -20,7 +20,7 @@ const WaitingRoom = () => {
   // Function to fetch the game state and grab players
   const fetchGameState = async (groupId) => {
     try {
-      const res = await fetch(`${API}/api/game/${groupId}/state`);
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/state`);
       const data = await res.json();
       setPlayers(data.players || []);
       
@@ -45,7 +45,7 @@ const WaitingRoom = () => {
     if (lastMessage?.type === 'MATCHMAKING_COMPLETE') {
       const handleMatchmaking = async () => {
         try {
-          const res = await fetch(`${API}/player/${playerData.id}/group`);
+          const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
           const data = await res.json();
           setCurrentGroupData(data); // Switches WS instantly
         } catch (e) {
@@ -74,7 +74,7 @@ const WaitingRoom = () => {
     if (savingReady) return;
     setSavingReady(true);
     try {
-      const res = await fetch(`${API}/api/game/${currentGroupData.group_id}/ready`, {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${currentGroupData.group_id}/ready`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id })

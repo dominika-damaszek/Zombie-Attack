@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Users, UsersRound, Send, ChevronRight } from 'lucide-react';
+import { API_URLS } from '../services/api';
 
 const MODES_GAME = [
   {
@@ -82,7 +83,7 @@ const HostGame = ({ setHasSession }) => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `http://localhost:8000/session?token=${token}`,
+        `${API_URLS.SESSION}?token=${token}`,
         { game_mode: gameMode }
       );
       localStorage.setItem('session_id', response.data.id);

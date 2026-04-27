@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Skull, Shield, RotateCcw, Home } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URLS } from '../services/api';
 
 export default function EndGame() {
   const location = useLocation();
@@ -13,7 +13,7 @@ export default function EndGame() {
 
   useEffect(() => {
     if (!groupId) { setLoading(false); return; }
-    fetch(`${API}/api/game/${groupId}/recap`)
+    fetch(`${API_URLS.BASE}/api/game/${groupId}/recap`)
       .then((r) => r.json())
       .then(setRecap)
       .catch(console.error)

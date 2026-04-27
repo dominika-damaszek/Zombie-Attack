@@ -7,7 +7,8 @@ import { useAudio } from '../hooks/useAudio';
 import AudioToggle from '../components/AudioToggle';
 import EduPopup from '../components/EduPopup';
 
-const API = 'http://localhost:8000';
+import { API_URLS } from '../services/api';
+
 
 // ─── Role Reveal ──────────────────────────────────────────────────────────────
 function RoleReveal({ role, secretWord, gameMode, onContinue }) {
@@ -221,7 +222,7 @@ const GameScreen = () => {
   const fetchState = useCallback(async () => {
     if (!groupData?.group_id) return;
     try {
-      const res = await fetch(`${API}/api/game/${groupData.group_id}/state`);
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/state`);
       const data = await res.json();
       setGameState(data);
       const me = data.players?.find((p) => p.id === playerData?.id);
@@ -263,19 +264,19 @@ const GameScreen = () => {
 
   const handleFinishInstructions = async () => {
     try {
-      await fetch(`${API}/api/game/${groupData.group_id}/finish_instructions`, { method: 'POST' });
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/finish_instructions`, { method: 'POST' });
     } catch (e) { console.error(e); }
   };
 
   const handleFinishRound = async () => {
     try {
-      await fetch(`${API}/api/game/${groupData.group_id}/finish_round`, { method: 'POST' });
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/finish_round`, { method: 'POST' });
     } catch (e) { console.error(e); }
   };
 
   const handleDoneTrading = async () => {
     try {
-      await fetch(`${API}/api/game/${groupData.group_id}/trade_done`, { 
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/trade_done`, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id })
@@ -288,7 +289,7 @@ const GameScreen = () => {
     if (hasSkippedTrade) return;
     if (!window.confirm("You can only use Skip Trade ONCE per game. Use it now?")) return;
     try {
-      await fetch(`${API}/api/game/${groupData.group_id}/skip_trade`, { 
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/skip_trade`, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id })
@@ -300,7 +301,7 @@ const GameScreen = () => {
 
   const handleNextRound = async () => {
     try {
-      await fetch(`${API}/api/game/${groupData.group_id}/next_round`, { method: 'POST' });
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/next_round`, { method: 'POST' });
       setPlayerState(prev => ({...prev, isReadyForNext: true}));
     } catch (e) { console.error(e); }
   };
@@ -311,7 +312,7 @@ const GameScreen = () => {
     playSFX('button_click');
 
     try {
-      const res = await fetch(`${API}/api/game/${groupData.group_id}/scan`, {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id, item }),

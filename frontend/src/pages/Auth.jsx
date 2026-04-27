@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { LogIn, UserPlus } from 'lucide-react';
+import { API_URLS } from '../services/api';
 
 const Auth = ({ setIsAuthenticated }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,7 +11,7 @@ const Auth = ({ setIsAuthenticated }) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const API_URL = 'http://127.0.0.1:8000/auth';
+  const API_URL = API_URLS.AUTH;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
