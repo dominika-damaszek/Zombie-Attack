@@ -65,7 +65,7 @@ const Dashboard = () => {
     try {
       if (group && group.group_number === 0) {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URLS.BASE}/session/${session.id}/start`, { method: 'POST' });
+        const res = await fetch(`${API_URLS.BASE}/session/${session.id}/start?token=${token}`, { method: 'POST' });
         if (!res.ok) throw new Error(await res.text());
         
         // Refetch sessions to get the new groups
@@ -145,10 +145,10 @@ const Dashboard = () => {
               if (!window.confirm("End this session entirely? This will disconnect all players.")) return;
               try {
                 const token = localStorage.getItem('token');
-                await axios.delete(`${API_URLS.SESSION}/${session.id}?token=${token}`);
+                const delRes = await fetch(`${API_URLS.SESSION}/${session.id}?token=${token}`, { method: 'DELETE' });
+                if (!delRes.ok) throw new Error(await delRes.text());
                 localStorage.removeItem('session_id');
                 localStorage.removeItem('session_data');
-                if (setHasSession) setHasSession(false);
                 navigate('/host');
               } catch (e) {
                 alert("Failed to end session: " + e.message);

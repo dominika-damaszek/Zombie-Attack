@@ -18,15 +18,18 @@ const WaitingRoom = () => {
   const { lastMessage } = useGameWebSocket(currentGroupData?.group_id, playerData?.id);
 
   // Function to fetch the game state and grab players
-  const fetchGameState = async (groupId) => {
+  // Accepts explicit args so it's never stale inside closures
+  const fetchGameState = async (groupId, gData, pData) => {
+    const usedGroupData = gData ?? currentGroupData;
+    const usedPlayerData = pData ?? playerData;
     try {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/state`);
       const data = await res.json();
       setPlayers(data.players || []);
       
-      // If we are in an assigned team and game shifted to active, Launch!
-      if (currentGroupData?.group_number !== 0 && data.game_state !== 'lobby') {
-         navigate('/game', { state: { groupData: currentGroupData, playerData } });
+      // If we are in a real team (not lobby) and game has left 'lobby' state → Launch!
+      if (usedGroupData?.group_number !== 0 && data.game_state !== 'lobby') {
+         navigate('/game', { state: { groupData: usedGroupData, playerData: usedPlayerData } });
       }
     } catch (e) {
       console.error(e);
@@ -36,9 +39,10 @@ const WaitingRoom = () => {
   // Initial fetch and on Group ID change
   useEffect(() => {
     if (currentGroupData?.group_id) {
-       fetchGameState(currentGroupData.group_id);
+       fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
     }
-  }, [currentGroupData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentGroupData?.group_id]);
 
   // Handle Websocket Real-time Events
   useEffect(() => {
@@ -46,8 +50,10 @@ const WaitingRoom = () => {
       const handleMatchmaking = async () => {
         try {
           const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
-          const data = await res.json();
-          setCurrentGroupData(data); // Switches WS instantly
+          const newGroupData = await res.json();
+          setCurrentGroupData(newGroupData); // Switches WS instantly
+          // Immediately check new group state — game may already be started
+          await fetchGameState(newGroupData.group_id, newGroupData, playerData);
         } catch (e) {
           console.error(e);
         }
@@ -55,20 +61,25 @@ const WaitingRoom = () => {
       // Short delay to ensure backend has fully committed
       setTimeout(handleMatchmaking, 500);
     } else if (lastMessage?.type === 'PLAYER_JOINED' || lastMessage?.type === 'PLAYER_READY') {
-       fetchGameState(currentGroupData.group_id);
+       fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
     } else if (lastMessage?.type === 'GAME_STARTED') {
+      // currentGroupData is the real group by now (WS reconnected after MATCHMAKING_COMPLETE)
       navigate('/game', { state: { groupData: currentGroupData, playerData } });
     }
-  }, [lastMessage, navigate, playerData, currentGroupData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastMessage]);
 
-  // Polling fallback
+  // Polling fallback — always uses latest currentGroupData via closure on the effect dependency
   useEffect(() => {
     if (!currentGroupData?.group_id) return;
-    pollingRef.current = setInterval(() => {
-      fetchGameState(currentGroupData.group_id);
+    const id = setInterval(() => {
+      fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
     }, 4000);
-    return () => clearInterval(pollingRef.current);
-  }, [currentGroupData, playerData, navigate]);
+    pollingRef.current = id;
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentGroupData?.group_id]);
+
 
   const markReady = async () => {
     if (savingReady) return;
@@ -80,7 +91,7 @@ const WaitingRoom = () => {
         body: JSON.stringify({ player_id: playerData.id })
       });
       if (res.ok) {
-         fetchGameState(currentGroupData.group_id);
+         fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
       }
     } catch (e) {
       console.error(e);

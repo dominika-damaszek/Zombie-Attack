@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Users, UsersRound, Send, ChevronRight } from 'lucide-react';
+import { Users, UsersRound, Send, ChevronRight, Activity } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
 const MODES_GAME = [
