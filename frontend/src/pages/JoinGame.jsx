@@ -32,6 +32,12 @@ const JoinGame = () => {
         { join_code: joinCode }
       );
       
+      // Save to localStorage so it survives page refresh
+      localStorage.setItem('player_session', JSON.stringify({
+        groupData: response.data,
+        playerData: { id: response.data.player_id }
+      }));
+
       // Navigate to waiting room with group data and player id
       navigate('/waiting', { 
         state: { 
