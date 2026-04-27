@@ -7,15 +7,13 @@ const Home = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
-      <div className="relative">
+      <div className="relative mb-4">
         <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 rounded-full"></div>
-        <div className="bg-slate-800/80 p-8 rounded-[3rem] border border-slate-700 shadow-2xl relative">
-          <img 
-            src="/zombie-logo.svg" 
-            alt="Zombie Attack Logo" 
-            className="w-24 h-24 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]" 
-          />
-        </div>
+        <img 
+          src="/zombie-logo.svg" 
+          alt="Zombie Attack Logo" 
+          className="w-64 h-64 relative drop-shadow-[0_0_20px_rgba(52,211,153,0.3)] animate-pulse-slow" 
+        />
       </div>
 
       <div className="space-y-4">
