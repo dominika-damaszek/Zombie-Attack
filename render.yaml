@@ -13,7 +13,6 @@ services:
   # React Frontend Static Site
   - type: static_site
     name: zombie-attack-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishPath: dist
