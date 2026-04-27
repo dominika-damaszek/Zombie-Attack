@@ -141,6 +141,25 @@ const Dashboard = () => {
             </p>
           </div>
           <button
+            onClick={async () => {
+              if (!window.confirm("End this session entirely? This will disconnect all players.")) return;
+              try {
+                const token = localStorage.getItem('token');
+                await axios.delete(`${API_URLS.SESSION}/${session.id}?token=${token}`);
+                localStorage.removeItem('session_id');
+                localStorage.removeItem('session_data');
+                if (setHasSession) setHasSession(false);
+                navigate('/host');
+              } catch (e) {
+                alert("Failed to end session: " + e.message);
+              }
+            }}
+            className="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold py-3 px-5 rounded-xl transition-all border border-rose-500/20"
+          >
+            <Skull size={16} />
+            End Session
+          </button>
+          <button
             onClick={refreshAll}
             disabled={refreshing}
             className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-3 px-5 rounded-xl transition-all hover:scale-105 active:scale-95"

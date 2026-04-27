@@ -7,7 +7,15 @@ import sys
 import os
 
 # Configuration
-API = os.getenv("API_URL", "http://127.0.0.1:8000")
+API = os.getenv("API_URL")
+if not API:
+    print("--- ZOMBIEWARE BOT SETUP ---")
+    use_local = input("Usar servidor local (127.0.0.1:8000)? (s/n): ").lower()
+    if use_local == 's':
+        API = "http://127.0.0.1:8000"
+    else:
+        API = input("Digite a URL do backend (ex: https://zombie-attack-backend.onrender.com): ")
+
 if API.endswith('/'):
     API = API[:-1]
 
@@ -16,8 +24,8 @@ WS_BASE = API.replace("http", "ws")
 WS_API = f"{WS_BASE}/api/game/ws"
 PIN = "1234"
 
-print(f"Using API: {API}")
-print(f"Using WS: {WS_API}")
+print(f"\n[CONFIG] API: {API}")
+print(f"[CONFIG] WS: {WS_API}\n")
 
 async def bot_flow(bot_id, join_code):
     # Stagger bot creation slightly to prevent SQLite database locking

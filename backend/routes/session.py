@@ -111,6 +111,29 @@ def get_my_sessions(token: str, db: Session = Depends(database.get_db)):
     sessions = db.query(models.Session).filter(models.Session.teacher_id == user.id).all()
     return [prepare_session_response(s) for s in sessions]
 
+@router.delete("/{session_id}")
+async def end_session(session_id: str, token: str, db: Session = Depends(database.get_db)):
+    user = get_current_user(token, db)
+    session = db.query(models.Session).filter(
+        models.Session.id == session_id,
+        models.Session.teacher_id == user.id
+    ).first()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found or unauthorized")
+        
+    session.status = "finished"
+    db.commit()
+    
+    # Notify all groups in this session that it's over
+    for group in session.groups:
+        await manager.broadcast_to_group(group.id, {
+            "type": "SESSION_TERMINATED",
+            "message": "A professora encerrou esta sessão."
+        })
+        
+    return {"message": "Session terminated successfully"}
+
 def prepare_session_response(session: models.Session):
     groups = []
     for g in session.groups:
