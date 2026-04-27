@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Play, Users, Skull, Shield, Activity, RefreshCw, Zap } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URLS } from '../services/api';
+
 
 const STATE_LABELS = {
   lobby: { label: 'Lobby', color: 'text-slate-400', bg: 'bg-slate-700' },
@@ -37,7 +38,7 @@ const Dashboard = () => {
 
   const fetchGroupStats = useCallback(async (groupId) => {
     try {
-      const res = await fetch(`${API}/api/game/${groupId}/state`);
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/state`);
       const data = await res.json();
       setGroupStats((prev) => ({ ...prev, [groupId]: data }));
     } catch (e) {
@@ -64,11 +65,11 @@ const Dashboard = () => {
     try {
       if (group && group.group_number === 0) {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API}/session/${session.id}/start`, { method: 'POST' });
+        const res = await fetch(`${API_URLS.BASE}/session/${session.id}/start`, { method: 'POST' });
         if (!res.ok) throw new Error(await res.text());
         
         // Refetch sessions to get the new groups
-        const sessionsRes = await fetch(`${API}/session/my?token=${token}`);
+        const sessionsRes = await fetch(`${API_URLS.BASE}/session/my?token=${token}`);
         const sessions = await sessionsRes.json();
         const updatedSession = sessions.find(s => s.id === session.id);
         if (updatedSession) {
@@ -78,7 +79,7 @@ const Dashboard = () => {
           refreshAll();
         }
       } else {
-        const res = await fetch(`${API}/api/game/${groupId}/start`, { method: 'POST' });
+        const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/start`, { method: 'POST' });
         if (!res.ok) throw new Error(await res.text());
         await fetchGroupStats(groupId);
       }
@@ -93,7 +94,7 @@ const Dashboard = () => {
     if (!window.confirm("Are you sure you want to end this game early?")) return;
     setStartingGroup(groupId);
     try {
-      const res = await fetch(`${API}/api/game/${groupId}/end`, { method: 'POST' });
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/end`, { method: 'POST' });
       if (!res.ok) throw new Error(await res.text());
       await fetchGroupStats(groupId);
     } catch (e) {

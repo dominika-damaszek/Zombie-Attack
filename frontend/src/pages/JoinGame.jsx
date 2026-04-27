@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { LogIn } from 'lucide-react';
+import { API_URLS } from '../services/api';
 
 const JoinGame = () => {
   const { code } = useParams();
@@ -27,7 +28,7 @@ const JoinGame = () => {
     
     try {
       const response = await axios.post(
-        `http://localhost:8000/player/join?token=${token}`,
+        `${API_URLS.PLAYER}/join?token=${token}`,
         { join_code: joinCode }
       );
       
