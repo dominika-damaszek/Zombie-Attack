@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Gamepad2, LogIn, LogOut, BookOpen, Info, Skull, LayoutDashboard, UserCircle } from 'lucide-react';
+import { Home, Users, Gamepad2, LogIn, LogOut, BookOpen, Info, LayoutDashboard, UserCircle } from 'lucide-react';
 
 const Sidebar = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession }) => {
   const handleLogout = () => {
@@ -33,7 +33,7 @@ const Sidebar = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSessio
         {/* Logo */}
         <div className="p-6 flex items-center space-x-3 border-b border-slate-700/50 mb-6">
           <div className="bg-emerald-500/20 p-2 rounded-xl text-emerald-400">
-            <Skull size={28} />
+            <img src="/zombie-logo.svg" alt="Logo" className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
             Zombieware
