@@ -131,6 +131,48 @@ const HostGame = ({ setHasSession }) => {
         <p className="text-slate-500 text-sm">Configure your classroom activity before launching.</p>
       </div>
 
+      {localStorage.getItem('session_id') && (
+        <div className="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+             <div className="p-2 bg-amber-500/20 rounded-lg text-amber-500">
+               <Activity size={20} />
+             </div>
+             <div>
+               <p className="text-sm font-bold text-amber-400">Você já tem uma sessão ativa!</p>
+               <p className="text-xs text-slate-500">Deseja continuar ou encerrar para criar outra?</p>
+             </div>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="px-4 py-2 bg-amber-500 text-slate-900 font-bold rounded-xl text-sm flex-1 sm:flex-none"
+            >
+              Continuar
+            </button>
+            <button 
+              onClick={async () => {
+                if (!window.confirm("Encerrar sessão anterior?")) return;
+                try {
+                  const sId = localStorage.getItem('session_id');
+                  const token = localStorage.getItem('token');
+                  await axios.delete(`${API_URLS.SESSION}/${sId}?token=${token}`);
+                  localStorage.removeItem('session_id');
+                  localStorage.removeItem('session_data');
+                  if (setHasSession) setHasSession(false);
+                  window.location.reload();
+                } catch (e) {
+                   localStorage.removeItem('session_id');
+                   window.location.reload();
+                }
+              }}
+              className="px-4 py-2 bg-rose-500/20 text-rose-400 font-bold rounded-xl text-sm flex-1 sm:flex-none"
+            >
+              Encerrar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
         {/* Track Selector */}
         <div className="glass-panel p-2 flex rounded-2xl">
