@@ -32,9 +32,7 @@ const Sidebar = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSessio
       <div>
         {/* Logo */}
         <div className="p-6 flex items-center space-x-3 border-b border-slate-700/50 mb-6">
-          <div className="bg-emerald-500/20 p-2 rounded-xl text-emerald-400">
-            <img src="/zombie-logo.svg" alt="Logo" className="w-7 h-7" />
-          </div>
+          <img src="/zombie-logo.svg" alt="Logo" className="w-12 h-12 drop-shadow-[0_0_10px_rgba(52,211,153,0.2)]" />
           <h1 className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
             Zombieware
           </h1>

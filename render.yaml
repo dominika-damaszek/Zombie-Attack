@@ -13,9 +13,9 @@ services:
   # React Frontend Static Site
   - type: static_site
     name: zombie-attack-frontend
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    publishPath: dist
+    # No rootDir here to avoid path resolution issues with routes
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: frontend/dist
     routes:
       - type: rewrite
         source: /*
