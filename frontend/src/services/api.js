@@ -6,8 +6,10 @@ if (API_BASE_URL.endsWith('/')) {
 // WebSocket URL derived from API_BASE_URL
 const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws');
 
-console.log('Zombieware API Base URL:', API_BASE_URL);
-console.log('Zombieware WS Base URL:', WS_BASE_URL);
+console.log('--- ZOMBIEWARE CONFIG ---');
+console.log('API Base URL:', API_BASE_URL);
+console.log('WS Base URL:', WS_BASE_URL);
+console.log('-------------------------');
 
 export const API_URLS = {
     BASE: API_BASE_URL,
