@@ -12,11 +12,12 @@ app = FastAPI(title="Zombieware API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict to frontend URL
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Note: In strict production environments, replace ["*"] with the specific frontend URL.
 
 app.include_router(auth.router)
 app.include_router(session.router)
