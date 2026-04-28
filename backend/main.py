@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import models
-from .database import engine
+import models
+from database import engine
 
-from .routes import auth, session, player, game
+from routes import auth, session, player, game
 
 # Create DB Tables
 models.Base.metadata.create_all(bind=engine)
@@ -32,4 +32,4 @@ if __name__ == "__main__":
     import uvicorn
     import os
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run("main:app", host="localhost", port=port)
