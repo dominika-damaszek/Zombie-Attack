@@ -102,9 +102,9 @@ const WaitingRoom = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
         <div className="glass-panel p-8 text-center max-w-sm rounded-3xl">
-          <p className="text-slate-400 mb-4">Dados do grupo não encontrados.</p>
+          <p className="text-slate-400 mb-4">No group data found.</p>
           <button onClick={() => navigate('/join')} className="btn-primary px-6 py-3">
-            Voltar
+            Go Back
           </button>
         </div>
       </div>
@@ -125,27 +125,26 @@ const WaitingRoom = () => {
             : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
         }`}>
           <span>
-            {isLobby ? '🌐 Lobby Global' : `✅ Grupo ${currentGroupData.group_number}`}
+            {isLobby ? '🌐 Global Lobby' : `✅ Group ${currentGroupData.group_number}`}
           </span>
           <div className="flex items-center gap-1.5">
             {connected ? (
-              <><Wifi size={14} /> Em tempo real</>
+              <><Wifi size={14} /> Live</>
             ) : (
-              <><WifiOff size={14} className="text-slate-500" /> <span className="text-slate-500">Reconectando...</span></>
+              <><WifiOff size={14} className="text-slate-500" /> <span className="text-slate-500">Reconnecting...</span></>
             )}
           </div>
         </div>
 
         <div className="glass-panel p-6 rounded-3xl border border-slate-700/50">
-          {/* Title */}
           <div className="text-center mb-6">
             <h2 className="text-2xl font-black text-white mb-1">
-              {isLobby ? 'Aguardando o Professor' : `Você está no Grupo ${currentGroupData.group_number}`}
+              {isLobby ? 'Waiting for Teacher' : `You are in Group ${currentGroupData.group_number}`}
             </h2>
             <p className="text-slate-400 text-sm">
               {isLobby
-                ? 'O professor vai dividir a turma em grupos em breve...'
-                : 'Reúna seu grupo e aguarde o início do jogo'}
+                ? 'The teacher will split the class into groups shortly...'
+                : 'Gather your group and wait for the game to start'}
             </p>
           </div>
 
@@ -154,7 +153,7 @@ const WaitingRoom = () => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
                 <Users size={16} className="text-emerald-400" />
-                {isLobby ? 'Alunos na sala' : 'Integrantes do grupo'}
+                {isLobby ? 'Students in room' : 'Group members'}
               </div>
               <span className="bg-emerald-500/20 text-emerald-400 font-black px-3 py-0.5 rounded-full text-xs">
                 {players.length}
@@ -173,7 +172,7 @@ const WaitingRoom = () => {
                 >
                   <span className={`font-semibold text-sm ${p.id === playerData?.id ? 'text-emerald-300' : 'text-slate-300'}`}>
                     {p.username}
-                    {p.id === playerData?.id && <span className="ml-2 text-xs text-emerald-500 font-normal">(você)</span>}
+                    {p.id === playerData?.id && <span className="ml-2 text-xs text-emerald-500 font-normal">(you)</span>}
                   </span>
                   {!isLobby && (
                     p.is_ready
@@ -183,12 +182,12 @@ const WaitingRoom = () => {
                 </div>
               ))}
               {players.length === 0 && (
-                <p className="text-slate-600 text-sm text-center py-4">Nenhum jogador ainda...</p>
+                <p className="text-slate-600 text-sm text-center py-4">No players yet...</p>
               )}
             </div>
           </div>
 
-          {/* Ready Button (only in real group) */}
+          {/* Ready Button */}
           {!isLobby && (
             <button
               onClick={markReady}
@@ -203,7 +202,7 @@ const WaitingRoom = () => {
                 ? <Loader2 className="animate-spin" size={18} />
                 : <CheckCircle2 size={18} />
               }
-              {myReadyState ? 'Pronto! Aguardando os outros...' : 'Estou pronto!'}
+              {myReadyState ? "Ready! Waiting for others..." : "I'm Ready!"}
             </button>
           )}
 

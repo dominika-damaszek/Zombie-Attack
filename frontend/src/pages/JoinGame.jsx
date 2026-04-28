@@ -31,7 +31,7 @@ const JoinGame = () => {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Código inválido ou sala não encontrada');
+        throw new Error(errorData.detail || 'Invalid code or room not found');
       }
       const data = await response.json();
 
@@ -47,7 +47,7 @@ const JoinGame = () => {
         }
       });
     } catch (err) {
-      setError(err.message || 'Falha ao entrar na sala');
+      setError(err.message || 'Failed to join room');
       setLoading(false);
     }
   };
@@ -60,8 +60,8 @@ const JoinGame = () => {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h2 className="text-4xl font-black text-white mb-2">Entrar na Turma</h2>
-          <p className="text-slate-400">Digite o código da sala fornecido pelo professor</p>
+          <h2 className="text-4xl font-black text-white mb-2">Join a Class</h2>
+          <p className="text-slate-400">Enter the room code provided by your teacher</p>
         </div>
 
         <div className="glass-panel p-8 rounded-3xl border border-slate-700/50">
@@ -74,7 +74,7 @@ const JoinGame = () => {
           <form onSubmit={handleJoin} className="space-y-6">
             <div>
               <label className="block text-slate-400 text-sm font-semibold mb-3 text-center uppercase tracking-wider">
-                Código da Sala
+                Room Code
               </label>
               <input
                 type="text"
@@ -94,9 +94,9 @@ const JoinGame = () => {
               className="w-full py-4 rounded-2xl font-black text-xl text-slate-900 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {loading ? (
-                <><Loader2 size={22} className="animate-spin" /> Entrando...</>
+                <><Loader2 size={22} className="animate-spin" /> Joining...</>
               ) : (
-                <><LogIn size={22} /> Entrar</>
+                <><LogIn size={22} /> Join</>
               )}
             </button>
           </form>

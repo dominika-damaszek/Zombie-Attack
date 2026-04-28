@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Play, Users, Skull, RefreshCw, ChevronRight, BookOpen, Gamepad2, X } from 'lucide-react';
+import { Play, Users, Skull, RefreshCw, ChevronRight, X } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
 const MODULE_LABELS = {
-  module_1: { label: 'Módulo 1: Trading', emoji: '📘', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-  module_2: { label: 'Módulo 2: Zumbis', emoji: '⚠️', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
-  module_3: { label: 'Módulo 3: Passwords', emoji: '🔒', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-  easy:     { label: 'Jogo: Fácil', emoji: '🟢', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  normal:   { label: 'Jogo: Normal', emoji: '🟡', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  hard:     { label: 'Jogo: Difícil', emoji: '🔴', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
+  module_1: { label: 'Module 1: Trading',   emoji: '📘', color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20' },
+  module_2: { label: 'Module 2: Zombies',   emoji: '⚠️', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+  module_3: { label: 'Module 3: Passwords', emoji: '🔒', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+  easy:     { label: 'Game: Easy',          emoji: '🟢', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  normal:   { label: 'Game: Normal',        emoji: '🟡', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+  hard:     { label: 'Game: Hard',          emoji: '🔴', color: 'text-rose-400',   bg: 'bg-rose-500/10 border-rose-500/20' },
 };
 
 const STATE_LABELS = {
-  lobby:            { label: 'Lobby', color: 'text-slate-400', bg: 'bg-slate-700' },
-  role_assignment:  { label: 'Atribuindo Papéis', color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
-  round_active:     { label: 'Round Ativo', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  scan_phase:       { label: 'Fase de Scan', color: 'text-cyan-400', bg: 'bg-cyan-500/20' },
-  round_transition: { label: 'Transição', color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
-  end_game:         { label: 'Fim de Jogo', color: 'text-rose-400', bg: 'bg-rose-500/20' },
+  lobby:            { label: 'Lobby',            color: 'text-slate-400',   bg: 'bg-slate-700' },
+  role_assignment:  { label: 'Assigning Roles',  color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
+  round_active:     { label: 'Round Active',     color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  scan_phase:       { label: 'Scan Phase',       color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
+  round_transition: { label: 'Transitioning',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
+  end_game:         { label: 'Game Over',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
 };
 
 const Dashboard = ({ setHasSession }) => {
@@ -47,7 +47,7 @@ const Dashboard = ({ setHasSession }) => {
       if (!res.ok) return;
       const data = await res.json();
       setGroupStats(prev => ({ ...prev, [groupId]: data }));
-    } catch (e) { /* silent */ }
+    } catch { /* silent */ }
   }, []);
 
   const refreshAll = useCallback(async (silent = false) => {
@@ -78,7 +78,7 @@ const Dashboard = ({ setHasSession }) => {
         localStorage.setItem('session_data', JSON.stringify(updatedSession));
         await Promise.all(newGroups.map(g => fetchGroupStats(g.id)));
       }
-    } catch (e) { alert('Erro: ' + e.message); }
+    } catch (e) { alert('Error: ' + e.message); }
     finally { setActionLoading(null); }
   };
 
@@ -88,23 +88,23 @@ const Dashboard = ({ setHasSession }) => {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/start`, { method: 'POST' });
       if (!res.ok) throw new Error(await res.text());
       await fetchGroupStats(groupId);
-    } catch (e) { alert('Erro: ' + e.message); }
+    } catch (e) { alert('Error: ' + e.message); }
     finally { setActionLoading(null); }
   };
 
   const endGame = async (groupId) => {
-    if (!window.confirm('Encerrar este jogo antecipadamente?')) return;
+    if (!window.confirm('End this game early?')) return;
     setActionLoading(groupId);
     try {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/end`, { method: 'POST' });
       if (!res.ok) throw new Error(await res.text());
       await fetchGroupStats(groupId);
-    } catch (e) { alert('Erro: ' + e.message); }
+    } catch (e) { alert('Error: ' + e.message); }
     finally { setActionLoading(null); }
   };
 
   const endSession = async () => {
-    if (!window.confirm('Encerrar esta sessão? Todos os alunos serão desconectados.')) return;
+    if (!window.confirm('End this session? All students will be disconnected.')) return;
     try {
       const token = localStorage.getItem('token');
       await fetch(`${API_URLS.SESSION}/${session.id}?token=${token}`, { method: 'DELETE' });
@@ -112,16 +112,16 @@ const Dashboard = ({ setHasSession }) => {
       localStorage.removeItem('session_data');
       if (setHasSession) setHasSession(false);
       navigate('/host');
-    } catch (e) { alert('Erro: ' + e.message); }
+    } catch (e) { alert('Error: ' + e.message); }
   };
 
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)]">
         <div className="glass-panel p-8 text-center max-w-sm rounded-3xl">
-          <p className="text-slate-400 mb-4">Nenhuma sessão ativa encontrada.</p>
+          <p className="text-slate-400 mb-4">No active session found.</p>
           <button onClick={() => navigate('/host')} className="btn-primary px-6 py-3">
-            Criar Sessão
+            Create Session
           </button>
         </div>
       </div>
@@ -141,7 +141,7 @@ const Dashboard = ({ setHasSession }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
-            Dashboard do Professor
+            Teacher Dashboard
           </h2>
           <div className={`inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full text-sm font-semibold border ${modeInfo.bg} ${modeInfo.color}`}>
             <span>{modeInfo.emoji}</span>
@@ -150,7 +150,7 @@ const Dashboard = ({ setHasSession }) => {
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-slate-800 px-5 py-3 rounded-2xl border border-slate-700 text-center">
-            <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">Alunos</p>
+            <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">Students</p>
             <p className="text-2xl font-black text-white">{totalPlayers}</p>
           </div>
           <button
@@ -165,12 +165,12 @@ const Dashboard = ({ setHasSession }) => {
             className="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold py-3 px-4 rounded-2xl transition-all border border-rose-500/20 text-sm"
           >
             <X size={16} />
-            Encerrar Sessão
+            End Session
           </button>
         </div>
       </div>
 
-      {/* Lobby (matchmaking) */}
+      {/* Global Lobby */}
       {lobbyGroup && (
         <div className="glass-panel rounded-3xl border-2 border-dashed border-cyan-500/40 p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
@@ -185,15 +185,15 @@ const Dashboard = ({ setHasSession }) => {
                 />
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Lobby Global</p>
+                <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Global Lobby</p>
                 <p className="text-3xl font-mono font-black text-cyan-400 tracking-widest">{lobbyGroup.join_code}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Users size={14} className="text-slate-400" />
                   <span className="text-slate-300 font-semibold">
-                    {groupStats[lobbyGroup.id]?.players?.length ?? lobbyGroup.player_count ?? 0} alunos aguardando
+                    {groupStats[lobbyGroup.id]?.players?.length ?? lobbyGroup.player_count ?? 0} students waiting
                   </span>
                 </div>
-                <p className="text-slate-500 text-xs mt-1">Mínimo 6 alunos para iniciar</p>
+                <p className="text-slate-500 text-xs mt-1">Minimum 6 students to split groups</p>
               </div>
             </div>
             <button
@@ -206,7 +206,7 @@ const Dashboard = ({ setHasSession }) => {
               ) : (
                 <ChevronRight size={20} />
               )}
-              Dividir Grupos
+              Split Groups
             </button>
           </div>
         </div>
@@ -217,7 +217,7 @@ const Dashboard = ({ setHasSession }) => {
         <>
           <h3 className="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
             <Users size={18} className="text-emerald-400" />
-            {gameGroups.length} {gameGroups.length === 1 ? 'Grupo' : 'Grupos'}
+            {gameGroups.length} {gameGroups.length === 1 ? 'Group' : 'Groups'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {gameGroups.map((group) => {
@@ -237,15 +237,13 @@ const Dashboard = ({ setHasSession }) => {
                     isActive ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.08)]' : 'border-slate-700/50'
                   }`}
                 >
-                  {/* Header */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-black text-white">Grupo {group.group_number}</h3>
+                    <h3 className="text-xl font-black text-white">Group {group.group_number}</h3>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${stateInfo.bg} ${stateInfo.color}`}>
                       {stateInfo.label}
                     </span>
                   </div>
 
-                  {/* QR + Code */}
                   <div className="flex items-center gap-4">
                     <div className="bg-white p-2 rounded-xl shadow-inner flex-shrink-0">
                       <QRCodeSVG
@@ -257,21 +255,20 @@ const Dashboard = ({ setHasSession }) => {
                       />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Código</p>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Join Code</p>
                       <p className="text-2xl font-mono font-black text-emerald-400 tracking-widest">{group.join_code}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <Users size={12} className="text-slate-400" />
-                        <span className="text-slate-300 text-sm font-semibold">{playerCount} alunos</span>
+                        <span className="text-slate-300 text-sm font-semibold">{playerCount} students</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Stats */}
                   {stats && playerCount > 0 && (
                     <div>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-emerald-400">{playerCount - infected} sobreviventes</span>
-                        <span className="text-rose-400">{infected} infectados ({infectionPct}%)</span>
+                        <span className="text-emerald-400">{playerCount - infected} survivors</span>
+                        <span className="text-rose-400">{infected} infected ({infectionPct}%)</span>
                       </div>
                       <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
                         <div
@@ -285,7 +282,6 @@ const Dashboard = ({ setHasSession }) => {
                     </div>
                   )}
 
-                  {/* Action Button */}
                   <button
                     onClick={() => isActive ? endGame(group.id) : startGame(group.id)}
                     disabled={(!canStart && !isActive) || actionLoading === group.id}
@@ -300,9 +296,9 @@ const Dashboard = ({ setHasSession }) => {
                     {actionLoading === group.id ? (
                       <RefreshCw size={14} className="animate-spin" />
                     ) : isActive ? (
-                      <><Skull size={14} /> Encerrar Jogo</>
+                      <><Skull size={14} /> End Game</>
                     ) : (
-                      <><Play size={14} fill="currentColor" /> Iniciar Jogo</>
+                      <><Play size={14} fill="currentColor" /> Start Game</>
                     )}
                   </button>
                 </div>
@@ -315,9 +311,9 @@ const Dashboard = ({ setHasSession }) => {
       {gameGroups.length === 0 && !lobbyGroup && (
         <div className="text-center py-16 text-slate-500">
           <Users size={48} className="mx-auto mb-4 opacity-40" />
-          <p>Nenhum grupo encontrado.</p>
+          <p>No groups found.</p>
           <button onClick={() => navigate('/host')} className="mt-4 text-emerald-400 underline text-sm">
-            Criar nova sessão
+            Create a new session
           </button>
         </div>
       )}

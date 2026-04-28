@@ -23,13 +23,13 @@ const Home = ({ isAuthenticated }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] text-center px-4">
-      <div className="flex flex-col items-center gap-6 mb-16">
+      <div className="flex flex-col items-center gap-6 mb-14">
         <div className="relative">
-          <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 rounded-full" />
+          <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 rounded-full scale-150" />
           <img
             src="/zombie-logo.svg"
             alt="Zombieware"
-            className="w-28 h-28 relative drop-shadow-[0_0_24px_rgba(52,211,153,0.35)]"
+            className="w-52 h-52 relative drop-shadow-[0_0_32px_rgba(52,211,153,0.4)]"
           />
         </div>
         <div>
@@ -37,7 +37,7 @@ const Home = ({ isAuthenticated }) => {
             Zombieware
           </h1>
           <p className="text-slate-400 text-lg max-w-md mx-auto">
-            Plataforma de jogo de cartas para sala de aula. Simples para professores, divertido para alunos.
+            The classroom trading card game platform. Simple for teachers, fun for students.
           </p>
         </div>
       </div>
@@ -49,7 +49,7 @@ const Home = ({ isAuthenticated }) => {
         >
           <Users size={40} strokeWidth={2.5} />
           JOIN
-          <span className="text-sm font-medium text-slate-700 -mt-1">Entrar numa turma</span>
+          <span className="text-sm font-medium text-slate-700 -mt-1">Enter a classroom</span>
         </button>
 
         <button
@@ -58,13 +58,13 @@ const Home = ({ isAuthenticated }) => {
         >
           <Monitor size={40} strokeWidth={2.5} />
           HOST
-          <span className="text-sm font-medium text-slate-700 -mt-1">Criar sessão de aula</span>
+          <span className="text-sm font-medium text-slate-700 -mt-1">Create a class session</span>
         </button>
       </div>
 
       {!isAuthenticated && (
         <p className="mt-8 text-slate-500 text-sm">
-          É necessário fazer login para jogar.
+          Login required to play.
         </p>
       )}
     </div>

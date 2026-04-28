@@ -7,36 +7,36 @@ const MODULES = [
   {
     id: 'module_1',
     emoji: '📘',
-    label: 'Módulo 1: Trading',
-    desc: 'Foco em trocar e colecionar cartas. Sem senhas, sem zumbis. 3 rounds de 3 minutos.',
-    concepts: ['Trading', 'Verificação'],
+    label: 'Module 1: Trading',
+    desc: 'Focus on trading and collecting cards. No passwords, no zombies. 3 rounds of 3 minutes.',
+    concepts: ['Trading', 'Verification'],
     color: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
     badge: 'bg-blue-500/20 text-blue-300',
   },
   {
     id: 'module_2',
     emoji: '⚠️',
-    label: 'Módulo 2: Zumbis',
-    desc: 'Introduz o papel do zumbi e mecânicas de malware. Sem senhas ainda.',
-    concepts: ['Malware', 'Resposta a Incidentes'],
+    label: 'Module 2: Zombies',
+    desc: 'Introduces the zombie role and malware mechanics. No passwords yet.',
+    concepts: ['Malware', 'Incident Response'],
     color: 'from-orange-500/20 to-orange-600/10 border-orange-500/30',
     badge: 'bg-orange-500/20 text-orange-300',
   },
   {
     id: 'module_3',
     emoji: '🔒',
-    label: 'Módulo 3: Passwords',
-    desc: 'Adiciona a mecânica de Senha Secreta para mostrar a importância da autenticação.',
-    concepts: ['Autenticação', 'Zero Trust'],
+    label: 'Module 3: Passwords',
+    desc: 'Adds the Secret Password mechanic to show why authentication matters.',
+    concepts: ['Authentication', 'Zero Trust'],
     color: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
     badge: 'bg-purple-500/20 text-purple-300',
   },
 ];
 
 const GAME_MODES = [
-  { id: 'easy', emoji: '🟢', label: 'Fácil', desc: 'Sem cartas infectadas. Ideal para iniciantes.' },
-  { id: 'normal', emoji: '🟡', label: 'Normal', desc: 'Cartas infectadas espalham malware ao escanear.' },
-  { id: 'hard', emoji: '🔴', label: 'Difícil', desc: 'Papéis especiais, eventos aleatórios e cadeia de infecção complexa.' },
+  { id: 'easy',   emoji: '🟢', label: 'Easy',   desc: 'No infected cards. Great for beginners.' },
+  { id: 'normal', emoji: '🟡', label: 'Normal', desc: 'Infected cards spread malware on scan.' },
+  { id: 'hard',   emoji: '🔴', label: 'Hard',   desc: 'Special roles, random events, and complex infection chains.' },
 ];
 
 const HostGame = ({ setHasSession }) => {
@@ -78,7 +78,7 @@ const HostGame = ({ setHasSession }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_mode: gameMode })
       });
-      if (!response.ok) throw new Error('Falha ao criar sessão');
+      if (!response.ok) throw new Error('Failed to create session');
       const data = await response.json();
       localStorage.setItem('session_id', data.id);
       localStorage.setItem('session_data', JSON.stringify({ ...data, game_mode: gameMode }));
@@ -86,27 +86,24 @@ const HostGame = ({ setHasSession }) => {
       navigate('/dashboard', { state: { session: { ...data, game_mode: gameMode } } });
     } catch (error) {
       console.error(error);
-      alert('Falha ao criar sessão. Você está logado?');
+      alert('Failed to create session. Are you logged in?');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleLaunchModule = () => createSession(selectedModule);
-  const handleLaunchGame = () => createSession(selectedGameMode);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 py-10">
       <div className="w-full max-w-lg">
         <div className="text-center mb-10">
           <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
-            Professor
+            Teacher Panel
           </h2>
-          <p className="text-slate-400">Escolha como quer iniciar a sessão de hoje</p>
+          <p className="text-slate-400">Choose how you want to start today's session</p>
         </div>
 
         <div className="space-y-4">
-          {/* MÓDULOS */}
+          {/* MODULES */}
           <div className="glass-panel rounded-3xl border border-slate-700/50 overflow-hidden">
             <button
               onClick={() => { setModulesOpen(!modulesOpen); setJogoOpen(false); }}
@@ -117,15 +114,11 @@ const HostGame = ({ setHasSession }) => {
                   <BookOpen size={28} className="text-cyan-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-2xl font-black text-white">MÓDULOS</p>
-                  <p className="text-slate-400 text-sm">Atividade didática por módulo</p>
+                  <p className="text-2xl font-black text-white">MODULES</p>
+                  <p className="text-slate-400 text-sm">Guided lesson by module</p>
                 </div>
               </div>
-              {modulesOpen ? (
-                <ChevronUp size={24} className="text-slate-400" />
-              ) : (
-                <ChevronDown size={24} className="text-slate-400" />
-              )}
+              {modulesOpen ? <ChevronUp size={24} className="text-slate-400" /> : <ChevronDown size={24} className="text-slate-400" />}
             </button>
 
             {modulesOpen && (
@@ -159,18 +152,18 @@ const HostGame = ({ setHasSession }) => {
                 ))}
 
                 <button
-                  onClick={handleLaunchModule}
+                  onClick={() => createSession(selectedModule)}
                   disabled={loading}
                   className="w-full mt-2 py-4 rounded-2xl font-black text-lg text-slate-900 bg-gradient-to-r from-cyan-400 to-blue-400 hover:from-cyan-300 hover:to-blue-300 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                 >
                   {loading ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} fill="currentColor" />}
-                  {loading ? 'Iniciando...' : `Iniciar ${MODULES.find(m => m.id === selectedModule)?.label}`}
+                  {loading ? 'Starting...' : `Launch ${MODULES.find(m => m.id === selectedModule)?.label}`}
                 </button>
               </div>
             )}
           </div>
 
-          {/* JOGO */}
+          {/* GAME */}
           <div className="glass-panel rounded-3xl border border-slate-700/50 overflow-hidden">
             <button
               onClick={() => { setJogoOpen(!jogoOpen); setModulesOpen(false); }}
@@ -181,15 +174,11 @@ const HostGame = ({ setHasSession }) => {
                   <Gamepad2 size={28} className="text-emerald-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-2xl font-black text-white">JOGO</p>
-                  <p className="text-slate-400 text-sm">Sessão livre com modo de jogo</p>
+                  <p className="text-2xl font-black text-white">GAME</p>
+                  <p className="text-slate-400 text-sm">Free play with difficulty mode</p>
                 </div>
               </div>
-              {jogoOpen ? (
-                <ChevronUp size={24} className="text-slate-400" />
-              ) : (
-                <ChevronDown size={24} className="text-slate-400" />
-              )}
+              {jogoOpen ? <ChevronUp size={24} className="text-slate-400" /> : <ChevronDown size={24} className="text-slate-400" />}
             </button>
 
             {jogoOpen && (
@@ -215,12 +204,12 @@ const HostGame = ({ setHasSession }) => {
                 </p>
 
                 <button
-                  onClick={handleLaunchGame}
+                  onClick={() => createSession(selectedGameMode)}
                   disabled={loading}
                   className="w-full mt-2 py-4 rounded-2xl font-black text-lg text-slate-900 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                 >
                   {loading ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} fill="currentColor" />}
-                  {loading ? 'Iniciando...' : 'Iniciar Jogo'}
+                  {loading ? 'Starting...' : 'Launch Game'}
                 </button>
               </div>
             )}
@@ -231,13 +220,13 @@ const HostGame = ({ setHasSession }) => {
           <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Activity size={18} className="text-amber-400" />
-              <p className="text-sm text-amber-300 font-semibold">Você já tem uma sessão ativa</p>
+              <p className="text-sm text-amber-300 font-semibold">You already have an active session</p>
             </div>
             <button
               onClick={() => navigate('/dashboard')}
               className="text-sm font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-4 py-2 rounded-xl transition-all"
             >
-              Ver Dashboard
+              View Dashboard
             </button>
           </div>
         )}

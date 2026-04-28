@@ -27,14 +27,14 @@ const Auth = ({ setIsAuthenticated }) => {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Erro de autenticação.');
+        throw new Error(errorData.detail || 'Authentication failed.');
       }
       const data = await response.json();
       localStorage.setItem('token', data.access_token);
       setIsAuthenticated(true);
       navigate(redirectTo);
     } catch (err) {
-      setError(err.message || 'Erro de autenticação.');
+      setError(err.message || 'Authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -45,10 +45,10 @@ const Auth = ({ setIsAuthenticated }) => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
-            {isLogin ? 'Bem-vindo de volta' : 'Criar Conta'}
+            {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="text-slate-400 text-sm">
-            {isLogin ? 'Entre com seu nome de usuário e PIN' : 'Registe-se para jogar'}
+            {isLogin ? 'Sign in with your username and PIN' : 'Register to start playing'}
           </p>
         </div>
 
@@ -64,7 +64,7 @@ const Auth = ({ setIsAuthenticated }) => {
               className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               onClick={() => { setIsLogin(false); setError(''); }}
             >
-              Registrar
+              Register
             </button>
           </div>
 
@@ -76,11 +76,11 @@ const Auth = ({ setIsAuthenticated }) => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-slate-400 text-sm font-semibold mb-2">Nome de usuário</label>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">Username</label>
               <input
                 type="text"
                 className="input-field"
-                placeholder="ex: profa_ana"
+                placeholder="e.g. teacher_john"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -88,7 +88,7 @@ const Auth = ({ setIsAuthenticated }) => {
               />
             </div>
             <div>
-              <label className="block text-slate-400 text-sm font-semibold mb-2">PIN (4 dígitos)</label>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">PIN (4 digits)</label>
               <input
                 type="password"
                 className="input-field text-center text-2xl tracking-[0.5em] font-mono"
@@ -106,11 +106,11 @@ const Auth = ({ setIsAuthenticated }) => {
               className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <span className="animate-pulse">Aguarde...</span>
+                <span className="animate-pulse">Please wait...</span>
               ) : (
                 <>
                   {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
-                  {isLogin ? 'Entrar' : 'Criar Conta'}
+                  {isLogin ? 'Sign In' : 'Create Account'}
                 </>
               )}
             </button>
