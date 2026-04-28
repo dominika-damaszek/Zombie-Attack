@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LogIn, Loader2 } from 'lucide-react';
 import { API_URLS } from '../services/api';
+import BackButton from '../components/BackButton';
 
 const JoinGame = () => {
   const { code } = useParams();
@@ -34,17 +35,12 @@ const JoinGame = () => {
         throw new Error(errorData.detail || 'Invalid code or room not found');
       }
       const data = await response.json();
-
       localStorage.setItem('player_session', JSON.stringify({
         groupData: data,
         playerData: { id: data.player_id }
       }));
-
       navigate('/waiting', {
-        state: {
-          groupData: data,
-          playerData: { id: data.player_id }
-        }
+        state: { groupData: data, playerData: { id: data.player_id } }
       });
     } catch (err) {
       setError(err.message || 'Failed to join room');
@@ -59,6 +55,7 @@ const JoinGame = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
       <div className="w-full max-w-sm">
+        <BackButton to="/" />
         <div className="text-center mb-8">
           <h2 className="text-4xl font-black text-white mb-2">Join a Class</h2>
           <p className="text-slate-400">Enter the room code provided by your teacher</p>

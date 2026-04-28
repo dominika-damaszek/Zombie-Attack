@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2, Users, Wifi, WifiOff } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 import { API_URLS } from '../services/api';
+import BackButton from '../components/BackButton';
 
 const WaitingRoom = () => {
   const location = useLocation();
@@ -47,10 +48,7 @@ const WaitingRoom = () => {
           const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
           const newGroupData = await res.json();
           setCurrentGroupData(newGroupData);
-          localStorage.setItem('player_session', JSON.stringify({
-            groupData: newGroupData,
-            playerData: playerData
-          }));
+          localStorage.setItem('player_session', JSON.stringify({ groupData: newGroupData, playerData }));
           await fetchGameState(newGroupData.group_id, newGroupData, playerData);
         } catch (e) { console.error(e); }
       };
@@ -70,10 +68,7 @@ const WaitingRoom = () => {
           const pRes = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
           const latestGroup = await pRes.json();
           if (latestGroup.group_id !== currentGroupData.group_id) {
-            localStorage.setItem('player_session', JSON.stringify({
-              groupData: latestGroup,
-              playerData: playerData
-            }));
+            localStorage.setItem('player_session', JSON.stringify({ groupData: latestGroup, playerData }));
             setCurrentGroupData(latestGroup);
             return;
           }
@@ -102,10 +97,9 @@ const WaitingRoom = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
         <div className="glass-panel p-8 text-center max-w-sm rounded-3xl">
+          <BackButton to="/join" />
           <p className="text-slate-400 mb-4">No group data found.</p>
-          <button onClick={() => navigate('/join')} className="btn-primary px-6 py-3">
-            Go Back
-          </button>
+          <button onClick={() => navigate('/join')} className="btn-primary px-6 py-3">Go Back</button>
         </div>
       </div>
     );
@@ -118,7 +112,8 @@ const WaitingRoom = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 py-10">
       <div className="w-full max-w-md">
-        {/* Status Banner */}
+        <BackButton to="/join" />
+
         <div className={`flex items-center justify-between px-4 py-2 rounded-2xl mb-5 text-sm font-semibold ${
           isLobby
             ? 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400'
@@ -148,7 +143,6 @@ const WaitingRoom = () => {
             </p>
           </div>
 
-          {/* Players List */}
           <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
@@ -159,7 +153,6 @@ const WaitingRoom = () => {
                 {players.length}
               </span>
             </div>
-
             <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
               {players.map((p) => (
                 <div
@@ -187,7 +180,6 @@ const WaitingRoom = () => {
             </div>
           </div>
 
-          {/* Ready Button */}
           {!isLobby && (
             <button
               onClick={markReady}
@@ -198,23 +190,15 @@ const WaitingRoom = () => {
                   : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.01] active:scale-[0.99]'
               }`}
             >
-              {savingReady
-                ? <Loader2 className="animate-spin" size={18} />
-                : <CheckCircle2 size={18} />
-              }
+              {savingReady ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
               {myReadyState ? "Ready! Waiting for others..." : "I'm Ready!"}
             </button>
           )}
 
-          {/* Lobby waiting dots */}
           {isLobby && (
             <div className="flex justify-center gap-2">
               {[0, 1, 2].map(i => (
-                <div
-                  key={i}
-                  className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
+                <div key={i} className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           )}

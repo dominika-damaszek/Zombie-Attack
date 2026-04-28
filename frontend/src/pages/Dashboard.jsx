@@ -3,23 +3,23 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Play, Users, Skull, RefreshCw, ChevronRight, X } from 'lucide-react';
 import { API_URLS } from '../services/api';
+import BackButton from '../components/BackButton';
 
 const MODULE_LABELS = {
   module_1: { label: 'Module 1: Trading',   emoji: '📘', color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20' },
   module_2: { label: 'Module 2: Zombies',   emoji: '⚠️', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
   module_3: { label: 'Module 3: Passwords', emoji: '🔒', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-  easy:     { label: 'Game: Easy',          emoji: '🟢', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  normal:   { label: 'Game: Normal',        emoji: '🟡', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  hard:     { label: 'Game: Hard',          emoji: '🔴', color: 'text-rose-400',   bg: 'bg-rose-500/10 border-rose-500/20' },
+  normal:   { label: 'Game: Normal',        emoji: '🧟', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
 };
 
 const STATE_LABELS = {
-  lobby:            { label: 'Lobby',            color: 'text-slate-400',   bg: 'bg-slate-700' },
-  role_assignment:  { label: 'Assigning Roles',  color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
-  round_active:     { label: 'Round Active',     color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  scan_phase:       { label: 'Scan Phase',       color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
-  round_transition: { label: 'Transitioning',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
-  end_game:         { label: 'Game Over',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
+  lobby:              { label: 'Lobby',            color: 'text-slate-400',   bg: 'bg-slate-700' },
+  role_assignment:    { label: 'Assigning Roles',  color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
+  module_instructions:{ label: 'Instructions',     color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
+  initial_scan_phase: { label: 'Initial Scan',     color: 'text-blue-400',    bg: 'bg-blue-500/20' },
+  round_active:       { label: 'Round Active',     color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  module_between_rounds: { label: 'Scan Phase',    color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
+  end_game:           { label: 'Game Over',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
 };
 
 const Dashboard = ({ setHasSession }) => {
@@ -47,7 +47,7 @@ const Dashboard = ({ setHasSession }) => {
       if (!res.ok) return;
       const data = await res.json();
       setGroupStats(prev => ({ ...prev, [groupId]: data }));
-    } catch { /* silent */ }
+    } catch { }
   }, []);
 
   const refreshAll = useCallback(async (silent = false) => {
@@ -108,21 +108,22 @@ const Dashboard = ({ setHasSession }) => {
     try {
       const token = localStorage.getItem('token');
       await fetch(`${API_URLS.SESSION}/${session.id}?token=${token}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
+    finally {
       localStorage.removeItem('session_id');
       localStorage.removeItem('session_data');
       if (setHasSession) setHasSession(false);
-      navigate('/host');
-    } catch (e) { alert('Error: ' + e.message); }
+      navigate('/host', { replace: true });
+    }
   };
 
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)]">
         <div className="glass-panel p-8 text-center max-w-sm rounded-3xl">
+          <BackButton to="/host" />
           <p className="text-slate-400 mb-4">No active session found.</p>
-          <button onClick={() => navigate('/host')} className="btn-primary px-6 py-3">
-            Create Session
-          </button>
+          <button onClick={() => navigate('/host')} className="btn-primary px-6 py-3">Create Session</button>
         </div>
       </div>
     );
@@ -137,7 +138,8 @@ const Dashboard = ({ setHasSession }) => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      {/* Header */}
+      <BackButton to="/host" />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
@@ -170,19 +172,12 @@ const Dashboard = ({ setHasSession }) => {
         </div>
       </div>
 
-      {/* Global Lobby */}
       {lobbyGroup && (
         <div className="glass-panel rounded-3xl border-2 border-dashed border-cyan-500/40 p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
             <div className="flex items-center gap-5">
               <div className="bg-white p-2 rounded-2xl shadow-inner">
-                <QRCodeSVG
-                  value={`${joinUrlBase}${lobbyGroup.join_code}`}
-                  size={90}
-                  bgColor="#ffffff"
-                  fgColor="#0f172a"
-                  level="M"
-                />
+                <QRCodeSVG value={`${joinUrlBase}${lobbyGroup.join_code}`} size={90} bgColor="#ffffff" fgColor="#0f172a" level="M" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Global Lobby</p>
@@ -201,18 +196,13 @@ const Dashboard = ({ setHasSession }) => {
               disabled={actionLoading === lobbyGroup.id}
               className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-black py-4 px-8 rounded-2xl text-lg transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
             >
-              {actionLoading === lobbyGroup.id ? (
-                <RefreshCw size={20} className="animate-spin" />
-              ) : (
-                <ChevronRight size={20} />
-              )}
+              {actionLoading === lobbyGroup.id ? <RefreshCw size={20} className="animate-spin" /> : <ChevronRight size={20} />}
               Split Groups
             </button>
           </div>
         </div>
       )}
 
-      {/* Game Groups */}
       {gameGroups.length > 0 && (
         <>
           <h3 className="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
@@ -224,35 +214,22 @@ const Dashboard = ({ setHasSession }) => {
               const stats = groupStats[group.id];
               const state = stats?.game_state || group.game_state || 'lobby';
               const stateInfo = STATE_LABELS[state] || STATE_LABELS.lobby;
-              const isActive = state === 'round_active' || state === 'scan_phase';
-              const canStart = state === 'lobby' || state === 'role_assignment';
+              const isActive = state === 'round_active';
+              const canStart = ['lobby', 'role_assignment'].includes(state);
               const playerCount = stats?.players?.length || group.player_count || 0;
               const infected = stats?.players?.filter(p => p.is_infected).length || 0;
               const infectionPct = playerCount > 0 ? Math.round((infected / playerCount) * 100) : 0;
 
               return (
-                <div
-                  key={group.id}
-                  className={`glass-panel p-5 rounded-3xl border-2 flex flex-col gap-4 transition-all ${
-                    isActive ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.08)]' : 'border-slate-700/50'
-                  }`}
-                >
+                <div key={group.id} className={`glass-panel p-5 rounded-3xl border-2 flex flex-col gap-4 transition-all ${isActive ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.08)]' : 'border-slate-700/50'}`}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-black text-white">Group {group.group_number}</h3>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${stateInfo.bg} ${stateInfo.color}`}>
-                      {stateInfo.label}
-                    </span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${stateInfo.bg} ${stateInfo.color}`}>{stateInfo.label}</span>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="bg-white p-2 rounded-xl shadow-inner flex-shrink-0">
-                      <QRCodeSVG
-                        value={`${joinUrlBase}${group.join_code}`}
-                        size={72}
-                        bgColor="#ffffff"
-                        fgColor="#0f172a"
-                        level="M"
-                      />
+                      <QRCodeSVG value={`${joinUrlBase}${group.join_code}`} size={72} bgColor="#ffffff" fgColor="#0f172a" level="M" />
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Join Code</p>
@@ -271,14 +248,9 @@ const Dashboard = ({ setHasSession }) => {
                         <span className="text-rose-400">{infected} infected ({infectionPct}%)</span>
                       </div>
                       <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all duration-700"
-                          style={{ width: `${infectionPct}%` }}
-                        />
+                        <div className="h-full rounded-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all duration-700" style={{ width: `${infectionPct}%` }} />
                       </div>
-                      {stats.current_round > 0 && (
-                        <p className="text-xs text-slate-500 text-center mt-1 font-mono">Round {stats.current_round}</p>
-                      )}
+                      {stats.current_round > 0 && <p className="text-xs text-slate-500 text-center mt-1 font-mono">Round {stats.current_round}</p>}
                     </div>
                   )}
 
@@ -286,20 +258,14 @@ const Dashboard = ({ setHasSession }) => {
                     onClick={() => isActive ? endGame(group.id) : startGame(group.id)}
                     disabled={(!canStart && !isActive) || actionLoading === group.id}
                     className={`w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm ${
-                      isActive
-                        ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
-                        : canStart
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      isActive ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
+                      : canStart ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
+                      : 'bg-slate-700 text-slate-500 cursor-not-allowed'
                     }`}
                   >
-                    {actionLoading === group.id ? (
-                      <RefreshCw size={14} className="animate-spin" />
-                    ) : isActive ? (
-                      <><Skull size={14} /> End Game</>
-                    ) : (
-                      <><Play size={14} fill="currentColor" /> Start Game</>
-                    )}
+                    {actionLoading === group.id ? <RefreshCw size={14} className="animate-spin" />
+                      : isActive ? <><Skull size={14} /> End Game</>
+                      : <><Play size={14} fill="currentColor" /> Start Game</>}
                   </button>
                 </div>
               );
@@ -312,9 +278,7 @@ const Dashboard = ({ setHasSession }) => {
         <div className="text-center py-16 text-slate-500">
           <Users size={48} className="mx-auto mb-4 opacity-40" />
           <p>No groups found.</p>
-          <button onClick={() => navigate('/host')} className="mt-4 text-emerald-400 underline text-sm">
-            Create a new session
-          </button>
+          <button onClick={() => navigate('/host')} className="mt-4 text-emerald-400 underline text-sm">Create a new session</button>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
 import { API_URLS } from '../services/api';
+import BackButton from '../components/BackButton';
 
 const Auth = ({ setIsAuthenticated }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,7 +18,6 @@ const Auth = ({ setIsAuthenticated }) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const endpoint = isLogin ? '/login' : '/register';
       const response = await fetch(`${API_URLS.AUTH}${endpoint}`, {
@@ -43,6 +43,7 @@ const Auth = ({ setIsAuthenticated }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
       <div className="w-full max-w-md">
+        <BackButton to="/" />
         <div className="text-center mb-8">
           <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
             {isLogin ? 'Welcome Back' : 'Create Account'}

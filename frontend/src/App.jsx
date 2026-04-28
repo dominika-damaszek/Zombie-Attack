@@ -10,6 +10,7 @@ import WaitingRoom from './pages/WaitingRoom';
 import GameScreen from './pages/GameScreen';
 import Profile from './pages/Profile';
 import EndGame from './pages/EndGame';
+import PreviewPage from './pages/PreviewPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,33 +31,30 @@ function App() {
     return () => window.removeEventListener('storage', syncSession);
   }, []);
 
-  const noNavPages = ['/game'];
-  const isFullScreenGame = noNavPages.some(p => window.location.pathname.startsWith(p));
+  const isFullScreenGame = window.location.pathname.startsWith('/game');
+  const isPreview = window.location.pathname.startsWith('/preview');
 
   return (
     <Router>
       <div className="flex flex-col min-h-screen bg-slate-900 selection:bg-emerald-500/30">
-        <TopNav
-          isAuthenticated={isAuthenticated}
-          hasSession={hasSession}
-          setIsAuthenticated={setIsAuthenticated}
-          setHasSession={setHasSession}
-        />
+        {!isFullScreenGame && !isPreview && (
+          <TopNav
+            isAuthenticated={isAuthenticated}
+            hasSession={hasSession}
+            setIsAuthenticated={setIsAuthenticated}
+            setHasSession={setHasSession}
+          />
+        )}
 
         <main className="flex-1 overflow-y-auto relative">
           <div className="relative z-10">
             <Routes>
               <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
               <Route path="/auth" element={<Auth setIsAuthenticated={setIsAuthenticated} />} />
+              <Route path="/preview" element={<PreviewPage />} />
               <Route
                 path="/host"
-                element={
-                  isAuthenticated ? (
-                    <HostGame setHasSession={setHasSession} />
-                  ) : (
-                    <Navigate to="/auth" state={{ from: '/host' }} />
-                  )
-                }
+                element={isAuthenticated ? <HostGame setHasSession={setHasSession} /> : <Navigate to="/auth" state={{ from: '/host' }} />}
               />
               <Route
                 path="/dashboard"
@@ -64,39 +62,19 @@ function App() {
               />
               <Route
                 path="/profile"
-                element={
-                  isAuthenticated ? (
-                    <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} />
-                  ) : (
-                    <Navigate to="/auth" />
-                  )
-                }
+                element={isAuthenticated ? <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} /> : <Navigate to="/auth" />}
               />
               <Route
                 path="/join"
-                element={
-                  isAuthenticated ? (
-                    <JoinGame />
-                  ) : (
-                    <Navigate to="/auth" state={{ from: '/join' }} />
-                  )
-                }
+                element={isAuthenticated ? <JoinGame /> : <Navigate to="/auth" state={{ from: '/join' }} />}
               />
               <Route
                 path="/join/:code"
-                element={
-                  isAuthenticated ? (
-                    <JoinGame />
-                  ) : (
-                    <Navigate to="/auth" state={{ from: '/join' }} />
-                  )
-                }
+                element={isAuthenticated ? <JoinGame /> : <Navigate to="/auth" state={{ from: '/join' }} />}
               />
               <Route path="/waiting" element={<WaitingRoom />} />
               <Route path="/game" element={<GameScreen />} />
               <Route path="/endgame" element={<EndGame />} />
-              <Route path="/rules" element={<div className="glass-panel p-8 max-w-2xl mx-auto mt-12"><h1 className="text-2xl font-bold text-slate-100">Rules (Em breve)</h1></div>} />
-              <Route path="/about" element={<div className="glass-panel p-8 max-w-2xl mx-auto mt-12"><h1 className="text-2xl font-bold text-slate-100">About (Em breve)</h1></div>} />
             </Routes>
           </div>
 
