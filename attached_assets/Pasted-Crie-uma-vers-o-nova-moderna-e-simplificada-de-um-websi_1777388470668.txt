@@ -1,0 +1,273 @@
+Crie uma versão nova, moderna e simplificada de um website para um jogo de cartas físicas (trading card game), mantendo a base conceitual do site antigo já existente (global lobby, estrutura principal e lógica geral), mas redesenhando a experiência para ser extremamente simples para professores e alunos.
+Objetivo principal:
+O sistema deve facilitar a organização de turmas em grupos automaticamente, permitir acompanhamento de progresso pelo professor e reduzir ao máximo o trabalho manual.
+Estrutura principal da Home Page:
+
+
+Topo da página:
+
+
+Logo + título principal do jogo centralizados no topo
+
+
+Botão “Login” no canto superior direito
+
+
+
+
+Centro da página:
+
+
+Apenas dois botões grandes:
+
+
+JOIN
+
+
+HOST
+
+
+
+
+
+
+Fluxo JOIN:
+
+
+Usuário deve fazer login primeiro
+
+
+Após login:
+
+
+Mostrar tela simples para inserir um código de sala
+
+
+Após inserir o código:
+
+
+Entrar automaticamente no lobby da turma
+
+
+
+
+
+
+No lobby:
+
+
+Sistema usa conceito de Global Lobby já existente
+
+
+Divide automaticamente os participantes em grupos
+
+
+Regras de grupos:
+
+
+Mínimo: 6 jogadores
+
+
+Máximo: 11 jogadores
+
+
+Se atingir 12 jogadores:
+
+
+Divide automaticamente em 2 grupos de 6
+
+
+
+
+Continuar essa lógica para turmas maiores
+
+
+
+
+
+
+Mostrar claramente:
+
+
+Grupo do jogador
+
+
+Integrantes do grupo
+
+
+Progresso do grupo
+
+
+Status geral da turma
+
+
+
+
+Fluxo HOST:
+
+
+Professor faz login
+
+
+Após login:
+
+
+Mostrar apenas dois botões:
+
+
+MÓDULOS
+
+
+JOGO
+
+
+
+
+
+
+Botão MÓDULOS:
+
+
+Ao clicar, expandir 3 opções:
+
+
+Módulo 1: Trading
+
+
+Módulo 2: Zombies
+
+
+Módulo 3: Passwords
+
+
+
+
+Botão JOGO:
+
+
+Leva automaticamente para a página principal do game via QR code / room code system
+
+
+Professor pode iniciar sessão rapidamente
+
+
+Painel do Professor:
+
+
+Dashboard simples e intuitivo
+
+
+Acompanhar:
+
+
+Todos os grupos
+
+
+Quantidade de alunos por grupo
+
+
+Progresso por módulo
+
+
+Status de conclusão
+
+
+Código da sala
+
+
+
+
+Interface deve priorizar rapidez e baixa complexidade
+
+
+Professor não precisa organizar grupos manualmente
+
+
+Backend / Database:
+
+
+Usar Neon (PostgreSQL) como database principal
+
+
+Estruturar:
+
+
+Users
+
+
+Rooms
+
+
+Global Lobby
+
+
+Groups
+
+
+Modules
+
+
+Progress Tracking
+
+
+Teacher Dashboard
+
+
+
+
+Sistema em tempo real para atualização de progresso
+
+
+Design:
+
+
+Visual moderno, gamificado, limpo
+
+
+Responsivo (desktop + mobile)
+
+
+UX extremamente simples
+
+
+Navegação mínima
+
+
+Grandes botões
+
+
+Baixa fricção
+
+
+Foco em uso escolar
+
+
+Requisitos técnicos:
+
+
+Aproveitar arquitetura e lógica do website antigo sempre que possível
+
+
+Melhorar organização visual
+
+
+Sistema escalável
+
+
+Login seguro
+
+
+Geração de códigos de sala
+
+
+QR code support
+
+
+Auto-grouping algorithm
+
+
+Dashboard para professor em tempo real
+
+
+Prioridade:
+“Simplicidade operacional para professores + organização automática + experiência intuitiva para estudantes.”

@@ -62,10 +62,12 @@ async def start_matchmaking(session_id: str, payload: dict = {}, token: str = No
     players = db.query(models.GroupPlayer).filter(models.GroupPlayer.group_id == lobby_group.id).all()
     players_count = len(players)
     if players_count < 6:
-        raise HTTPException(status_code=400, detail="Cannot start a game with less than 6 players! We recommend 6-7 players per system.")
+        raise HTTPException(status_code=400, detail="Cannot start a game with less than 6 players! We recommend 6-11 players per group.")
         
-    # Calculate target number of groups
-    num_groups = max(1, math.ceil(players_count / 6))
+    # Calculate target number of groups:
+    # Groups must have between 6 and 11 players.
+    # At 12 players → 2 groups of 6. Use max group size 11 to determine minimum groups needed.
+    num_groups = max(1, math.ceil(players_count / 11))
     
     # Create the groups
     new_groups = []

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
@@ -8,93 +8,114 @@ const Auth = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const API_URL = API_URLS.AUTH;
+  const location = useLocation();
+  const redirectTo = location.state?.from || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       const endpoint = isLogin ? '/login' : '/register';
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(`${API_URLS.AUTH}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, pin })
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'An error occurred during authentication.');
+        throw new Error(errorData.detail || 'Erro de autenticação.');
       }
       const data = await response.json();
-
       localStorage.setItem('token', data.access_token);
       setIsAuthenticated(true);
-      navigate('/');
+      navigate(redirectTo);
     } catch (err) {
-      setError(err.message || 'An error occurred during authentication.');
+      setError(err.message || 'Erro de autenticação.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] animate-in fade-in duration-500">
-      <div className="glass-panel w-full max-w-md p-8">
-        <div className="flex mb-8 bg-slate-900/50 rounded-xl p-1">
-          <button
-            className={`flex-1 py-2 rounded-lg font-semibold transition-all ${isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-            onClick={() => { setIsLogin(true); setError(''); }}
-          >
-            Login
-          </button>
-          <button
-            className={`flex-1 py-2 rounded-lg font-semibold transition-all ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-            onClick={() => { setIsLogin(false); setError(''); }}
-          >
-            Register
-          </button>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
+            {isLogin ? 'Bem-vindo de volta' : 'Criar Conta'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {isLogin ? 'Entre com seu nome de usuário e PIN' : 'Registe-se para jogar'}
+          </p>
         </div>
 
-        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-6 text-center">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h2>
+        <div className="glass-panel p-8 rounded-3xl border border-slate-700/50">
+          <div className="flex mb-8 bg-slate-900/50 rounded-2xl p-1 gap-1">
+            <button
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              onClick={() => { setIsLogin(true); setError(''); }}
+            >
+              Login
+            </button>
+            <button
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              onClick={() => { setIsLogin(false); setError(''); }}
+            >
+              Registrar
+            </button>
+          </div>
 
-        {error && (
-          <div className="bg-rose-500/10 text-rose-400 border border-rose-500/50 p-3 rounded-lg mb-6 text-center text-sm">
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="bg-rose-500/10 text-rose-400 border border-rose-500/30 p-3 rounded-xl mb-6 text-center text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-slate-400 text-sm font-semibold mb-2">Username</label>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-slate-400 text-sm font-semibold mb-2">PIN</label>
-            <input
-              type="password"
-              className="input-field"
-              placeholder="4-digit PIN"
-              maxLength="4"
-              pattern="\d{4}"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary w-full flex items-center justify-center space-x-2 mt-4">
-            {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
-            <span>{isLogin ? 'Login to Account' : 'Create Account'}</span>
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">Nome de usuário</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="ex: profa_ana"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">PIN (4 dígitos)</label>
+              <input
+                type="password"
+                className="input-field text-center text-2xl tracking-[0.5em] font-mono"
+                placeholder="••••"
+                maxLength="4"
+                pattern="\d{4}"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span className="animate-pulse">Aguarde...</span>
+              ) : (
+                <>
+                  {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
+                  {isLogin ? 'Entrar' : 'Criar Conta'}
+                </>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

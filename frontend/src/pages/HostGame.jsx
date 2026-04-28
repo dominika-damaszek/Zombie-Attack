@@ -1,74 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UsersRound, Send, ChevronRight, Activity } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Play, BookOpen, Gamepad2, Activity } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
-const MODES_GAME = [
-  {
-    id: 'easy',
-    emoji: '🟢',
-    label: 'Easy',
-    badge: 'mode-easy',
-    tagline: 'Perfect for beginners',
-    items: 3,
-    desc: 'No infected cards, simple rules. Great for learning the basics of trust and authentication.',
-    concepts: ['Authentication', 'Password Safety'],
-  },
-  {
-    id: 'normal',
-    emoji: '🟡',
-    label: 'Normal',
-    badge: 'mode-normal',
-    tagline: 'The standard experience',
-    items: 5,
-    desc: 'Infected cards spread malware on scan. Players can inspect and discard suspicious items.',
-    concepts: ['Malware Spread', 'Zero Trust', 'Phishing'],
-  },
-  {
-    id: 'hard',
-    emoji: '🔴',
-    label: 'Hard',
-    badge: 'mode-hard',
-    tagline: 'Advanced threat landscape',
-    items: 8,
-    desc: 'Special roles (Firewall, Analyst), random round events, and a complex infection chain.',
-    concepts: ['Firewalls', 'Threat Analysis', 'Incident Response', 'Zero Trust'],
-  },
-];
-
-const MODES_MODULES = [
+const MODULES = [
   {
     id: 'module_1',
     emoji: '📘',
-    label: 'Module 1: Trading',
-    badge: 'mode-easy',
-    tagline: 'Learn the Trading mechanics',
-    desc: 'Focus entirely on trading and gathering cards. No passwords, no zombies. Features 3 rounds of 3 minutes.',
-    concepts: ['Trading', 'Verification'],
+    label: 'Módulo 1: Trading',
+    desc: 'Foco em trocar e colecionar cartas. Sem senhas, sem zumbis. 3 rounds de 3 minutos.',
+    concepts: ['Trading', 'Verificação'],
+    color: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
+    badge: 'bg-blue-500/20 text-blue-300',
   },
   {
     id: 'module_2',
     emoji: '⚠️',
-    label: 'Module 2: Infection',
-    badge: 'mode-normal',
-    tagline: 'Introduce Malware',
-    desc: 'Introduces the zombie role and malware mechanics. No passwords exist yet.',
-    concepts: ['Malware Spread', 'Incident Response'],
+    label: 'Módulo 2: Zumbis',
+    desc: 'Introduz o papel do zumbi e mecânicas de malware. Sem senhas ainda.',
+    concepts: ['Malware', 'Resposta a Incidentes'],
+    color: 'from-orange-500/20 to-orange-600/10 border-orange-500/30',
+    badge: 'bg-orange-500/20 text-orange-300',
   },
   {
     id: 'module_3',
     emoji: '🔒',
-    label: 'Module 3: Trust',
-    badge: 'mode-hard',
-    tagline: 'Introduce Authentication',
-    desc: 'Adds the Secret Password mechanic to show why authentication is important.',
-    concepts: ['Authentication', 'Zero Trust'],
-  }
+    label: 'Módulo 3: Passwords',
+    desc: 'Adiciona a mecânica de Senha Secreta para mostrar a importância da autenticação.',
+    concepts: ['Autenticação', 'Zero Trust'],
+    color: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
+    badge: 'bg-purple-500/20 text-purple-300',
+  },
+];
+
+const GAME_MODES = [
+  { id: 'easy', emoji: '🟢', label: 'Fácil', desc: 'Sem cartas infectadas. Ideal para iniciantes.' },
+  { id: 'normal', emoji: '🟡', label: 'Normal', desc: 'Cartas infectadas espalham malware ao escanear.' },
+  { id: 'hard', emoji: '🔴', label: 'Difícil', desc: 'Papéis especiais, eventos aleatórios e cadeia de infecção complexa.' },
 ];
 
 const HostGame = ({ setHasSession }) => {
-  const [trackType, setTrackType] = useState('modules'); // 'modules' or 'game'
-  const [gameMode, setGameMode] = useState('module_1'); // default matches first track
+  const [modulesOpen, setModulesOpen] = useState(false);
+  const [jogoOpen, setJogoOpen] = useState(false);
+  const [selectedModule, setSelectedModule] = useState('module_1');
+  const [selectedGameMode, setSelectedGameMode] = useState('normal');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -76,13 +51,11 @@ const HostGame = ({ setHasSession }) => {
     const checkActiveSession = async () => {
       const token = localStorage.getItem('token');
       if (!token) return;
-
       try {
         const response = await fetch(`${API_URLS.SESSION}/my?token=${token}`);
-        if (!response.ok) throw new Error('Fetch failed');
+        if (!response.ok) return;
         const data = await response.json();
         if (data && data.length > 0) {
-          // Found active sessions!
           const activeSession = data.find(s => s.status === 'active') || data[0];
           localStorage.setItem('session_id', activeSession.id);
           localStorage.setItem('session_data', JSON.stringify(activeSession));
@@ -90,31 +63,22 @@ const HostGame = ({ setHasSession }) => {
           navigate('/dashboard', { state: { session: activeSession } });
         }
       } catch (e) {
-        console.error("Failed to fetch existing sessions", e);
+        console.error('Failed to fetch existing sessions', e);
       }
     };
-    
     checkActiveSession();
   }, [navigate, setHasSession]);
 
-  const handleTrackChange = (track) => {
-    setTrackType(track);
-    setGameMode(track === 'modules' ? 'module_1' : 'normal');
-  };
-
-  const submitSession = async () => {
+  const createSession = async (gameMode) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${API_URLS.SESSION}?token=${token}`,
-        { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ game_mode: gameMode })
-        }
-      );
-      if (!response.ok) throw new Error('Failed to create session');
+      const response = await fetch(`${API_URLS.SESSION}?token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_mode: gameMode })
+      });
+      if (!response.ok) throw new Error('Falha ao criar sessão');
       const data = await response.json();
       localStorage.setItem('session_id', data.id);
       localStorage.setItem('session_data', JSON.stringify({ ...data, game_mode: gameMode }));
@@ -122,153 +86,161 @@ const HostGame = ({ setHasSession }) => {
       navigate('/dashboard', { state: { session: { ...data, game_mode: gameMode } } });
     } catch (error) {
       console.error(error);
-      alert('Failed to create session. Are you logged in?');
+      alert('Falha ao criar sessão. Você está logado?');
+    } finally {
       setLoading(false);
     }
   };
 
-  const currentModes = trackType === 'modules' ? MODES_MODULES : MODES_GAME;
-  const selectedMode = currentModes.find((m) => m.id === gameMode);
+  const handleLaunchModule = () => createSession(selectedModule);
+  const handleLaunchGame = () => createSession(selectedGameMode);
 
   return (
-    <div className="max-w-2xl mx-auto py-10 animate-zw-fade">
-      {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-4xl font-black mb-1 zw-text-gradient">Host a Session</h2>
-        <p className="text-slate-500 text-sm">Configure your classroom activity before launching.</p>
-      </div>
-
-      {localStorage.getItem('session_id') && (
-        <div className="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-             <div className="p-2 bg-amber-500/20 rounded-lg text-amber-500">
-               <Activity size={20} />
-             </div>
-             <div>
-               <p className="text-sm font-bold text-amber-400">Você já tem uma sessão ativa!</p>
-               <p className="text-xs text-slate-500">Deseja continuar ou encerrar para criar outra?</p>
-             </div>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 bg-amber-500 text-slate-900 font-bold rounded-xl text-sm flex-1 sm:flex-none"
-            >
-              Continuar
-            </button>
-            <button 
-              onClick={async () => {
-                if (!window.confirm("Encerrar sessão anterior?")) return;
-                try {
-                  const sId = localStorage.getItem('session_id');
-                  const token = localStorage.getItem('token');
-                  await fetch(`${API_URLS.SESSION}/${sId}?token=${token}`, { method: 'DELETE' });
-                  localStorage.removeItem('session_id');
-                  localStorage.removeItem('session_data');
-                  if (setHasSession) setHasSession(false);
-                  window.location.reload();
-                } catch (e) {
-                   localStorage.removeItem('session_id');
-                   window.location.reload();
-                }
-              }}
-              className="px-4 py-2 bg-rose-500/20 text-rose-400 font-bold rounded-xl text-sm flex-1 sm:flex-none"
-            >
-              Encerrar
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        {/* Track Selector */}
-        <div className="glass-panel p-2 flex rounded-2xl">
-          <button
-            onClick={() => handleTrackChange('modules')}
-            className={`flex-1 py-3 text-center font-bold text-lg transition-all rounded-xl ${
-              trackType === 'modules'
-                ? 'bg-cyan-500 text-slate-900 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
-          >
-            Modules
-          </button>
-          <button
-            onClick={() => handleTrackChange('game')}
-            className={`flex-1 py-3 text-center font-bold text-lg transition-all rounded-xl ${
-              trackType === 'game'
-                ? 'bg-emerald-500 text-slate-900 shadow-[0_0_15px_rgba(52,211,153,0.3)]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
-          >
-            Game
-          </button>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 py-10">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
+            Professor
+          </h2>
+          <p className="text-slate-400">Escolha como quer iniciar a sessão de hoje</p>
         </div>
 
-        {/* Game Mode Selector */}
-        <div className="glass-panel p-6 rounded-2xl animate-zw-fade" key={trackType}>
-          <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: '#AD9E97' }}>
-             Select specific {trackType === 'modules' ? 'Module' : 'Game Mode'}
-          </h3>
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            {currentModes.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setGameMode(m.id)}
-                className={`p-3 rounded-xl text-center transition-all border-2 ${
-                  gameMode === m.id
-                    ? 'border-amber-500/50 scale-[1.03]'
-                    : 'border-transparent opacity-70 hover:opacity-100'
-                }`}
-                style={{
-                  background: gameMode === m.id ? 'rgba(121,88,70,0.2)' : 'rgba(56,44,37,0.4)',
-                }}
-              >
-                <div className="text-2xl mb-1">{m.emoji}</div>
-                <p className="font-bold text-sm" style={{ color: '#AD9E97' }}>{m.label}</p>
-                <p className="text-xs text-slate-500">{m.tagline}</p>
-              </button>
-            ))}
-          </div>
-
-          {/* Mode Detail */}
-          {selectedMode && (
-            <div
-              className={`rounded-xl p-4 ${selectedMode.badge}`}
-              style={{ background: 'rgba(56,44,37,0.6)', border: '1px solid rgba(109,113,98,0.25)' }}
+        <div className="space-y-4">
+          {/* MÓDULOS */}
+          <div className="glass-panel rounded-3xl border border-slate-700/50 overflow-hidden">
+            <button
+              onClick={() => { setModulesOpen(!modulesOpen); setJogoOpen(false); }}
+              className="w-full flex items-center justify-between p-7 hover:bg-slate-800/40 transition-all"
             >
-              <p className="text-sm font-semibold mb-2">{selectedMode.desc}</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedMode.concepts.map((c) => (
-                  <span
-                    key={c}
-                    className="text-xs px-2 py-0.5 rounded-full font-mono"
-                    style={{ background: 'rgba(173,158,151,0.12)', color: '#AD9E97', border: '1px solid rgba(173,158,151,0.2)' }}
-                  >
-                    {c}
-                  </span>
-                ))}
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center">
+                  <BookOpen size={28} className="text-cyan-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-black text-white">MÓDULOS</p>
+                  <p className="text-slate-400 text-sm">Atividade didática por módulo</p>
+                </div>
               </div>
-            </div>
-          )}
+              {modulesOpen ? (
+                <ChevronUp size={24} className="text-slate-400" />
+              ) : (
+                <ChevronDown size={24} className="text-slate-400" />
+              )}
+            </button>
+
+            {modulesOpen && (
+              <div className="px-6 pb-6 space-y-3 border-t border-slate-700/50 pt-4">
+                {MODULES.map((mod) => (
+                  <button
+                    key={mod.id}
+                    onClick={() => setSelectedModule(mod.id)}
+                    className={`w-full text-left p-4 rounded-2xl border bg-gradient-to-br transition-all ${mod.color} ${
+                      selectedModule === mod.id ? 'scale-[1.02] shadow-lg' : 'opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl mt-0.5">{mod.emoji}</span>
+                      <div className="flex-1">
+                        <p className="font-bold text-slate-100">{mod.label}</p>
+                        <p className="text-slate-400 text-xs mt-1">{mod.desc}</p>
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                          {mod.concepts.map(c => (
+                            <span key={c} className={`text-xs px-2 py-0.5 rounded-full font-semibold ${mod.badge}`}>{c}</span>
+                          ))}
+                        </div>
+                      </div>
+                      {selectedModule === mod.id && (
+                        <div className="w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center flex-shrink-0 mt-1">
+                          <div className="w-2 h-2 rounded-full bg-slate-900" />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+
+                <button
+                  onClick={handleLaunchModule}
+                  disabled={loading}
+                  className="w-full mt-2 py-4 rounded-2xl font-black text-lg text-slate-900 bg-gradient-to-r from-cyan-400 to-blue-400 hover:from-cyan-300 hover:to-blue-300 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                >
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} fill="currentColor" />}
+                  {loading ? 'Iniciando...' : `Iniciar ${MODULES.find(m => m.id === selectedModule)?.label}`}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* JOGO */}
+          <div className="glass-panel rounded-3xl border border-slate-700/50 overflow-hidden">
+            <button
+              onClick={() => { setJogoOpen(!jogoOpen); setModulesOpen(false); }}
+              className="w-full flex items-center justify-between p-7 hover:bg-slate-800/40 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                  <Gamepad2 size={28} className="text-emerald-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-2xl font-black text-white">JOGO</p>
+                  <p className="text-slate-400 text-sm">Sessão livre com modo de jogo</p>
+                </div>
+              </div>
+              {jogoOpen ? (
+                <ChevronUp size={24} className="text-slate-400" />
+              ) : (
+                <ChevronDown size={24} className="text-slate-400" />
+              )}
+            </button>
+
+            {jogoOpen && (
+              <div className="px-6 pb-6 space-y-3 border-t border-slate-700/50 pt-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {GAME_MODES.map((mode) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => setSelectedGameMode(mode.id)}
+                      className={`p-4 rounded-2xl border text-center transition-all ${
+                        selectedGameMode === mode.id
+                          ? 'border-emerald-500/50 bg-emerald-500/10 scale-[1.03]'
+                          : 'border-slate-700 bg-slate-800/40 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <div className="text-2xl mb-1">{mode.emoji}</div>
+                      <p className="font-bold text-sm text-slate-200">{mode.label}</p>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-slate-400 text-xs text-center px-2">
+                  {GAME_MODES.find(m => m.id === selectedGameMode)?.desc}
+                </p>
+
+                <button
+                  onClick={handleLaunchGame}
+                  disabled={loading}
+                  className="w-full mt-2 py-4 rounded-2xl font-black text-lg text-slate-900 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                >
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} fill="currentColor" />}
+                  {loading ? 'Iniciando...' : 'Iniciar Jogo'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Launch */}
-        <button
-          onClick={submitSession}
-          disabled={loading}
-          className="btn-primary w-full flex items-center justify-center gap-3 py-5 text-xl rounded-2xl"
-        >
-          {loading ? (
-            <span className="animate-pulse">Generating Mission Codes…</span>
-          ) : (
-            <>
-              <Send size={22} />
-              Launch {selectedMode?.label}
-              <ChevronRight size={20} />
-            </>
-          )}
-        </button>
+        {localStorage.getItem('session_id') && (
+          <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Activity size={18} className="text-amber-400" />
+              <p className="text-sm text-amber-300 font-semibold">Você já tem uma sessão ativa</p>
+            </div>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="text-sm font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-4 py-2 rounded-xl transition-all"
+            >
+              Ver Dashboard
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
