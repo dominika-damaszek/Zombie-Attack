@@ -117,12 +117,31 @@ function QRScannerModal({ onScan, onClose }) {
   useEffect(() => {
     const scanner = new Html5Qrcode('qr-reader');
     scannerRef.current = scanner;
-    scanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => { try { onScan(JSON.parse(text)); } catch { setError('Invalid QR format.'); } },
-      () => {}
-    ).catch((e) => setError('Camera denied: ' + e));
+
+    const startScanner = async () => {
+      // Try rear camera first (mobile), fall back to front camera (laptop/PC)
+      try {
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          (text) => { try { onScan(JSON.parse(text)); } catch { setError('Invalid QR format.'); } },
+          () => {}
+        );
+      } catch {
+        try {
+          await scanner.start(
+            { facingMode: 'user' },
+            { fps: 10, qrbox: { width: 240, height: 240 } },
+            (text) => { try { onScan(JSON.parse(text)); } catch { setError('Invalid QR format.'); } },
+            () => {}
+          );
+        } catch (e) {
+          setError('Camera access denied. Please allow camera permissions in your browser and try again.');
+        }
+      }
+    };
+
+    startScanner();
     return () => scanner.stop().catch(() => {});
   }, [onScan]);
 

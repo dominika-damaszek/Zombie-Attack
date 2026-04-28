@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import models
-from database import engine
+from . import models
+from .database import engine
 
-from routes import auth, session, player, game
+from .routes import auth, session, player, game
 
 # Create DB Tables
 models.Base.metadata.create_all(bind=engine)

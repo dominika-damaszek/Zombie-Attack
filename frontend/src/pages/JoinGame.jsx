@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { LogIn } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
@@ -27,27 +26,33 @@ const JoinGame = () => {
     setError('');
     
     try {
-      const response = await axios.post(
-        `${API_URLS.PLAYER}/join?token=${token}`,
-        { join_code: joinCode }
-      );
+      const response = await fetch(`${API_URLS.PLAYER}/join?token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ join_code: joinCode })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to join group');
+      }
+      const data = await response.json();
       
       // Save to localStorage so it survives page refresh
       localStorage.setItem('player_session', JSON.stringify({
-        groupData: response.data,
-        playerData: { id: response.data.player_id }
+        groupData: data,
+        playerData: { id: data.player_id }
       }));
 
       // Navigate to waiting room with group data and player id
       navigate('/waiting', { 
         state: { 
-          groupData: response.data,
-          playerData: { id: response.data.player_id }
+          groupData: data,
+          playerData: { id: data.player_id }
         } 
       });
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || 'Failed to join group');
+      setError(err.message || 'Failed to join group');
       setLoading(false);
     }
   };

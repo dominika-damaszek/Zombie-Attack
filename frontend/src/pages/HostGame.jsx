@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Users, UsersRound, Send, ChevronRight, Activity } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
@@ -79,10 +78,12 @@ const HostGame = ({ setHasSession }) => {
       if (!token) return;
 
       try {
-        const response = await axios.get(`${API_URLS.SESSION}/my?token=${token}`);
-        if (response.data && response.data.length > 0) {
+        const response = await fetch(`${API_URLS.SESSION}/my?token=${token}`);
+        if (!response.ok) throw new Error('Fetch failed');
+        const data = await response.json();
+        if (data && data.length > 0) {
           // Found active sessions!
-          const activeSession = response.data.find(s => s.status === 'active') || response.data[0];
+          const activeSession = data.find(s => s.status === 'active') || data[0];
           localStorage.setItem('session_id', activeSession.id);
           localStorage.setItem('session_data', JSON.stringify(activeSession));
           if (setHasSession) setHasSession(true);
@@ -105,14 +106,20 @@ const HostGame = ({ setHasSession }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
+      const response = await fetch(
         `${API_URLS.SESSION}?token=${token}`,
-        { game_mode: gameMode }
+        { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game_mode: gameMode })
+        }
       );
-      localStorage.setItem('session_id', response.data.id);
-      localStorage.setItem('session_data', JSON.stringify({ ...response.data, game_mode: gameMode }));
+      if (!response.ok) throw new Error('Failed to create session');
+      const data = await response.json();
+      localStorage.setItem('session_id', data.id);
+      localStorage.setItem('session_data', JSON.stringify({ ...data, game_mode: gameMode }));
       if (setHasSession) setHasSession(true);
-      navigate('/dashboard', { state: { session: { ...response.data, game_mode: gameMode } } });
+      navigate('/dashboard', { state: { session: { ...data, game_mode: gameMode } } });
     } catch (error) {
       console.error(error);
       alert('Failed to create session. Are you logged in?');
@@ -155,7 +162,7 @@ const HostGame = ({ setHasSession }) => {
                 try {
                   const sId = localStorage.getItem('session_id');
                   const token = localStorage.getItem('token');
-                  await axios.delete(`${API_URLS.SESSION}/${sId}?token=${token}`);
+                  await fetch(`${API_URLS.SESSION}/${sId}?token=${token}`, { method: 'DELETE' });
                   localStorage.removeItem('session_id');
                   localStorage.removeItem('session_data');
                   if (setHasSession) setHasSession(false);

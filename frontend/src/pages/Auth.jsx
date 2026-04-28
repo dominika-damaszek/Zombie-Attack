@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { LogIn, UserPlus } from 'lucide-react';
 import { API_URLS } from '../services/api';
 
@@ -19,13 +18,22 @@ const Auth = ({ setIsAuthenticated }) => {
 
     try {
       const endpoint = isLogin ? '/login' : '/register';
-      const response = await axios.post(`${API_URL}${endpoint}`, { username, pin });
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, pin })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'An error occurred during authentication.');
+      }
+      const data = await response.json();
 
-      localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('token', data.access_token);
       setIsAuthenticated(true);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred during authentication.');
+      setError(err.message || 'An error occurred during authentication.');
     }
   };
 
