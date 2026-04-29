@@ -1,0 +1,183 @@
+Module 1
+The instruction screen should take the whole page. To move to the next instruction, players must click “Next.” The instruction will only proceed when everyone clicks “Next.” The number of players who have clicked “Next” must be visible, along with a small message below the button: “Waiting for player X…”
+Intro:
+We are in an apocalyptic world. Everything is falling apart, zombies are getting closer every day, and the only way to get what you need is through trading…
+Instruction 1:
+We are now going to play a trading game.
+Start by opening the box and taking the cards.
+(Photo of the box)
+Instruction 2:
+Shuffle the cards and distribute 4 cards to each player.
+Keep your cards secret — your information should always stay private!
+(Photo of the back of 4 cards)
+Instruction 3:
+These are the 5 possible items:
+Medicine, Food, Clothes, Guns, Tools
+(Photo of the cards)
+Instruction 4:
+Scan your cards by pointing the camera at the QR code.
+(Button to open the camera and scan the cards)
+(The scanned cards should appear in the inventory below the scan button)
+Instruction 5:
+Your objective is to acquire the following cards:
+(3 objectives according to the cards in the game; the system will read all cards and generate objectives accordingly)
+Try to be the first one to finish — you will be ranked.
+Instruction 6:
+The first round will start. You have 3 minutes to trade with one other player.
+ATTENTION: Do ONLY one trade.
+Click “Ready” if you finish before the timer.
+Now the dashboard appears, showing:
+
+
+The timer
+
+
+Your cards
+
+
+Your objective
+
+
+The Ready button
+
+
+When everyone clicks “Ready” or the timer ends, the round finishes, and the scan page appears again. The next round only begins when everyone has scanned a new card.
+If there is an odd number of players, one person must be randomly selected by the system to skip that round. The “Skip Trade” button should appear only for that player during that round.
+(This applies only to Module 1)
+After 3 rounds, before the final dashboard, show this cybersecurity insight:
+Trades happen online all the time — when you buy something on Amazon, download a new game, or click on a link. But sometimes… there are malicious zombies—I mean, threats—just waiting for one small mistake.
+Stay alert, protect what’s yours, and remember what you learned today…
+Because the zombies may be closer than you think.
+The game stops, and the final dashboard with game information appears.
+Players must be ranked from first to last based on who completed their objectives fastest.
+
+Module 2: Zombies
+The zombies have now infiltrated everywhere, and they are trying to infect you. Infected traded items will turn you into a zombie in no time.
+Will you survive?
+Instruction 1:
+The trading rules are the same as in the last module.
+First, distribute 4 cards to each player.
+Instruction 2:
+Scan your cards.
+(Cards must appear in inventory)
+Instruction 3:
+But now there is a difference:
+There are zombies among you, and their objective is to infect survivors with contaminated items.
+Survivors must trade to acquire their objective cards.
+Zombies must trade to infect survivors.
+Instruction 4:
+You will know that you are infected by scanning your traded card at the end of a round.
+If you are infected, you will start the next round as a zombie.
+Instruction 5:
+Your role is:
+(Role appears)
+Your role is an ABSOLUTE secret. Do not show or tell anyone who you are!
+Instruction 6:
+If you are unsure about trading with someone and there is no other option, you may skip the round.
+Zombies can trade among themselves if necessary, but no points are counted for this.
+ATTENTION: You can skip only one trade per game!
+The round starts like the last module. The dashboard looks the same, but now includes:
+
+
+Roles
+
+
+The names of other zombies (visible only to zombies)
+
+
+After the round, when a player scans a card:
+If the scanned card is infected, a pop-up must appear explaining that:
+
+
+You were infected
+
+
+You are now a zombie
+
+
+You should act normally and try to infect a survivor next round
+
+
+Before the end, the security message should appear:
+Zombies were everywhere… and you might have been infected!
+It is hard to stay secure when you have no protection at all. The infection spreads, and you have no way to stop it!
+It would be great if you had a way to spot the zombies…
+Well… maybe in the next module.
+At the end, final statistics must appear again, now showing:
+
+
+Who started as zombies
+
+
+Who was infected each round
+
+
+The points system is still in development, but it may include:
+
+
+Points for surviving each round
+
+
+Points for infecting players
+
+
+
+Module 3: Passwords
+Intro:
+In this destroyed world, with zombies everywhere trying to get you, something curious was discovered…
+Zombie brains are deteriorating, and they have great difficulty remembering information after a few hours…
+That’s it!
+The survivors now know how to spot the zombies:
+Passwords.
+Instruction 1:
+Trading works like in the last modules:
+Shuffle the cards and distribute 4 cards to each player.
+(Scan your cards)
+(Show inventory)
+Instruction 2:
+Roles are still secret.
+Survivors must trade to complete their objectives.
+Zombies must trade to infect survivors.
+Instruction 3:
+Passwords are the new element now!
+Along with their role, survivors will now receive a password.
+Example: Cat
+Instruction 4:
+Passwords must NEVER be spoken out loud!
+Zombies are everywhere… and they can hear you!
+A revealed password cannot protect anyone!
+Survivors must identify each other using hints about the password.
+Instruction 5:
+Example: Cat
+You may say:
+“Do you have some clothes? I really love fluffy things.”
+You may NEVER say:
+“Can I have some food for my CAT?”
+Example: Keyboard
+You may say:
+“Do you have medicine? I can write the name for you.”
+You may NEVER say:
+“Do you have tools? I must fix my KEYBOARD.”
+Instruction 6:
+Zombies will try to make you believe they know the password.
+You can choose how obvious or subtle your hints are, but remember:
+The more obvious you are, the easier it is for zombies to discover your password.
+Remember:
+Although the password can help you, your biggest defense is making the right choice.
+If something feels off, it probably is.
+Now your role appears together with your password, and the game continues like the last module.
+Each round, a new password is assigned.
+Before the end, this message will appear:
+(Make the message appear in a dynamic, interesting way to capture teenagers’ attention.)
+Did you trade even when you weren’t sure?
+Did you get infected because you trusted without proof?
+That’s what zombies… also known as social engineers… do.
+They make you trust them.
+They make you believe them.
+They hack people.
+One small mistake.
+One bad decision.
+One unsafe trade… and you’re done.
+Your best defense is awareness.
+Trust your instincts… and remember:
+If something feels off, it probably is.
