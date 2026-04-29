@@ -46,6 +46,7 @@ class Group(Base):
     scan_end_time = Column(Integer, nullable=True)
     secret_word = Column(String, nullable=True)
     game_mode = Column(String, default="normal")
+    instruction_slide = Column(Integer, default=0)
 
 class GroupPlayer(Base):
     __tablename__ = "group_players"

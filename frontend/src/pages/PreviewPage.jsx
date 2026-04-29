@@ -10,12 +10,13 @@ const CARD_TYPES = {
 };
 
 const SLIDES = [
-  { emoji: '🌐', title: 'Welcome to Zombieware', text: 'You are about to experience a simulation of how data moves through a network. Each player is a node — connected, vulnerable, and important.' },
-  { emoji: '🃏', title: 'Your Physical Cards',   text: 'Each of you has 4 physical item cards. These represent files and data packets being shared across the network.' },
-  { emoji: '🤝', title: 'How to Trade',          text: 'Walk around the room and exchange one card with another player per round. Face to face — just like peer-to-peer file sharing.' },
-  { emoji: '🎯', title: 'Your Objectives',       text: 'You have 3 secret objectives — 3 card types you must collect. Trade strategically to complete all 3 goals!' },
-  { emoji: '📱', title: 'Scanning Cards',        text: 'At the end of each round, scan every card in your hand. This logs the data transfer on the network. Do NOT scan during trading!' },
-  { emoji: '✅', title: 'Ready to Start!',       text: 'You will now scan your 4 starting cards to register them on the network. When you\'re done reading, press "I\'m Ready!" below.' },
+  { emoji: '🌍', title: 'An Apocalyptic World',  text: 'We are in an apocalyptic world. Everything is falling apart, zombies are getting closer every day, and the only way to get what you need is through trading…' },
+  { emoji: '📦', title: 'Take the Cards',        text: 'We are now going to play a trading game.\nStart by opening the box and taking the cards.' },
+  { emoji: '🃏', title: 'Shuffle & Distribute',  text: 'Shuffle the cards and distribute 4 cards to each player.\nKeep your cards secret — your information should always stay private!' },
+  { emoji: '🎴', title: 'The 5 Items',           text: 'These are the 5 possible items:\nMedicine, Food, Clothes, Weapons, Tools' },
+  { emoji: '📱', title: 'Scan Your Cards',       text: 'Scan your cards by pointing the camera at the QR code.\nThe scanned cards will appear in your inventory below.' },
+  { emoji: '🎯', title: 'Your Objectives',       text: 'Your objective is to acquire the following cards.\nTry to be the first to finish — you will be ranked.' },
+  { emoji: '⏱️', title: 'Round 1 Begins!',       text: 'The first round will start. You have 3 minutes to trade with one other player.\n⚠️ ATTENTION: Do ONLY one trade.\nClick "Ready!" when you finish before the timer.' },
 ];
 
 const MOCK_INVENTORY = [
@@ -38,41 +39,62 @@ const SCENES = [
 
 function InstructionsPreview() {
   const [slide, setSlide] = useState(0);
-  const [ready, setReady] = useState(false);
+  const [waiting, setWaiting] = useState(false);
   const isLast = slide === SLIDES.length - 1;
+  const MOCK_TOTAL = 6;
+  const MOCK_READY = 3;
+
+  const handleNext = () => {
+    if (isLast) { setWaiting(true); return; }
+    setWaiting(false);
+    setSlide(i => Math.min(SLIDES.length - 1, i + 1));
+  };
+
   return (
-    <div className="fixed inset-0 z-10 flex flex-col items-center justify-center bg-slate-950 px-4">
+    <div className="fixed inset-0 z-10 flex flex-col items-center justify-center bg-slate-950 px-4 overflow-y-auto py-8">
       <div className="w-full max-w-lg">
-        <div className="flex justify-center gap-2 mb-10">
+        <div className="flex justify-center gap-1.5 mb-8">
           {SLIDES.map((_, i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all ${slide === i ? 'bg-cyan-400 w-8' : slide > i ? 'bg-slate-600 w-4' : 'bg-slate-800 w-4'}`} />
           ))}
         </div>
         <div className="text-center">
-          <div className="text-8xl mb-8">{SLIDES[slide].emoji}</div>
+          <div className="text-8xl mb-8 animate-zw-float">{SLIDES[slide].emoji}</div>
           <h2 className="text-3xl font-black text-white mb-5">{SLIDES[slide].title}</h2>
-          <p className="text-slate-300 text-lg leading-relaxed mb-12 max-w-md mx-auto">{SLIDES[slide].text}</p>
+          <div className="space-y-1 mb-10">
+            {SLIDES[slide].text.split('\n').map((line, i) => (
+              <p key={i} className="text-slate-300 text-lg leading-relaxed">{line}</p>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button onClick={() => setSlide(i => Math.max(0, i - 1))} disabled={slide === 0}
-            className={`flex items-center gap-1 py-4 px-5 rounded-2xl font-bold text-sm ${slide === 0 ? 'opacity-20 cursor-not-allowed bg-slate-800 text-slate-500' : 'bg-slate-800 text-slate-300'}`}>
-            <ChevronLeft size={20} /> Back
+
+        {waiting ? (
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <CheckCircle2 size={20} className="text-cyan-400" />
+              <span className="text-cyan-400 font-bold">You're ready!</span>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.2)' }}>
+              <p className="text-xs font-mono mb-2" style={{ color: '#6D7162' }}>{MOCK_READY}/{MOCK_TOTAL} players ready</p>
+              <p className="text-xs text-slate-600">Waiting for: alice, bob, charlie…</p>
+              <div className="flex gap-1 mt-2">
+                {Array.from({ length: MOCK_TOTAL }).map((_, i) => (
+                  <div key={i} className={`flex-1 h-1 rounded-full ${i < MOCK_READY ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                ))}
+              </div>
+            </div>
+            <button onClick={() => { setWaiting(false); setSlide(0); }} className="mt-4 text-slate-600 text-xs underline">← Restart demo</button>
+          </div>
+        ) : (
+          <button onClick={handleNext}
+            className="w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={isLast
+              ? { background: 'linear-gradient(135deg,#0891b2,#06b6d4)', color: '#fff', boxShadow: '0 0 30px rgba(6,182,212,0.25)' }
+              : { background: '#a8c4a0', color: '#0f1a0e' }
+            }>
+            {isLast ? <><CheckCircle2 size={22} /> I'm Ready!</> : <>Next <ChevronRight size={22} /></>}
           </button>
-          {isLast ? (
-            <button onClick={() => setReady(true)} disabled={ready}
-              className="flex-1 py-4 rounded-2xl font-black text-lg text-white flex items-center justify-center gap-2 disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg,#0891b2,#06b6d4)' }}>
-              <CheckCircle2 size={22} />{ready ? "Waiting for others..." : "I'm Ready!"}
-            </button>
-          ) : (
-            <button onClick={() => setSlide(i => Math.min(SLIDES.length - 1, i + 1))}
-              className="flex-1 py-4 rounded-2xl font-black text-lg text-slate-900 flex items-center justify-center gap-2"
-              style={{ background: '#a8c4a0' }}>
-              Next <ChevronRight size={22} />
-            </button>
-          )}
-        </div>
-        <p className="text-center text-slate-700 text-xs mt-4">Press Space or → to advance</p>
+        )}
       </div>
     </div>
   );

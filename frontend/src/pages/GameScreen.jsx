@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Shield, Skull, Timer, Package, Camera, X, Zap, AlertTriangle,
-         ChevronRight, ChevronLeft, Info, HelpCircle, Target, CheckCircle2 } from 'lucide-react';
+         ChevronRight, ChevronLeft, Info, HelpCircle, Target, CheckCircle2,
+         Users } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 import { useAudio } from '../hooks/useAudio';
 import AudioToggle from '../components/AudioToggle';
@@ -19,41 +20,147 @@ const CARD_TYPES = {
   unknown:     { emoji: '📦', label: 'Unknown',   color: 'text-slate-400',   bg: 'bg-slate-500/20 border-slate-500/30' },
 };
 
-// ── Instruction slides per module ─────────────────────────────────────────────
+// ── Module slides (7 per module, index 0–6) ───────────────────────────────────
 const MODULE_SLIDES = {
   module_1: [
-    { emoji: '🌐', title: 'Welcome to Zombieware', text: 'You are about to experience a simulation of how data moves through a network. Each player is a node — connected, vulnerable, and important.' },
-    { emoji: '🃏', title: 'Your Physical Cards',   text: 'Each of you has 4 physical item cards. These represent files and data packets being shared across the network.' },
-    { emoji: '🤝', title: 'How to Trade',          text: 'Walk around the room and exchange one card with another player per round. Face to face — just like peer-to-peer file sharing.' },
-    { emoji: '🎯', title: 'Your Objectives',       text: 'You have 3 secret objectives — 3 card types you must collect. Trade strategically to complete all 3 goals!' },
-    { emoji: '📱', title: 'Scanning Cards',        text: 'At the end of each round, scan every card in your hand. This logs the data transfer on the network. Do NOT scan during trading!' },
-    { emoji: '✅', title: 'Ready to Start!',       text: 'You will now scan your 4 starting cards to register them on the network. When you\'re done reading, press "I\'m Ready!" below.' },
+    {
+      type: 'story',
+      emoji: '🌍',
+      title: 'An Apocalyptic World',
+      text: 'We are in an apocalyptic world. Everything is falling apart, zombies are getting closer every day, and the only way to get what you need is through trading…',
+    },
+    {
+      type: 'info',
+      emoji: '📦',
+      title: 'Take the Cards',
+      text: 'We are now going to play a trading game.\nStart by opening the box and taking the cards.',
+    },
+    {
+      type: 'info',
+      emoji: '🃏',
+      title: 'Shuffle & Distribute',
+      text: 'Shuffle the cards and distribute 4 cards to each player.\nKeep your cards secret — your information should always stay private!',
+    },
+    {
+      type: 'items',
+      emoji: '🎴',
+      title: 'The 5 Items',
+      text: 'These are the 5 possible items:',
+    },
+    {
+      type: 'scan',
+      emoji: '📱',
+      title: 'Scan Your Cards',
+      text: 'Scan your cards by pointing the camera at the QR code.\nThe scanned cards will appear below.',
+    },
+    {
+      type: 'objectives',
+      emoji: '🎯',
+      title: 'Your Objectives',
+      text: 'Your objective is to acquire the following cards.\nTry to be the first to finish — you will be ranked.',
+    },
+    {
+      type: 'final',
+      emoji: '⏱️',
+      title: 'Round 1 Begins!',
+      text: 'The first round will start. You have 3 minutes to trade with one other player.\n⚠️ ATTENTION: Do ONLY one trade.\nClick "Ready!" when you finish before the timer.',
+    },
   ],
   module_2: [
-    { emoji: '⚠️', title: 'Danger Ahead',          text: 'The network has been compromised. A rogue malware strain has infected some players — they look just like you.' },
-    { emoji: '🧟', title: 'Meet the Zombies',      text: 'Some players are Zombies (Malware). Their goal is to infect others by contaminating their item cards before a trade.' },
-    { emoji: '☣️', title: 'How Infection Spreads', text: 'If you scan a card at the end of a round that a Zombie previously touched, YOUR device becomes infected too.' },
-    { emoji: '🤔', title: 'No Security Yet',       text: 'There are no passwords this round. Use social engineering — talk to people, observe behavior, and decide who to trust.' },
-    { emoji: '🎯', title: 'Your Objectives',       text: 'Collect your 3 target card types while avoiding infected ones. Surviving all rounds scores your team extra points!' },
-    { emoji: '✅', title: 'Ready to Play!',        text: 'Scan your 4 starting cards to begin. Good luck — and be very careful who you trade with.' },
+    {
+      type: 'story',
+      emoji: '🧟',
+      title: 'The Zombies Are Here',
+      text: 'The zombies have now infiltrated everywhere, and they are trying to infect you. Infected traded items will turn you into a zombie in no time.\nWill you survive?',
+    },
+    {
+      type: 'info',
+      emoji: '🃏',
+      title: 'Same Rules Apply',
+      text: 'The trading rules are the same as in the last module.\nFirst, distribute 4 cards to each player.',
+    },
+    {
+      type: 'scan',
+      emoji: '📱',
+      title: 'Scan Your Cards',
+      text: 'Scan your cards. Keep them secret — your information should always stay private!',
+    },
+    {
+      type: 'info',
+      emoji: '☣️',
+      title: 'The Big Difference',
+      text: 'There are zombies among you, and their objective is to infect survivors with contaminated items.\nSurvivors must trade to acquire their objective cards.\nZombies must trade to infect survivors.',
+    },
+    {
+      type: 'info',
+      emoji: '🦠',
+      title: 'How Infection Works',
+      text: 'You will know that you are infected by scanning your traded card at the end of a round.\nIf you are infected, you will start the next round as a zombie.',
+    },
+    {
+      type: 'role',
+      emoji: '🎭',
+      title: 'Your Role',
+      text: 'Your role is an ABSOLUTE secret. Do not show or tell anyone who you are!',
+    },
+    {
+      type: 'final',
+      emoji: '⏭️',
+      title: 'Skip Round Rules',
+      text: 'If you are unsure about trading with someone and there is no other option, you may skip the round.\nZombies can trade among themselves if necessary, but no points are counted for this.\n⚠️ ATTENTION: You can skip only one trade per game!',
+    },
   ],
   module_3: [
-    { emoji: '🔒', title: 'Security Upgraded',     text: 'The network admins have deployed an authentication system. The zombie outbreak forced an upgrade to Zero Trust security.' },
-    { emoji: '🔑', title: 'Secret Password',       text: 'Every Survivor now has a Secret Password visible on their screen. Zombies do NOT have this password — they are locked out.' },
-    { emoji: '🛑', title: 'Zero Trust Protocol',   text: 'Before accepting a card from anyone, ask them for the Secret Password. If they cannot provide it — DO NOT trade.' },
-    { emoji: '🧟', title: 'Zombie Deception',      text: 'Zombies will try to fake the password or social engineer you. Verify every time — even with people you already traded with.' },
-    { emoji: '🎯', title: 'Your Objectives',       text: 'Collect your 3 target cards. Only trade with verified survivors (confirmed password). Complete objectives to score maximum points.' },
-    { emoji: '✅', title: 'Ready for Battle!',     text: 'The simulation begins now. Scan your starting cards to register on the network and protect it from the outbreak.' },
-  ],
-  normal: [
-    { emoji: '🧟', title: 'Welcome to Zombieware', text: 'The network is under attack! You are either a Survivor protecting data — or a Zombie spreading malware. The simulation begins now.' },
-    { emoji: '🃏', title: 'Your Physical Cards',   text: 'Each player starts with 4 item cards. These represent files in the network. Scan them to verify and log them.' },
-    { emoji: '☣️', title: 'Infection Rules',       text: 'Zombies infect by contaminating cards. If you scan an infected card at the end of a round, you become a Zombie too.' },
-    { emoji: '🔑', title: 'The Password',          text: 'Survivors have a Secret Password. Before trading with anyone, ask them for it. No password = Zombie. No exceptions.' },
-    { emoji: '🎯', title: 'Your Objectives',       text: 'You have 3 secret card types to collect. Complete objectives to score points for your team. Survivors vs Zombies — who wins?' },
-    { emoji: '✅', title: 'Let\'s Play!',          text: 'Scan your 4 starting cards now to enter the network. The simulation begins when everyone is ready.' },
+    {
+      type: 'story',
+      emoji: '🧠',
+      title: 'A Curious Discovery',
+      text: 'Zombie brains are deteriorating, and they have great difficulty remembering information after a few hours…\n\nThe survivors now know how to spot the zombies:\n\nPasswords.',
+    },
+    {
+      type: 'scan',
+      emoji: '🃏',
+      title: 'Same Trading Rules',
+      text: 'Trading works like in the last modules:\nShuffle the cards and distribute 4 cards to each player, then scan them.',
+    },
+    {
+      type: 'info',
+      emoji: '🎭',
+      title: 'Roles & Objectives',
+      text: 'Roles are still secret.\nSurvivors must trade to complete their objectives.\nZombies must trade to infect survivors.',
+    },
+    {
+      type: 'info',
+      emoji: '🔑',
+      title: 'Passwords Are New!',
+      text: 'Along with their role, survivors will now receive a password.\n\nExample: Cat\n\nSurvivors must identify each other using hints about the password.',
+    },
+    {
+      type: 'info',
+      emoji: '🤫',
+      title: 'Never Say It Out Loud',
+      text: 'Passwords must NEVER be spoken out loud!\nZombies are everywhere… and they can hear you!\nA revealed password cannot protect anyone!',
+    },
+    {
+      type: 'hints',
+      emoji: '💬',
+      title: 'Hint Examples',
+      lines: [
+        { ok: true,  text: '"Do you have some clothes? I really love fluffy things."' },
+        { ok: false, text: '"Can I have food for my CAT?" ← NEVER say this' },
+        { ok: true,  text: '"Do you have medicine? I can write the name for you."' },
+        { ok: false, text: '"Do you have tools? I must fix my KEYBOARD." ← NEVER say this' },
+      ],
+    },
+    {
+      type: 'final',
+      emoji: '🧟',
+      title: 'Beware of Deception',
+      text: 'Zombies will try to make you believe they know the password.\nThe more obvious you are, the easier it is for zombies to discover it.\n\nRemember: Your biggest defense is making the right choice.\nIf something feels off — it probably is.',
+    },
   ],
 };
+MODULE_SLIDES.normal = MODULE_SLIDES.module_3;
 
 // ── Info modal content ─────────────────────────────────────────────────────────
 const INFO_SECTIONS = [
@@ -71,7 +178,7 @@ const INFO_SECTIONS = [
   { title: 'Mechanics', items: [
     { emoji: '🔑', label: 'Password',  desc: 'The shared secret that proves you\'re a Survivor. Ask before trading!' },
     { emoji: '🎯', label: 'Objectives',desc: '3 card types to collect. Complete all 3 to score maximum points.' },
-    { emoji: '⏭️', label: 'Skip Round',desc: 'Once per game: draw a random card from the pool and discard one.' },
+    { emoji: '⏭️', label: 'Skip Round',desc: 'Once per game: skip a trade round.' },
   ]},
 ];
 
@@ -124,8 +231,8 @@ function InfectionAlert({ onDismiss }) {
         <div className="relative glass-panel p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid #d97559' }}>
           <div className="text-7xl mb-4 animate-bounce">🧟</div>
           <h2 className="text-4xl font-black mb-2" style={{ color: '#d97559' }}>INFECTED!</h2>
-          <p className="text-slate-300 mb-1">Malware transferred to your device.</p>
-          <p className="text-slate-500 text-sm mb-4">You received a file from an infected source. You are now a Zombie.</p>
+          <p className="text-slate-300 mb-1">You received a contaminated card.</p>
+          <p className="text-slate-500 text-sm mb-4">You are now a Zombie. Act normal and try to infect a survivor next round.</p>
           <button onClick={onDismiss} className="w-full py-3 rounded-xl font-bold text-white" style={{ background: '#795846' }}>
             Accept Fate
           </button>
@@ -245,6 +352,113 @@ function InfoModal({ onClose }) {
   );
 }
 
+// ── Instruction Slide Renderer ─────────────────────────────────────────────────
+function SlideContent({ slide, playerState, inventory, objectives }) {
+  if (!slide) return null;
+  const { type, emoji, title, text, lines } = slide;
+
+  if (type === 'items') {
+    return (
+      <div className="text-center">
+        <div className="text-7xl mb-6 animate-zw-float">{emoji}</div>
+        <h2 className="text-3xl font-black text-white mb-3">{title}</h2>
+        <p className="text-slate-400 mb-6">{text}</p>
+        <div className="grid grid-cols-5 gap-2">
+          {Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([key, ct]) => (
+            <div key={key} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${ct.bg}`}>
+              <span className="text-3xl">{ct.emoji}</span>
+              <span className={`text-xs font-bold ${ct.color}`}>{ct.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'objectives') {
+    return (
+      <div className="text-center">
+        <div className="text-7xl mb-6 animate-zw-float">{emoji}</div>
+        <h2 className="text-3xl font-black text-white mb-3">{title}</h2>
+        {text.split('\n').map((line, i) => <p key={i} className="text-slate-400 mb-1">{line}</p>)}
+        <div className="mt-5 space-y-3 text-left">
+          {objectives.length === 0 ? (
+            <p className="text-slate-600 text-sm text-center italic">Objectives will appear here after you scan your cards.</p>
+          ) : objectives.map((type, i) => {
+            const ct = CARD_TYPES[type] || CARD_TYPES.unknown;
+            const owned = inventory.some(c => c.type === type);
+            return (
+              <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${owned ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-slate-800/60 border-slate-700/50'}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{ct.emoji}</span>
+                  <span className={`font-bold ${owned ? 'text-emerald-300' : 'text-slate-200'}`}>{ct.label}</span>
+                </div>
+                {owned ? <CheckCircle2 size={20} className="text-emerald-400" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-600" />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'role') {
+    const isZombie = playerState?.role === 'zombie';
+    const cfg = isZombie
+      ? { emoji: '🧟', label: 'ZOMBIE',   color: '#d97559', bg: 'rgba(80,30,20,0.6)', border: 'rgba(217,117,89,0.4)' }
+      : { emoji: '🛡️', label: 'SURVIVOR', color: '#a8c4a0', bg: 'rgba(30,50,35,0.6)', border: 'rgba(168,196,160,0.4)' };
+    return (
+      <div className="text-center">
+        <div className="text-7xl mb-5 animate-zw-float">{cfg.emoji}</div>
+        <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>Your Role Is</p>
+        <h2 className="text-5xl font-black mb-5 uppercase" style={{ color: cfg.color }}>{cfg.label}</h2>
+        <div className="rounded-2xl p-4 mb-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+          <p className="text-slate-200 font-semibold text-lg">{text}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'hints') {
+    return (
+      <div className="text-center">
+        <div className="text-7xl mb-5 animate-zw-float">{emoji}</div>
+        <h2 className="text-3xl font-black text-white mb-5">{title}</h2>
+        <div className="space-y-3 text-left">
+          {lines.map((line, i) => (
+            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}>
+              <span className="text-lg flex-shrink-0">{line.ok ? '✅' : '❌'}</span>
+              <p className={`text-sm leading-relaxed ${line.ok ? 'text-emerald-300' : 'text-rose-300'}`}>{line.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'story') {
+    return (
+      <div className="text-center">
+        <div className="text-8xl mb-8 animate-zw-float">{emoji}</div>
+        <h2 className="text-3xl font-black mb-6" style={{ color: '#AD9E97' }}>{title}</h2>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(56,44,37,0.4)', border: '1px solid rgba(109,113,98,0.2)' }}>
+          {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-lg leading-relaxed">{line}</p>)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-center">
+      <div className="text-8xl mb-8 animate-zw-float">{emoji}</div>
+      <h2 className="text-3xl font-black text-white mb-5">{title}</h2>
+      <div className="space-y-1">
+        {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-lg leading-relaxed">{line}</p>)}
+      </div>
+    </div>
+  );
+}
+
 // ── Main GameScreen ────────────────────────────────────────────────────────────
 const GameScreen = ({ mockData } = {}) => {
   const location = useLocation();
@@ -253,7 +467,7 @@ const GameScreen = ({ mockData } = {}) => {
 
   const [gameState, setGameState] = useState(mockData?.gameState || null);
   const [playerState, setPlayerState] = useState(mockData?.playerState || null);
-  const [showRoleReveal, setShowRoleReveal] = useState(!mockData);
+  const [showRoleReveal, setShowRoleReveal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showInitialScanner, setShowInitialScanner] = useState(false);
   const [showInfectionAlert, setShowInfectionAlert] = useState(false);
@@ -263,11 +477,12 @@ const GameScreen = ({ mockData } = {}) => {
   const [loading, setLoading] = useState(!mockData);
   const [isDoneTrading, setIsDoneTrading] = useState(false);
   const [hasSkippedTrade, setHasSkippedTrade] = useState(false);
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [instructionsReady, setInstructionsReady] = useState(false);
+  const [localSlideReady, setLocalSlideReady] = useState(false);
   const [initialScanCount, setInitialScanCount] = useState(0);
   const [inventory, setInventory] = useState([]);
   const [objectives, setObjectives] = useState([]);
+
+  const gameModeRef = useRef('module_1');
 
   const { playSFX, toggle, isEnabled } = useAudio();
   const { lastMessage } = useGameWebSocket(
@@ -281,6 +496,7 @@ const GameScreen = ({ mockData } = {}) => {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/state`);
       const data = await res.json();
       setGameState(data);
+      gameModeRef.current = data.game_mode || 'module_1';
       const me = data.players?.find(p => p.id === playerData?.id);
       if (me) {
         setPlayerState(me);
@@ -298,55 +514,42 @@ const GameScreen = ({ mockData } = {}) => {
 
   useEffect(() => {
     if (!lastMessage) return;
-    if (lastMessage.type === 'GAME_STARTED') { fetchState(); playSFX('role_reveal'); }
+    if (lastMessage.type === 'GAME_STARTED') { fetchState(); }
+    if (lastMessage.type === 'SLIDE_ADVANCED') { setLocalSlideReady(false); fetchState(); }
+    if (lastMessage.type === 'PLAYER_READY') { fetchState(); }
     if (lastMessage.type === 'PHASE_CHANGED') { fetchState(); }
     if (lastMessage.type === 'PLAYER_INFECTED' && lastMessage.player_id === playerData?.id) {
       setShowInfectionAlert(true);
       setPlayerState(p => ({ ...p, role: 'zombie', is_infected: true }));
       playSFX('infected');
     }
-    if (lastMessage.type === 'GAME_ENDED' || lastMessage.type === 'ROUND_STARTED' || lastMessage.type === 'ROUND_ENDED') {
-      if (lastMessage.type === 'ROUND_STARTED') setIsDoneTrading(false);
+    if (lastMessage.type === 'ROUND_STARTED') {
+      setIsDoneTrading(false);
+      const mode = gameModeRef.current;
+      if (mode === 'module_3' || mode === 'normal') setShowRoleReveal(true);
+      fetchState();
+    }
+    if (lastMessage.type === 'ROUND_ENDED' || lastMessage.type === 'GAME_ENDED') {
       fetchState();
     }
   }, [lastMessage, playerData?.id, fetchState, playSFX]);
 
-  // Keyboard navigation for instructions
-  useEffect(() => {
-    const gamePhase = gameState?.game_state || mockData?.gameState?.game_state;
-    if (gamePhase !== 'module_instructions') return;
-    const gameMode = gameState?.game_mode || mockData?.gameState?.game_mode || 'module_1';
-    const slides = MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1;
-    const handleKey = (e) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        setSlideIndex(i => Math.min(slides.length - 1, i + 1));
-      } else if (e.key === 'ArrowLeft') {
-        setSlideIndex(i => Math.max(0, i - 1));
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [gameState?.game_state, gameState?.game_mode, mockData]);
-
-  const handleFinishInstructions = async () => {
-    if (!mockData) {
-      try {
-        await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/finish_instructions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ player_id: playerData.id }),
-        });
-        setInstructionsReady(true);
-      } catch (e) { console.error(e); }
-    } else {
-      setInstructionsReady(true);
-    }
+  const handleSlideReady = async () => {
+    if (localSlideReady || mockData) { setLocalSlideReady(true); return; }
+    setLocalSlideReady(true);
+    try {
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/slide_ready`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: playerData.id }),
+      });
+      fetchState();
+    } catch (e) { console.error(e); setLocalSlideReady(false); }
   };
 
   const handleInitialScan = async (cardCode) => {
     setShowInitialScanner(false);
-    setScanFeedback({ status: 'scanning', item: { type: 'card' } });
+    setScanFeedback({ status: 'scanning' });
     try {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/initial_scan`, {
         method: 'POST',
@@ -358,7 +561,6 @@ const GameScreen = ({ mockData } = {}) => {
         setInitialScanCount(data.initial_cards_scanned);
         setInventory(data.inventory || []);
         if (data.objectives?.length) setObjectives(data.objectives);
-        const ct = CARD_TYPES[data.card_type] || CARD_TYPES.unknown;
         setScanFeedback({ status: 'success', item: { type: data.card_type } });
         setTimeout(() => setScanFeedback(null), 2500);
         playSFX('scan_success');
@@ -447,76 +649,29 @@ const GameScreen = ({ mockData } = {}) => {
 
   const isZombie = playerState?.role === 'zombie';
   const gamePhase = gameState?.game_state || 'lobby';
-  const gameMode = gameState?.game_mode || 'normal';
+  const gameMode = gameState?.game_mode || mockData?.gameState?.game_mode || 'module_1';
   const statusColor = isZombie ? '#d97559' : '#a8c4a0';
   const statusEmoji = isZombie ? '🧟' : '🛡️';
   const statusLabel = isZombie ? 'Zombie' : 'Survivor';
   const otherZombies = gameState?.players?.filter(p => p.is_infected && p.id !== playerData?.id) || [];
 
-  // ── Full-screen instruction slides ─────────────────────────────────────────
+  // ── Full-screen synchronized instruction slides ───────────────────────────
   if (gamePhase === 'module_instructions') {
     const slides = MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1;
-    const slide = slides[slideIndex];
-    const isLast = slideIndex === slides.length - 1;
+    const slideIndex = mockData ? 0 : (gameState?.instruction_slide ?? 0);
+    const slide = slides[Math.min(slideIndex, slides.length - 1)];
+    const isLast = slideIndex >= slides.length - 1;
+    const isScanSlide = slide?.type === 'scan';
+    const scanDone = initialScanCount >= 4;
+
+    const readyCount = gameState?.ready_count ?? 0;
+    const totalPlayers = gameState?.players?.length ?? 1;
+    const notReady = gameState?.not_ready ?? [];
+
+    const meIsReady = localSlideReady || (gameState?.players?.find(p => p.id === playerData?.id)?.is_ready ?? false);
 
     return (
-      <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 px-4">
-        <div className="w-full max-w-lg">
-          <div className="flex justify-center gap-2 mb-10">
-            {slides.map((_, idx) => (
-              <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${slideIndex === idx ? 'bg-cyan-400 w-8' : slideIndex > idx ? 'bg-slate-600 w-4' : 'bg-slate-800 w-4'}`} />
-            ))}
-          </div>
-
-          <div className="text-center">
-            <div className="text-8xl mb-8 animate-zw-float">{slide.emoji}</div>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-5">{slide.title}</h2>
-            <p className="text-slate-300 text-lg leading-relaxed mb-12 max-w-md mx-auto">{slide.text}</p>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setSlideIndex(i => Math.max(0, i - 1))}
-              disabled={slideIndex === 0}
-              className={`flex items-center gap-1 py-4 px-5 rounded-2xl font-bold text-sm transition-all ${slideIndex === 0 ? 'opacity-20 cursor-not-allowed bg-slate-800 text-slate-500' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'}`}
-            >
-              <ChevronLeft size={20} /> Back
-            </button>
-
-            {isLast ? (
-              <button
-                onClick={handleFinishInstructions}
-                disabled={instructionsReady}
-                className="flex-1 py-4 rounded-2xl font-black text-lg text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 30px rgba(6,182,212,0.25)' }}
-              >
-                <CheckCircle2 size={22} />
-                {instructionsReady ? "Waiting for others..." : "I'm Ready!"}
-              </button>
-            ) : (
-              <button
-                onClick={() => setSlideIndex(i => Math.min(slides.length - 1, i + 1))}
-                className="flex-1 py-4 rounded-2xl font-black text-lg text-slate-900 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: '#a8c4a0' }}
-              >
-                Next <ChevronRight size={22} />
-              </button>
-            )}
-          </div>
-
-          <p className="text-center text-slate-700 text-xs mt-4 font-mono">Press Space or → to advance</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Initial Scan Phase ─────────────────────────────────────────────────────
-  if (gamePhase === 'initial_scan_phase') {
-    const progress = initialScanCount;
-    const isDone = progress >= 4;
-
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 py-8">
+      <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 px-4 overflow-y-auto py-8">
         {showInitialScanner && (
           <QRScannerModal
             onScan={handleInitialScan}
@@ -526,61 +681,121 @@ const GameScreen = ({ mockData } = {}) => {
           />
         )}
 
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">📱</div>
-            <h2 className="text-3xl font-black text-white mb-2">Scan Your Cards</h2>
-            <p className="text-slate-400">Scan all 4 physical cards to register them on the network</p>
+        <div className="w-full max-w-lg">
+          {/* Progress pills */}
+          <div className="flex justify-center gap-1.5 mb-8">
+            {slides.map((_, idx) => (
+              <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${
+                slideIndex === idx ? 'bg-cyan-400 w-8' :
+                slideIndex > idx ? 'bg-slate-600 w-4' : 'bg-slate-800 w-4'
+              }`} />
+            ))}
           </div>
 
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700/50 mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-slate-300 font-bold">Progress</span>
-              <span className="font-black text-xl" style={{ color: isDone ? '#a8c4a0' : '#AD9E97' }}>{progress}/4</span>
-            </div>
-            <div className="flex gap-2 mb-5">
-              {[0,1,2,3].map(i => (
-                <div key={i} className={`flex-1 h-3 rounded-full transition-all ${i < progress ? 'bg-emerald-500' : 'bg-slate-700'}`} />
-              ))}
-            </div>
+          {/* Slide content */}
+          <SlideContent
+            slide={slide}
+            playerState={playerState}
+            inventory={inventory}
+            objectives={objectives}
+          />
 
-            <div className="grid grid-cols-2 gap-2 mb-4 min-h-16">
-              {inventory.map((card, idx) => {
-                const ct = CARD_TYPES[card.type] || CARD_TYPES.unknown;
-                return (
-                  <div key={idx} className={`flex items-center gap-2 p-2.5 rounded-xl border text-sm ${ct.bg}`}>
-                    <span className="text-xl">{ct.emoji}</span>
-                    <span className={`font-semibold ${ct.color}`}>{ct.label}</span>
+          {/* Scan UI (embedded in scan slide) */}
+          {isScanSlide && (
+            <div className="mt-6 rounded-2xl p-5" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-slate-300 font-bold text-sm">Scanning Progress</span>
+                <span className="font-black text-lg" style={{ color: scanDone ? '#a8c4a0' : '#AD9E97' }}>{initialScanCount}/4</span>
+              </div>
+              <div className="flex gap-2 mb-4">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className={`flex-1 h-2.5 rounded-full transition-all ${i < initialScanCount ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                ))}
+              </div>
+
+              {/* Scanned card mini-inventory */}
+              {inventory.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {inventory.slice(0, 4).map((card, idx) => {
+                    const ct = CARD_TYPES[card.type] || CARD_TYPES.unknown;
+                    return (
+                      <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl border text-sm ${ct.bg}`}>
+                        <span className="text-xl">{ct.emoji}</span>
+                        <span className={`font-semibold ${ct.color}`}>{ct.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {scanFeedback && (
+                <div className={`p-3 rounded-xl text-sm flex items-center gap-2 mb-3 ${scanFeedback.status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : scanFeedback.status === 'error' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-slate-800 text-slate-300'}`}>
+                  {scanFeedback.status === 'success' && <><Zap size={16} /> {(CARD_TYPES[scanFeedback.item?.type] || CARD_TYPES.unknown).emoji} Scanned!</>}
+                  {scanFeedback.status === 'error' && <><AlertTriangle size={16} /> {scanFeedback.message}</>}
+                  {scanFeedback.status === 'scanning' && <><Camera size={16} /> Verifying...</>}
+                </div>
+              )}
+
+              {scanDone ? (
+                <div className="text-center py-2">
+                  <CheckCircle2 size={28} className="text-emerald-400 mx-auto mb-1" />
+                  <p className="text-emerald-400 font-black text-sm">All 4 cards scanned!</p>
+                  <p className="text-slate-500 text-xs animate-pulse mt-0.5">Waiting for other players to finish scanning…</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowInitialScanner(true)}
+                  className="w-full py-3.5 rounded-xl font-black text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}
+                >
+                  <Camera size={20} /> Scan Card {initialScanCount + 1} of 4
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Navigation / Next button */}
+          {!isScanSlide && (
+            <div className="mt-8">
+              {meIsReady ? (
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <CheckCircle2 size={20} className="text-cyan-400" />
+                    <span className="text-cyan-400 font-bold">You're ready!</span>
                   </div>
-                );
-              })}
+                  <div className="rounded-xl p-3" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.2)' }}>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Users size={14} style={{ color: '#6D7162' }} />
+                      <span className="text-xs font-mono" style={{ color: '#6D7162' }}>
+                        {readyCount}/{totalPlayers} players ready
+                      </span>
+                    </div>
+                    {notReady.length > 0 && (
+                      <p className="text-xs text-slate-600 text-center">
+                        Waiting for: {notReady.join(', ')}…
+                      </p>
+                    )}
+                    <div className="flex gap-1 mt-2">
+                      {Array.from({ length: totalPlayers }).map((_, i) => (
+                        <div key={i} className={`flex-1 h-1 rounded-full ${i < readyCount ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleSlideReady}
+                  className="w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={isLast
+                    ? { background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 30px rgba(6,182,212,0.25)', color: '#fff' }
+                    : { background: '#a8c4a0', color: '#0f1a0e' }
+                  }
+                >
+                  {isLast ? <><CheckCircle2 size={22} /> I'm Ready!</> : <>Next <ChevronRight size={22} /></>}
+                </button>
+              )}
             </div>
-
-            {scanFeedback && (
-              <div className={`p-3 rounded-xl text-sm flex items-center gap-2 mb-3 ${scanFeedback.status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : scanFeedback.status === 'error' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-slate-800 text-slate-300'}`}>
-                {scanFeedback.status === 'success' && <><Zap size={16} /> {(CARD_TYPES[scanFeedback.item.type] || CARD_TYPES.unknown).emoji} {(CARD_TYPES[scanFeedback.item.type] || CARD_TYPES.unknown).label} scanned!</>}
-                {scanFeedback.status === 'error' && <><AlertTriangle size={16} /> {scanFeedback.message}</>}
-                {scanFeedback.status === 'scanning' && <><Camera size={16} /> Verifying...</>}
-              </div>
-            )}
-
-            {isDone ? (
-              <div className="text-center py-4">
-                <CheckCircle2 size={32} className="text-emerald-400 mx-auto mb-2" />
-                <p className="text-emerald-400 font-black">All cards registered!</p>
-                <p className="text-slate-500 text-sm animate-pulse mt-1">Waiting for other players...</p>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowInitialScanner(true)}
-                disabled={isDone}
-                className="w-full py-4 rounded-2xl font-black text-lg text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}
-              >
-                <Camera size={22} /> Scan Card {progress + 1} of 4
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
     );
@@ -670,17 +885,12 @@ const GameScreen = ({ mockData } = {}) => {
                 const ct = CARD_TYPES[type] || CARD_TYPES.unknown;
                 const owned = inventory.some(c => c.type === type);
                 return (
-                  <div key={idx} className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${
-                    owned ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'
-                  }`}>
+                  <div key={idx} className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${owned ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'}`}>
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl">{ct.emoji}</span>
                       <span className={`font-bold text-sm ${owned ? 'text-emerald-300' : 'text-slate-300'}`}>{ct.label}</span>
                     </div>
-                    {owned
-                      ? <CheckCircle2 size={18} className="text-emerald-400" />
-                      : <div className="w-4 h-4 rounded-full border-2 border-slate-600" />
-                    }
+                    {owned ? <CheckCircle2 size={18} className="text-emerald-400" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-600" />}
                   </div>
                 );
               })}
@@ -709,7 +919,7 @@ const GameScreen = ({ mockData } = {}) => {
           </div>
         )}
 
-        {/* ── Zombie Objective (no password) ──────────────────────────────── */}
+        {/* ── Zombie Objective ────────────────────────────────────────────── */}
         {isZombie && (
           <div className="rounded-2xl p-4 mb-3 text-sm text-slate-400" style={{ background: 'rgba(80,30,20,0.25)', border: '1px solid rgba(121,88,70,0.2)' }}>
             <p className="font-bold mb-1" style={{ color: '#d97559' }}>Zombie Objective</p>
@@ -743,7 +953,6 @@ const GameScreen = ({ mockData } = {}) => {
                   onClick={handleSkipTrade}
                   disabled={hasSkippedTrade}
                   className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
-                  title="Draw a random card from the pool and discard one of yours (once per game)"
                 >
                   Skip Round {hasSkippedTrade ? '(used)' : '(1×)'}
                 </button>
@@ -789,9 +998,9 @@ const GameScreen = ({ mockData } = {}) => {
             {scanFeedback.status === 'error' && <AlertTriangle size={18} style={{ color: '#d97559' }} />}
             {scanFeedback.status === 'scanning' && <Camera size={18} style={{ color: '#AD9E97' }} />}
             <p className="text-sm font-semibold text-slate-300">
-              {scanFeedback.status === 'success' && (() => { const ct = CARD_TYPES[scanFeedback.item?.type] || CARD_TYPES.unknown; return `${ct.emoji} ${ct.label} scanned and verified!`; })()}
+              {scanFeedback.status === 'success' && (() => { const ct = CARD_TYPES[scanFeedback.item?.type] || CARD_TYPES.unknown; return `${ct.emoji} ${ct.label} scanned!`; })()}
               {scanFeedback.status === 'error' && scanFeedback.message}
-              {scanFeedback.status === 'scanning' && 'Verifying digital signature…'}
+              {scanFeedback.status === 'scanning' && 'Verifying…'}
             </p>
           </div>
         )}

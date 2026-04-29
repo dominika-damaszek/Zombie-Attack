@@ -20,6 +20,7 @@ ROUND_EVENTS = [
 ]
 
 ALL_CARD_TYPES = ["remedio", "comida", "arma", "roupa", "ferramentas"]
+TOTAL_SLIDES = 7  # slides 0–6 per module
 
 # ── WebSocket ──────────────────────────────────────────────────────────────────
 @router.websocket("/ws/{group_id}/{player_id}")
@@ -78,14 +79,10 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
             p.role = "zombie"
             p.is_infected = True
 
-    if mode.startswith("module"):
-        group.game_state = "module_instructions"
-        group.current_round = 0
-        group.round_end_time = None
-    else:
-        group.game_state = "module_instructions"
-        group.current_round = 0
-        group.round_end_time = None
+    group.game_state = "module_instructions"
+    group.current_round = 0
+    group.round_end_time = None
+    group.instruction_slide = 0
 
     db.commit()
 
@@ -98,45 +95,63 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
     return {"message": "Game started", "mode": mode}
 
 
-# ── Instructions: per-player ready ────────────────────────────────────────────
+# ── Slide advancement helper ───────────────────────────────────────────────────
+async def _advance_slide(group, db, group_id: str):
+    nxt = (group.instruction_slide or 0) + 1
+    for p in group.players:
+        p.is_ready = False
+    if nxt >= TOTAL_SLIDES:
+        group.game_state = "round_active"
+        group.current_round = 1
+        group.round_end_time = int(time.time()) + 180
+        db.commit()
+        await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
+    else:
+        group.instruction_slide = nxt
+        db.commit()
+        await manager.broadcast_to_group(group_id, {"type": "SLIDE_ADVANCED", "slide": nxt})
+
+
+# ── Synchronized slide ready ───────────────────────────────────────────────────
+@router.post("/{group_id}/slide_ready")
+async def slide_ready(group_id: str, payload: dict = {}, db: DBSession = Depends(get_db)):
+    player_id = payload.get("player_id")
+    player = db.query(models.GroupPlayer).filter_by(id=player_id, group_id=group_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    group = player.group
+    if group.game_state != "module_instructions":
+        raise HTTPException(status_code=400, detail="Not in instruction phase")
+
+    if player.is_ready:
+        ready = sum(1 for p in group.players if p.is_ready)
+        return {"ready": ready, "total": len(group.players), "slide": group.instruction_slide or 0}
+
+    player.is_ready = True
+    db.commit()
+
+    ready = sum(1 for p in group.players if p.is_ready)
+    total = len(group.players)
+    not_ready = [p.user.username for p in group.players if not p.is_ready]
+
+    await manager.broadcast_to_group(group_id, {
+        "type": "PLAYER_READY",
+        "ready": ready,
+        "total": total,
+        "not_ready": not_ready,
+    })
+
+    if all(p.is_ready for p in group.players):
+        await _advance_slide(group, db, group_id)
+
+    return {"ready": ready, "total": total, "slide": group.instruction_slide or 0}
+
+
+# ── Legacy: finish_instructions (kept for compatibility) ──────────────────────
 @router.post("/{group_id}/finish_instructions")
 async def finish_instructions(group_id: str, payload: dict = {}, db: DBSession = Depends(get_db)):
-    group = db.query(models.Group).filter(models.Group.id == group_id).first()
-    if not group:
-        raise HTTPException(status_code=404)
-
-    player_id = payload.get("player_id")
-    if player_id:
-        player = db.query(models.GroupPlayer).filter_by(id=player_id, group_id=group_id).first()
-        if player:
-            player.is_ready = True
-            db.commit()
-
-    total = len(group.players)
-    ready = sum(1 for p in group.players if p.is_ready)
-
-    if total > 0 and all(p.is_ready for p in group.players):
-        group.game_state = "initial_scan_phase"
-        group.current_round = 0
-        group.round_end_time = None
-        for p in group.players:
-            p.is_ready = False
-            p.inventory = '[]'
-            p.objectives = '[]'
-            p.initial_cards_scanned = 0
-        db.commit()
-        await manager.broadcast_to_group(group_id, {
-            "type": "PHASE_CHANGED",
-            "state": "initial_scan_phase",
-        })
-    else:
-        await manager.broadcast_to_group(group_id, {
-            "type": "PLAYER_READY",
-            "ready": ready,
-            "total": total,
-        })
-
-    return {"message": "success", "ready": ready, "total": total}
+    return await slide_ready(group_id, payload, db)
 
 
 # ── Initial Card Scan (4 cards per player) ────────────────────────────────────
@@ -153,8 +168,8 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         raise HTTPException(status_code=404, detail="Player not found")
 
     group = player.group
-    if group.game_state != "initial_scan_phase":
-        raise HTTPException(status_code=400, detail="Not in initial scan phase")
+    if group.game_state not in ("initial_scan_phase", "module_instructions"):
+        raise HTTPException(status_code=400, detail="Not in scan phase")
 
     # Look up card in master catalogue
     card = db.query(models.Card).filter_by(code=card_code).first()
@@ -186,17 +201,29 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         player.is_ready = True
         db.commit()
 
-        # Check if all players finished initial scan
+        ready = sum(1 for p in group.players if p.is_ready)
+        total = len(group.players)
+        not_ready = [p.user.username for p in group.players if not p.is_ready]
+        await manager.broadcast_to_group(group_id, {
+            "type": "PLAYER_READY",
+            "ready": ready,
+            "total": total,
+            "not_ready": not_ready,
+        })
+
+        # If all players finished initial scan → advance slide or start round
         if all(p.is_ready for p in group.players):
-            group.game_state = "round_active"
-            group.current_round = 1
-            group.round_end_time = int(time.time()) + 180
-            for p in group.players:
-                p.is_ready = False
-            db.commit()
-            await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
-        else:
-            await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
+            if group.game_state == "module_instructions":
+                await _advance_slide(group, db, group_id)
+            else:
+                # legacy initial_scan_phase
+                group.game_state = "round_active"
+                group.current_round = 1
+                group.round_end_time = int(time.time()) + 180
+                for p in group.players:
+                    p.is_ready = False
+                db.commit()
+                await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
 
     return {
         "card_type": card.card_type,
@@ -410,14 +437,20 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
         "has_skipped_trade": p.has_skipped_trade or False,
     } for p in group.players]
 
+    ready_count = sum(1 for p in group.players if p.is_ready)
+    not_ready = [p.user.username for p in group.players if not p.is_ready]
+
     return {
-        "game_state":    group.game_state,
-        "current_round": group.current_round,
-        "round_end_time": group.round_end_time,
-        "scan_end_time": group.scan_end_time,
-        "secret_word":   group.secret_word,
-        "game_mode":     group.game_mode,
-        "players":       players_data,
+        "game_state":       group.game_state,
+        "current_round":    group.current_round,
+        "round_end_time":   group.round_end_time,
+        "scan_end_time":    group.scan_end_time,
+        "secret_word":      group.secret_word,
+        "game_mode":        group.game_mode,
+        "instruction_slide": group.instruction_slide or 0,
+        "ready_count":      ready_count,
+        "not_ready":        not_ready,
+        "players":          players_data,
     }
 
 

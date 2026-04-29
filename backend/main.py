@@ -25,6 +25,7 @@ def run_migrations():
             ("group_players", "inventory",             "TEXT DEFAULT '[]'"),
             ("group_players", "objectives",            "TEXT DEFAULT '[]'"),
             ("group_players", "initial_cards_scanned", "INTEGER DEFAULT 0"),
+            ("groups",        "instruction_slide",     "INTEGER DEFAULT 0"),
         ]
         for table, col, definition in new_cols:
             try:
