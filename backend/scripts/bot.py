@@ -56,6 +56,7 @@ async def bot_flow(bot_id, join_code):
         print(f"[{username}] No Lobby. Aguardando a professora dar Matchmaking...")
         
         uri = f"{WS_API}/{group_id}/{player_id}"
+        current_group = group_id
         try:
             async with websockets.connect(uri) as ws:
                 while True:
@@ -66,13 +67,43 @@ async def bot_flow(bot_id, join_code):
                         await asyncio.sleep(1) # wait for backend to commit updates
                         
                         new_g = (await client.get(f"{API}/player/{player_id}/group")).json()
+                        current_group = new_g['group_id']
                         await asyncio.sleep(1)
                         
-                        await client.post(f"{API}/api/game/{new_g['group_id']}/ready", json={"player_id": player_id})
-                        print(f"[{username}] READY!")
+                        await client.post(f"{API}/api/game/{current_group}/ready", json={"player_id": player_id})
+                        print(f"[{username}] READY para o jogo!")
                         break
         except Exception as e:
-            # WebSocket could close on matchmaking redirect, just ignore it gracefully.
+            pass
+            
+        # Connect to the new game group websocket
+        uri = f"{WS_API}/{current_group}/{player_id}"
+        try:
+            async with websockets.connect(uri) as ws:
+                while True:
+                    msg = await ws.recv()
+                    data = json.loads(msg)
+                    msg_type = data.get("type")
+                    
+                    if msg_type == "GAME_STARTED" or msg_type == "SLIDE_ADVANCED":
+                        await asyncio.sleep(2)
+                        await client.post(f"{API}/api/game/{current_group}/slide_ready", json={"player_id": player_id})
+                        print(f"[{username}] Leu o slide.")
+                    
+                    elif msg_type == "ROUND_STARTED":
+                        await asyncio.sleep(5)
+                        await client.post(f"{API}/api/game/{current_group}/trade_done", json={"player_id": player_id})
+                        print(f"[{username}] Troca finalizada.")
+                        
+                    elif msg_type == "ROUND_ENDED":
+                        await asyncio.sleep(3)
+                        await client.post(f"{API}/api/game/{current_group}/next_round")
+                        print(f"[{username}] Pronto pro próximo round.")
+                        
+                    elif msg_type == "GAME_ENDED":
+                        print(f"[{username}] Fim de jogo!")
+                        break
+        except Exception as e:
             pass
             
 async def main():

@@ -61,15 +61,15 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
         zombie_count = 0
         group.secret_word = None
     elif mode == "module_2":
-        zombie_count = max(1, int(len(players) * 0.15))
+        zombie_count = 1
         group.secret_word = None
     elif mode == "module_3":
-        zombie_count = max(1, int(len(players) * 0.15))
+        zombie_count = 1
         group.secret_word = random.choice(WORDS)
     else:
         # Normal mode
         group.secret_word = random.choice(WORDS)
-        zombie_count = max(1, int(len(players) * 0.15))
+        zombie_count = 1
 
     if zombie_count > 0:
         zombie_players = random.sample(

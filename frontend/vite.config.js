@@ -13,27 +13,27 @@ const apiBypass = (req) => {
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5000,
+    port: 5173,
     host: '0.0.0.0',
     allowedHosts: true,
     proxy: {
       '/auth': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         bypass: apiBypass,
       },
       '/session': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         bypass: apiBypass,
       },
       '/player': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         bypass: apiBypass,
       },
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         ws: true,
       },

@@ -56,11 +56,13 @@ const HostGame = ({ setHasSession }) => {
         if (!response.ok) return;
         const data = await response.json();
         if (data && data.length > 0) {
-          const activeSession = data.find(s => s.status === 'active') || data[0];
-          localStorage.setItem('session_id', activeSession.id);
-          localStorage.setItem('session_data', JSON.stringify(activeSession));
-          if (setHasSession) setHasSession(true);
-          navigate('/dashboard', { state: { session: activeSession } });
+          const activeSession = data.find(s => s.status === 'active');
+          if (activeSession) {
+            localStorage.setItem('session_id', activeSession.id);
+            localStorage.setItem('session_data', JSON.stringify(activeSession));
+            if (setHasSession) setHasSession(true);
+            navigate('/dashboard', { state: { session: activeSession } });
+          }
         }
       } catch (e) {
         console.error('Failed to fetch existing sessions', e);
