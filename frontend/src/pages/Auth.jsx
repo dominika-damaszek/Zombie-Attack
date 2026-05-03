@@ -1,92 +1,129 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
 import { API_URLS } from '../services/api';
+import BackButton from '../components/BackButton';
 
 const Auth = ({ setIsAuthenticated }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const API_URL = API_URLS.AUTH;
+  const location = useLocation();
+  const redirectTo = location.state?.from || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
+    setLoading(true);
     try {
       const endpoint = isLogin ? '/login' : '/register';
-      const response = await axios.post(`${API_URL}${endpoint}`, { username, pin });
-
-      localStorage.setItem('token', response.data.access_token);
+      const response = await fetch(`${API_URLS.AUTH}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, pin })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Authentication failed.');
+      }
+      const data = await response.json();
+      localStorage.setItem('token', data.access_token);
       setIsAuthenticated(true);
-      navigate('/');
+      navigate(redirectTo);
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred during authentication.');
+      setError(err.message || 'Authentication failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] animate-in fade-in duration-500">
-      <div className="glass-panel w-full max-w-md p-8">
-        <div className="flex mb-8 bg-slate-900/50 rounded-xl p-1">
-          <button
-            className={`flex-1 py-2 rounded-lg font-semibold transition-all ${isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-            onClick={() => { setIsLogin(true); setError(''); }}
-          >
-            Login
-          </button>
-          <button
-            className={`flex-1 py-2 rounded-lg font-semibold transition-all ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-            onClick={() => { setIsLogin(false); setError(''); }}
-          >
-            Register
-          </button>
+    <div className="flex-1 flex items-center justify-center px-4 relative overflow-hidden">
+      <div className="w-full max-w-md z-20 relative">
+        <BackButton to="/" />
+
+        <img src="/uie1.png" alt="Danger" className="w-40 h-40 mx-auto mb-4 animate-slow-scale drop-shadow-[0px_0_10px_rgba(255,125,0,1)]" />
+
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {isLogin ? 'Sign in with your username and PIN' : 'Register to start playing'}
+          </p>
         </div>
 
-        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-6 text-center">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h2>
+        <div className="glass-panel p-8 rounded-3xl border border-slate-700/50">
+          <div className="flex mb-8 bg-slate-900/50 rounded-2xl p-1 gap-1">
+            <button
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              onClick={() => { setIsLogin(true); setError(''); }}
+            >
+              Login
+            </button>
+            <button
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              onClick={() => { setIsLogin(false); setError(''); }}
+            >
+              Register
+            </button>
+          </div>
 
-        {error && (
-          <div className="bg-rose-500/10 text-rose-400 border border-rose-500/50 p-3 rounded-lg mb-6 text-center text-sm">
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="bg-rose-500/10 text-rose-400 border border-rose-500/30 p-3 rounded-xl mb-6 text-center text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-slate-400 text-sm font-semibold mb-2">Username</label>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-slate-400 text-sm font-semibold mb-2">PIN</label>
-            <input
-              type="password"
-              className="input-field"
-              placeholder="4-digit PIN"
-              maxLength="4"
-              pattern="\d{4}"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary w-full flex items-center justify-center space-x-2 mt-4">
-            {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
-            <span>{isLogin ? 'Login to Account' : 'Create Account'}</span>
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">Username</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="e.g. teacher_john"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">PIN (4 digits)</label>
+              <input
+                type="password"
+                className="input-field text-center text-2xl tracking-[0.5em] font-mono"
+                placeholder="••••"
+                maxLength="4"
+                pattern="\d{4}"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span className="animate-pulse">Please wait...</span>
+              ) : (
+                <>
+                  {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute right-[-10%] xl:right-[1%] w-[650px] h-[750px] 2xl:w-[800px] 2xl:h-[850px] z-10 opacity-90 pointer-events-none">
+        <img src="/maincharacer.png" alt="Main Character" className="w-full h-full object-contain drop-shadow-[20px_0_20px_rgba(190,120,255,0.4)]" />
       </div>
     </div>
   );
