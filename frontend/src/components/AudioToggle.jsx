@@ -13,7 +13,7 @@ export default function AudioToggle({ toggle, isEnabled }) {
     <button
       onClick={handleToggle}
       title={on ? 'Mute sounds' : 'Enable sounds'}
-      className="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+      className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
       style={{
         background: 'rgba(56,44,37,0.85)',
         border: '1px solid rgba(121,88,70,0.5)',

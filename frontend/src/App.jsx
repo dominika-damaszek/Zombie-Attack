@@ -11,17 +11,12 @@ import GameScreen from './pages/GameScreen';
 import Profile from './pages/Profile';
 import EndGame from './pages/EndGame';
 import PreviewPage from './pages/PreviewPage';
+import History from './pages/History';
+import ScanTest from './pages/ScanTest';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasSession, setHasSession] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) setIsAuthenticated(true);
-    const sessionId = localStorage.getItem('session_id');
-    if (sessionId) setHasSession(true);
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
+  const [hasSession, setHasSession] = useState(() => !!localStorage.getItem('session_id'));
 
   useEffect(() => {
     const syncSession = () => {
@@ -65,6 +60,10 @@ function App() {
                 element={isAuthenticated ? <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} /> : <Navigate to="/auth" />}
               />
               <Route
+                path="/history"
+                element={isAuthenticated ? <History /> : <Navigate to="/auth" state={{ from: '/history' }} />}
+              />
+              <Route
                 path="/join"
                 element={isAuthenticated ? <JoinGame /> : <Navigate to="/auth" state={{ from: '/join' }} />}
               />
@@ -72,6 +71,7 @@ function App() {
                 path="/join/:code"
                 element={isAuthenticated ? <JoinGame /> : <Navigate to="/auth" state={{ from: '/join' }} />}
               />
+              <Route path="/scan-test" element={<ScanTest />} />
               <Route path="/waiting" element={<WaitingRoom />} />
               <Route path="/game" element={<GameScreen />} />
               <Route path="/endgame" element={<EndGame />} />

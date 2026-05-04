@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, History } from 'lucide-react';
 
 const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession }) => {
   const navigate = useNavigate();
@@ -16,42 +16,51 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
   };
 
   return (
-    <header className="w-full flex items-center justify-between px-6 py-4 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 z-30 relative">
+    <header className="w-full flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 z-30 relative">
       <button
         onClick={() => navigate('/')}
-        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity"
       >
-        <img src="/zombie-logo.svg" alt="Logo" className="w-9 h-9 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
-        <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-tight">
+        <img src="/zombie-logo.svg" alt="Logo" className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
+        <span className="text-lg sm:text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-tight">
           Zombieware
         </span>
       </button>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {isAuthenticated && hasSession && (
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 rounded-xl transition-all border border-emerald-500/20"
+            className="flex items-center gap-1 sm:gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 sm:px-4 py-2 rounded-xl transition-all border border-emerald-500/20"
           >
             <LayoutDashboard size={16} />
-            Dashboard
+            <span className="hidden sm:inline">Dashboard</span>
+          </button>
+        )}
+        {isAuthenticated && (
+          <button
+            onClick={() => navigate('/history')}
+            className="flex items-center gap-1 sm:gap-2 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 sm:px-4 py-2 rounded-xl transition-all border border-slate-700"
+          >
+            <History size={16} />
+            <span className="hidden sm:inline">History</span>
           </button>
         )}
         {isAuthenticated ? (
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all border border-slate-700"
+            className="flex items-center gap-1 sm:gap-2 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 sm:px-4 py-2 rounded-xl transition-all border border-slate-700"
           >
             <LogOut size={16} />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </button>
         ) : (
           <button
             onClick={() => navigate('/auth')}
-            className="flex items-center gap-2 text-sm font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 px-5 py-2 rounded-xl transition-all shadow-md"
+            className="flex items-center gap-1 sm:gap-2 text-sm font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 px-3 sm:px-5 py-2 rounded-xl transition-all shadow-md"
           >
             <LogIn size={16} />
-            Login
+            <span className="hidden sm:inline">Login</span>
           </button>
         )}
       </div>

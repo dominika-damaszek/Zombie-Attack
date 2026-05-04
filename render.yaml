@@ -1,19 +1,27 @@
+databases:
+  - name: zombieware-db
+    databaseName: zombieware
+    user: zombieware
+    plan: free
+
 services:
-  # Python Backend Service
   - type: web
-    name: zombie-attack-backend
+    name: zombieware-backend
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
     envVars:
       - key: DATABASE_URL
-        value: sqlite:///./zombieware.db
+        fromDatabase:
+          name: zombieware-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
 
-  # React Frontend Static Site
   - type: static_site
-    name: zombie-attack-frontend
-    runtime: static
+    name: zombieware-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishPath: dist
@@ -24,6 +32,6 @@ services:
     envVars:
       - key: VITE_API_URL
         fromService:
-          name: zombie-attack-backend
+          name: zombieware-backend
           type: web
           property: url

@@ -174,7 +174,7 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
     # Look up card in master catalogue
     card = db.query(models.Card).filter_by(code=card_code).first()
     if not card:
-        raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}. Valid format: ZW-MED-01")
+        raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}. Valid format: QRC-XXXXXXXX")
 
     inventory = json.loads(player.inventory or '[]')
 

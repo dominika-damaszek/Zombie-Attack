@@ -7,7 +7,7 @@ import { API_URLS } from '../services/api';
 export default function EndGame() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { groupId } = location.state || {};
+  const { groupId } = location.state || { groupId: localStorage.getItem('endgame_group_id') };
   const [recap, setRecap] = useState(null);
   const [loading, setLoading] = useState(true);
 

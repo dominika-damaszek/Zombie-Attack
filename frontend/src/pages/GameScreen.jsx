@@ -193,15 +193,15 @@ function RoleReveal({ role, secretWord, gameMode, onContinue }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.97)' }}>
       <div className="relative text-center max-w-sm w-full px-6">
         <div className="relative glass-panel p-8 rounded-3xl" style={{ border: `2px solid ${cfg.border}` }}>
-          <div className="text-8xl mb-5 animate-zw-float">{cfg.emoji}</div>
+          <div className="text-6xl sm:text-8xl mb-4 sm:mb-5 animate-zw-float">{cfg.emoji}</div>
           <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>Your Role</p>
-          <h1 className="text-5xl font-black mb-4 uppercase" style={{ color: cfg.color, textShadow: `0 0 20px ${cfg.glow}` }}>
+          <h1 className="text-4xl sm:text-5xl font-black mb-3 sm:mb-4 uppercase" style={{ color: cfg.color, textShadow: `0 0 20px ${cfg.glow}` }}>
             {cfg.label}
           </h1>
           {!isZombie && secretWord && (
             <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.3)' }}>
               <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>🔑 Your Secret Password</p>
-              <p className="text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
+              <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
               <p className="text-slate-500 text-xs mt-1">Never share with unverified players.</p>
             </div>
           )}
@@ -360,10 +360,10 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
   if (type === 'items') {
     return (
       <div className="text-center">
-        <div className="text-7xl mb-6 animate-zw-float">{emoji}</div>
-        <h2 className="text-3xl font-black text-white mb-3">{title}</h2>
+        <div className="text-5xl sm:text-7xl mb-4 sm:mb-6 animate-zw-float">{emoji}</div>
+        <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 sm:mb-3">{title}</h2>
         <p className="text-slate-400 mb-6">{text}</p>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
           {Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([key, ct]) => (
             <div key={key} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${ct.bg}`}>
               <span className="text-3xl">{ct.emoji}</span>
@@ -378,8 +378,8 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
   if (type === 'objectives') {
     return (
       <div className="text-center">
-        <div className="text-7xl mb-6 animate-zw-float">{emoji}</div>
-        <h2 className="text-3xl font-black text-white mb-3">{title}</h2>
+        <div className="text-5xl sm:text-7xl mb-4 sm:mb-6 animate-zw-float">{emoji}</div>
+        <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 sm:mb-3">{title}</h2>
         {text.split('\n').map((line, i) => <p key={i} className="text-slate-400 mb-1">{line}</p>)}
         <div className="mt-5 space-y-3 text-left">
           {objectives.length === 0 ? (
@@ -409,9 +409,9 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
       : { emoji: '🛡️', label: 'SURVIVOR', color: '#a8c4a0', bg: 'rgba(30,50,35,0.6)', border: 'rgba(168,196,160,0.4)' };
     return (
       <div className="text-center">
-        <div className="text-7xl mb-5 animate-zw-float">{cfg.emoji}</div>
+        <div className="text-5xl sm:text-7xl mb-4 animate-zw-float">{cfg.emoji}</div>
         <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>Your Role Is</p>
-        <h2 className="text-5xl font-black mb-5 uppercase" style={{ color: cfg.color }}>{cfg.label}</h2>
+        <h2 className="text-4xl sm:text-5xl font-black mb-4 sm:mb-5 uppercase" style={{ color: cfg.color }}>{cfg.label}</h2>
         <div className="rounded-2xl p-4 mb-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
           <p className="text-slate-200 font-semibold text-lg">{text}</p>
         </div>
@@ -422,8 +422,8 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
   if (type === 'hints') {
     return (
       <div className="text-center">
-        <div className="text-7xl mb-5 animate-zw-float">{emoji}</div>
-        <h2 className="text-3xl font-black text-white mb-5">{title}</h2>
+        <div className="text-5xl sm:text-7xl mb-4 animate-zw-float">{emoji}</div>
+        <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-5">{title}</h2>
         <div className="space-y-3 text-left">
           {lines.map((line, i) => (
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}>
@@ -439,10 +439,10 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
   if (type === 'story') {
     return (
       <div className="text-center">
-        <div className="text-8xl mb-8 animate-zw-float">{emoji}</div>
-        <h2 className="text-3xl font-black mb-6" style={{ color: '#AD9E97' }}>{title}</h2>
+        <div className="text-6xl sm:text-8xl mb-5 sm:mb-8 animate-zw-float">{emoji}</div>
+        <h2 className="text-2xl sm:text-3xl font-black mb-4 sm:mb-6" style={{ color: '#AD9E97' }}>{title}</h2>
         <div className="rounded-2xl p-6" style={{ background: 'rgba(56,44,37,0.4)', border: '1px solid rgba(109,113,98,0.2)' }}>
-          {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-lg leading-relaxed">{line}</p>)}
+          {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-base sm:text-lg leading-relaxed">{line}</p>)}
         </div>
       </div>
     );
@@ -450,10 +450,10 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
 
   return (
     <div className="text-center">
-      <div className="text-8xl mb-8 animate-zw-float">{emoji}</div>
-      <h2 className="text-3xl font-black text-white mb-5">{title}</h2>
+      <div className="text-6xl sm:text-8xl mb-5 sm:mb-8 animate-zw-float">{emoji}</div>
+      <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-5">{title}</h2>
       <div className="space-y-1">
-        {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-lg leading-relaxed">{line}</p>)}
+        {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-base sm:text-lg leading-relaxed">{line}</p>)}
       </div>
     </div>
   );
@@ -463,7 +463,12 @@ function SlideContent({ slide, playerState, inventory, objectives }) {
 const GameScreen = ({ mockData } = {}) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { groupData, playerData } = location.state || {};
+  const { groupData, playerData } = location.state || (() => {
+    try {
+      const raw = localStorage.getItem('player_session');
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  })();
 
   const [gameState, setGameState] = useState(mockData?.gameState || null);
   const [playerState, setPlayerState] = useState(mockData?.playerState || null);
@@ -505,7 +510,10 @@ const GameScreen = ({ mockData } = {}) => {
         setInitialScanCount(me.initial_cards_scanned || 0);
         setHasSkippedTrade(me.has_skipped_trade || false);
       }
-      if (data.game_state === 'end_game') navigate('/endgame', { state: { groupId: groupData.group_id } });
+      if (data.game_state === 'end_game') {
+        localStorage.setItem('endgame_group_id', groupData.group_id);
+        navigate('/endgame', { state: { groupId: groupData.group_id } });
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [groupData?.group_id, playerData?.id, navigate, mockData]);
@@ -683,7 +691,7 @@ const GameScreen = ({ mockData } = {}) => {
 
         <div className="w-full max-w-lg">
           {/* Progress pills */}
-          <div className="flex justify-center gap-1.5 mb-8">
+          <div className="flex justify-center gap-1.5 mb-4 sm:mb-8">
             {slides.map((_, idx) => (
               <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${
                 slideIndex === idx ? 'bg-cyan-400 w-8' :
@@ -785,7 +793,7 @@ const GameScreen = ({ mockData } = {}) => {
               ) : (
                 <button
                   onClick={handleSlideReady}
-                  className="w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full py-4 sm:py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                   style={isLast
                     ? { background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 30px rgba(6,182,212,0.25)', color: '#fff' }
                     : { background: '#a8c4a0', color: '#0f1a0e' }
@@ -832,28 +840,28 @@ const GameScreen = ({ mockData } = {}) => {
       {/* Info button */}
       <button
         onClick={() => setShowInfoModal(true)}
-        className="fixed bottom-6 right-6 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+        className="fixed bottom-4 right-4 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
         style={{ background: 'rgba(121,88,70,0.8)', border: '1px solid rgba(173,158,151,0.4)' }}
       >
         <HelpCircle size={22} style={{ color: '#AD9E97' }} />
       </button>
 
-      <div className="max-w-lg mx-auto py-4 px-3 animate-zw-fade pb-20">
+      <div className="max-w-lg mx-auto py-3 px-3 animate-zw-fade pb-24">
 
         {/* ── Role Banner ──────────────────────────────────────────────────── */}
         <div className="rounded-2xl p-5 mb-3 flex items-center justify-between"
              style={{ background: `rgba(${isZombie ? '80,30,20' : '30,50,35'},0.6)`, border: `2px solid ${statusColor}33` }}>
           <div className="flex items-center gap-4">
-            <span className="text-5xl">{statusEmoji}</span>
+            <span className="text-3xl sm:text-5xl">{statusEmoji}</span>
             <div>
               <p className="text-xs uppercase tracking-widest font-mono mb-0.5" style={{ color: '#6D7162' }}>Your Role</p>
-              <p className="text-3xl font-black uppercase" style={{ color: statusColor }}>{statusLabel}</p>
+              <p className="text-xl sm:text-3xl font-black uppercase" style={{ color: statusColor }}>{statusLabel}</p>
               {gameMode === 'module_1' && <p className="text-xs text-slate-500 mt-0.5">Module 1 — Survivors only</p>}
             </div>
           </div>
           <div className="text-right">
             <p className="text-xs font-mono mb-1" style={{ color: '#6D7162' }}>Round</p>
-            <p className="text-3xl font-black text-white">{gameState?.current_round || '-'}</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{gameState?.current_round || '-'}</p>
             <p className="text-xs font-mono" style={{ color: '#6D7162' }}>of 3</p>
           </div>
         </div>
@@ -864,7 +872,7 @@ const GameScreen = ({ mockData } = {}) => {
             <Shield size={20} style={{ color: '#a8c4a0' }} />
             <div>
               <p className="text-xs uppercase tracking-widest font-mono" style={{ color: '#a8c4a0' }}>Secret Password</p>
-              <p className="text-2xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{gameState.secret_word}</p>
+              <p className="text-lg sm:text-2xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{gameState.secret_word}</p>
             </div>
           </div>
         )}

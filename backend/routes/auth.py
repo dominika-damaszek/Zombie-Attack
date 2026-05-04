@@ -57,3 +57,43 @@ def login(user_data: schemas.UserLogin, db: Session = Depends(database.get_db)):
 @router.get("/me", response_model=schemas.UserResponse)
 def get_me(token: str, db: Session = Depends(database.get_db)):
     return get_current_user(token, db)
+
+
+@router.get("/history")
+def get_history(token: str, db: Session = Depends(database.get_db)):
+    user = get_current_user(token, db)
+
+    as_teacher = []
+    sessions = db.query(models.Session).filter(
+        models.Session.teacher_id == user.id
+    ).all()
+    for s in sessions:
+        non_lobby_groups = [g for g in s.groups if g.group_number != 0]
+        total_players = sum(len(g.players) for g in non_lobby_groups)
+        as_teacher.append({
+            "session_id": s.id,
+            "game_mode": s.game_mode or "normal",
+            "status": s.status,
+            "num_groups": len(non_lobby_groups),
+            "total_players": total_players,
+        })
+
+    as_student = []
+    memberships = db.query(models.GroupPlayer).filter(
+        models.GroupPlayer.user_id == user.id
+    ).all()
+    for gp in memberships:
+        group = gp.group
+        if group is None or group.group_number == 0:
+            continue
+        as_student.append({
+            "group_id": group.id,
+            "group_number": group.group_number,
+            "game_mode": group.game_mode or "normal",
+            "game_state": group.game_state,
+            "role": gp.role,
+            "survived": not gp.is_infected,
+            "rounds_played": group.current_round or 0,
+        })
+
+    return {"as_teacher": as_teacher, "as_student": as_student}

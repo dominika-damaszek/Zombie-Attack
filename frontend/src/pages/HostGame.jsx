@@ -127,7 +127,7 @@ const HostGame = ({ setHasSession }) => {
 
             {modulesOpen && (
               <div className="px-6 pb-6 border-t border-slate-700/50 pt-5">
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                   {MODULES.map((mod) => (
                     <button
                       key={mod.id}
