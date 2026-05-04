@@ -35,11 +35,10 @@ async def get_game_state(client, group_id):
 
 
 async def bot_flow(bot_id, join_code):
-    # Stagger bots by 1.5 seconds to prevent overwhelming the server with simultaneous bcrypt logins
-    await asyncio.sleep(bot_id * 1.5)
+    await asyncio.sleep(bot_id * 0.3)
 
     username = f"bot_{bot_id}"
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         # Register / Login
         try:
             await client.post(f"{API}/auth/register", json={"username": username, "pin": PIN})
@@ -86,7 +85,7 @@ async def bot_flow(bot_id, join_code):
                             f"{API}/api/game/{current_group}/ready",
                             json={"player_id": player_id}
                         )
-                        print(f"[{username}] Pressed Ready! (waiting room) -> {r.status_code}")
+                        print(f"[{username}] Pressed Ready! (waiting room) → {r.status_code}")
                         break
         except Exception as e:
             print(f"[{username}] Lobby WS error: {e}")
@@ -108,14 +107,14 @@ async def bot_flow(bot_id, join_code):
                         f"{API}/api/game/{current_group}/slide_ready",
                         json={"player_id": player_id}
                     )
-                    print(f"[{username}] Caught up: pressed slide_ready (slide {state.get('instruction_slide', 0)}) -> {r.status_code}")
+                    print(f"[{username}] Caught up: pressed slide_ready (slide {state.get('instruction_slide', 0)}) → {r.status_code}")
                 elif current_state == "round_active":
                     await asyncio.sleep(3)
                     r = await client.post(
                         f"{API}/api/game/{current_group}/trade_done",
                         json={"player_id": player_id}
                     )
-                    print(f"[{username}] Caught up: marked trade done -> {r.status_code}")
+                    print(f"[{username}] Caught up: marked trade done → {r.status_code}")
 
                 while True:
                     msg = await asyncio.wait_for(ws.recv(), timeout=600)
@@ -129,7 +128,7 @@ async def bot_flow(bot_id, join_code):
                             f"{API}/api/game/{current_group}/slide_ready",
                             json={"player_id": player_id}
                         )
-                        print(f"[{username}] GAME_STARTED -> slide_ready -> {r.status_code}")
+                        print(f"[{username}] GAME_STARTED → slide_ready → {r.status_code}")
 
                     elif msg_type == "SLIDE_ADVANCED":
                         # Each new slide needs a ready confirmation
@@ -138,7 +137,7 @@ async def bot_flow(bot_id, join_code):
                             f"{API}/api/game/{current_group}/slide_ready",
                             json={"player_id": player_id}
                         )
-                        print(f"[{username}] SLIDE_ADVANCED (slide {data.get('slide')}) -> slide_ready -> {r.status_code}")
+                        print(f"[{username}] SLIDE_ADVANCED (slide {data.get('slide')}) → slide_ready → {r.status_code}")
 
                     elif msg_type == "ROUND_STARTED":
                         await asyncio.sleep(5)
@@ -146,14 +145,14 @@ async def bot_flow(bot_id, join_code):
                             f"{API}/api/game/{current_group}/trade_done",
                             json={"player_id": player_id}
                         )
-                        print(f"[{username}] ROUND_STARTED -> trade_done -> {r.status_code}")
+                        print(f"[{username}] ROUND_STARTED → trade_done → {r.status_code}")
 
                     elif msg_type == "ROUND_ENDED":
                         await asyncio.sleep(3)
                         r = await client.post(
                             f"{API}/api/game/{current_group}/next_round"
                         )
-                        print(f"[{username}] ROUND_ENDED -> next_round -> {r.status_code}")
+                        print(f"[{username}] ROUND_ENDED → next_round → {r.status_code}")
 
                     elif msg_type == "GAME_ENDED":
                         print(f"[{username}] Game ended!")

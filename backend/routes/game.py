@@ -253,11 +253,6 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
     if not group:
         raise HTTPException(status_code=404)
 
-    # Idempotent: only advance if we are actually between rounds.
-    # Multiple bots/players may call this simultaneously; only the first call acts.
-    if group.game_state != "module_between_rounds":
-        return {"message": "already_advanced"}
-        
     group.current_round += 1
     for p in group.players:
         p.is_ready = False
