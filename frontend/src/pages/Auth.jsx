@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Auth = ({ setIsAuthenticated }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +14,7 @@ const Auth = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from || '/';
+  const { t } = useLanguage();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,10 +48,10 @@ const Auth = ({ setIsAuthenticated }) => {
         <BackButton to="/" />
         <div className="text-center mb-8">
           <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
+            {isLogin ? t('auth_welcome_back') : t('auth_create_account')}
           </h2>
           <p className="text-slate-400 text-sm">
-            {isLogin ? 'Sign in with your username and PIN' : 'Register to start playing'}
+            {isLogin ? t('auth_sign_in_sub') : t('auth_register_sub')}
           </p>
         </div>
 
@@ -59,13 +61,13 @@ const Auth = ({ setIsAuthenticated }) => {
               className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               onClick={() => { setIsLogin(true); setError(''); }}
             >
-              Login
+              {t('auth_login_tab')}
             </button>
             <button
               className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               onClick={() => { setIsLogin(false); setError(''); }}
             >
-              Register
+              {t('auth_register_tab')}
             </button>
           </div>
 
@@ -77,7 +79,7 @@ const Auth = ({ setIsAuthenticated }) => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-slate-400 text-sm font-semibold mb-2">Username</label>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">{t('auth_username')}</label>
               <input
                 type="text"
                 className="input-field"
@@ -89,7 +91,7 @@ const Auth = ({ setIsAuthenticated }) => {
               />
             </div>
             <div>
-              <label className="block text-slate-400 text-sm font-semibold mb-2">PIN (4 digits)</label>
+              <label className="block text-slate-400 text-sm font-semibold mb-2">{t('auth_pin')}</label>
               <input
                 type="password"
                 className="input-field text-center text-2xl tracking-[0.5em] font-mono"
@@ -107,11 +109,11 @@ const Auth = ({ setIsAuthenticated }) => {
               className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <span className="animate-pulse">Please wait...</span>
+                <span className="animate-pulse">{t('auth_please_wait')}</span>
               ) : (
                 <>
                   {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
-                  {isLogin ? 'Sign In' : 'Create Account'}
+                  {isLogin ? t('auth_sign_in') : t('auth_create_account')}
                 </>
               )}
             </button>

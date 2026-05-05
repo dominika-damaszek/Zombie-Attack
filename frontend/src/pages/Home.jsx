@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Monitor } from 'lucide-react';
 import { API_URLS } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Home = ({ isAuthenticated }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [serverStatus, setServerStatus] = useState('waking');
 
   useEffect(() => {
@@ -53,7 +55,7 @@ const Home = ({ isAuthenticated }) => {
             Zombieware
           </h1>
           <p className="text-slate-400 text-sm sm:text-lg max-w-md mx-auto">
-            The classroom trading card game platform. Simple for teachers, fun for students.
+            {t('home_subtitle')}
           </p>
         </div>
       </div>
@@ -64,8 +66,8 @@ const Home = ({ isAuthenticated }) => {
           className="flex-1 flex flex-col items-center justify-center gap-2 sm:gap-3 py-7 sm:py-10 px-6 sm:px-8 rounded-3xl font-black text-xl sm:text-2xl text-slate-900 bg-gradient-to-br from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-[0_0_40px_rgba(52,211,153,0.25)] hover:shadow-[0_0_60px_rgba(52,211,153,0.4)] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
         >
           <Users size={36} strokeWidth={2.5} />
-          JOIN
-          <span className="text-sm font-medium text-slate-700 -mt-1">Enter a classroom</span>
+          {t('home_join')}
+          <span className="text-sm font-medium text-slate-700 -mt-1">{t('home_join_sub')}</span>
         </button>
 
         <button
@@ -73,14 +75,14 @@ const Home = ({ isAuthenticated }) => {
           className="flex-1 flex flex-col items-center justify-center gap-2 sm:gap-3 py-7 sm:py-10 px-6 sm:px-8 rounded-3xl font-black text-xl sm:text-2xl text-slate-900 bg-gradient-to-br from-cyan-400 to-blue-400 hover:from-cyan-300 hover:to-blue-300 shadow-[0_0_40px_rgba(6,182,212,0.2)] hover:shadow-[0_0_60px_rgba(6,182,212,0.35)] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
         >
           <Monitor size={36} strokeWidth={2.5} />
-          HOST
-          <span className="text-sm font-medium text-slate-700 -mt-1">Create a class session</span>
+          {t('home_host')}
+          <span className="text-sm font-medium text-slate-700 -mt-1">{t('home_host_sub')}</span>
         </button>
       </div>
 
       {!isAuthenticated && (
         <p className="mt-6 text-slate-500 text-sm">
-          Login required to play.
+          {t('home_login_required')}
         </p>
       )}
 
@@ -88,19 +90,19 @@ const Home = ({ isAuthenticated }) => {
         {serverStatus === 'waking' && (
           <>
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-slate-500">Waking up server…</span>
+            <span className="text-slate-500">{t('home_server_waking')}</span>
           </>
         )}
         {serverStatus === 'ready' && (
           <>
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-slate-600">Server ready</span>
+            <span className="text-slate-600">{t('home_server_ready')}</span>
           </>
         )}
         {serverStatus === 'error' && (
           <>
             <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span className="text-slate-500">Server unreachable — try again shortly</span>
+            <span className="text-slate-500">{t('home_server_error')}</span>
           </>
         )}
       </div>

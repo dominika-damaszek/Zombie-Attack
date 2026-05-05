@@ -4,10 +4,12 @@ import { CheckCircle2, Loader2, Users, Wifi, WifiOff } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const WaitingRoom = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const { groupData, playerData } = location.state || (() => {
     try {
@@ -98,8 +100,8 @@ const WaitingRoom = () => {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4">
         <div className="glass-panel p-8 text-center max-w-sm rounded-3xl">
           <BackButton to="/join" />
-          <p className="text-slate-400 mb-4">No group data found.</p>
-          <button onClick={() => navigate('/join')} className="btn-primary px-6 py-3">Go Back</button>
+          <p className="text-slate-400 mb-4">{t('wait_no_group')}</p>
+          <button onClick={() => navigate('/join')} className="btn-primary px-6 py-3">{t('wait_go_back')}</button>
         </div>
       </div>
     );
@@ -120,13 +122,13 @@ const WaitingRoom = () => {
             : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
         }`}>
           <span>
-            {isLobby ? '🌐 Global Lobby' : `✅ Group ${currentGroupData.group_number}`}
+            {isLobby ? t('wait_global_lobby') : `✅ ${t('wait_group')} ${currentGroupData.group_number}`}
           </span>
           <div className="flex items-center gap-1.5">
             {connected ? (
-              <><Wifi size={14} /> Live</>
+              <><Wifi size={14} /> {t('wait_live')}</>
             ) : (
-              <><WifiOff size={14} className="text-slate-500" /> <span className="text-slate-500">Reconnecting...</span></>
+              <><WifiOff size={14} className="text-slate-500" /> <span className="text-slate-500">{t('wait_reconnecting')}</span></>
             )}
           </div>
         </div>
@@ -134,12 +136,12 @@ const WaitingRoom = () => {
         <div className="glass-panel p-6 rounded-3xl border border-slate-700/50">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-black text-white mb-1">
-              {isLobby ? 'Waiting for Teacher' : `You are in Group ${currentGroupData.group_number}`}
+              {isLobby ? t('wait_waiting_teacher') : `${t('wait_in_group')} ${currentGroupData.group_number}`}
             </h2>
             <p className="text-slate-400 text-sm">
               {isLobby
-                ? 'The teacher will split the class into groups shortly...'
-                : 'Gather your group and wait for the game to start'}
+                ? t('wait_teacher_splitting')
+                : t('wait_gather_group')}
             </p>
           </div>
 
@@ -147,7 +149,7 @@ const WaitingRoom = () => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
                 <Users size={16} className="text-emerald-400" />
-                {isLobby ? 'Students in room' : 'Group members'}
+                {isLobby ? t('wait_students_in_room') : t('wait_group_members')}
               </div>
               <span className="bg-emerald-500/20 text-emerald-400 font-black px-3 py-0.5 rounded-full text-xs">
                 {players.length}
@@ -165,7 +167,7 @@ const WaitingRoom = () => {
                 >
                   <span className={`font-semibold text-sm ${p.id === playerData?.id ? 'text-emerald-300' : 'text-slate-300'}`}>
                     {p.username}
-                    {p.id === playerData?.id && <span className="ml-2 text-xs text-emerald-500 font-normal">(you)</span>}
+                    {p.id === playerData?.id && <span className="ml-2 text-xs text-emerald-500 font-normal">{t('wait_you')}</span>}
                   </span>
                   {!isLobby && (
                     p.is_ready
@@ -175,7 +177,7 @@ const WaitingRoom = () => {
                 </div>
               ))}
               {players.length === 0 && (
-                <p className="text-slate-600 text-sm text-center py-4">No players yet...</p>
+                <p className="text-slate-600 text-sm text-center py-4">{t('wait_no_players')}</p>
               )}
             </div>
           </div>
@@ -191,7 +193,7 @@ const WaitingRoom = () => {
               }`}
             >
               {savingReady ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-              {myReadyState ? "Ready! Waiting for others..." : "I'm Ready!"}
+              {myReadyState ? t('wait_ready_waiting') : t('wait_ready')}
             </button>
           )}
 

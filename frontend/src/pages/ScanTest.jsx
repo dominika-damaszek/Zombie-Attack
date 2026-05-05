@@ -61,25 +61,23 @@ export default function ScanTest() {
     };
 
     const start = async () => {
+      const config = { fps: 10, qrbox: { width: 260, height: 260 } };
       try {
-        await scanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 260, height: 260 } },
-          handleResult,
-          () => {}
-        );
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras || cameras.length === 0) throw new Error('no cameras');
+        const back = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+        await scanner.start(back.id, config, handleResult, () => {});
       } catch {
         try {
-          await scanner.start(
-            { facingMode: 'user' },
-            { fps: 10, qrbox: { width: 260, height: 260 } },
-            handleResult,
-            () => {}
-          );
+          await scanner.start({ facingMode: 'environment' }, config, handleResult, () => {});
         } catch {
-          if (active) {
-            setError('Camera access denied. Allow camera permissions and try again.');
-            setScanning(false);
+          try {
+            await scanner.start({ facingMode: 'user' }, config, handleResult, () => {});
+          } catch {
+            if (active) {
+              setError('Camera access denied. Please tap Allow when the browser asks for camera permission, then try again.');
+              setScanning(false);
+            }
           }
         }
       }
