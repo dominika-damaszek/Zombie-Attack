@@ -51,6 +51,7 @@ class JoinGroupResponse(BaseModel):
     group_number: int
     player_count: int
     player_id: str
+    join_code: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str

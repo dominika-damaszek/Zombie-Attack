@@ -121,6 +121,31 @@ function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
   );
 }
 
+function CardTakenPopup({ playerName, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="relative rounded-3xl p-7 max-w-sm w-full mx-4 text-center" style={{ background: 'rgba(42,38,34,0.97)', border: '2px solid rgba(217,117,89,0.5)', backdropFilter: 'blur(20px)' }}>
+        <div className="text-5xl mb-3">🚫</div>
+        <h3 className="text-xl font-black mb-2" style={{ color: '#d97559' }}>Card Already Taken</h3>
+        <p className="text-slate-300 text-sm mb-1 leading-relaxed">
+          This card has already been scanned by
+        </p>
+        <p className="text-lg font-black mb-3" style={{ color: '#AD9E97' }}>{playerName}</p>
+        <p className="text-slate-500 text-xs mb-5 leading-relaxed">
+          Each card can only belong to one player during this phase. Please scan a different card.
+        </p>
+        <button
+          onClick={onClose}
+          className="w-full py-3.5 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #795846, #a87a64)' }}
+        >
+          Got it, scan another card
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function InfectionAlert({ onDismiss, t }) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, 6000);
@@ -143,81 +168,183 @@ function InfectionAlert({ onDismiss, t }) {
   );
 }
 
-async function startCameraScanner(scanner, handleResult, setError) {
+async function startCameraScanner(scanner, handleResult) {
   const config = { fps: 10, qrbox: { width: 240, height: 240 } };
   try {
     const cameras = await Html5Qrcode.getCameras();
     if (!cameras || cameras.length === 0) throw new Error('no cameras');
     const back = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
     await scanner.start(back.id, config, handleResult, () => {});
+    return true;
   } catch {
     try {
       await scanner.start({ facingMode: 'environment' }, config, handleResult, () => {});
+      return true;
     } catch {
       try {
         await scanner.start({ facingMode: 'user' }, config, handleResult, () => {});
+        return true;
       } catch {
-        setError('Camera access denied. Please tap Allow when the browser asks for camera permission, then try again.');
+        return false;
       }
     }
   }
 }
 
 function QRScannerModal({ onScan, onClose, title, hint }) {
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [permState, setPermState] = useState('checking'); // 'checking'|'prompt'|'requesting'|'granted'|'denied'
+  const [retryCountdown, setRetryCountdown] = useState(null);
+  const [loading, setLoading] = useState(false);
   const scannerRef = useRef(null);
+  const retryTimerRef = useRef(null);
+  const countdownRef = useRef(null);
+  const onScanRef = useRef(onScan);
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
-  useEffect(() => {
+  const stopScanner = useCallback(() => {
+    if (scannerRef.current) {
+      scannerRef.current.stop().catch(() => {});
+      scannerRef.current = null;
+    }
+  }, []);
+
+  const scheduleRetry = useCallback((doRequest) => {
+    clearTimeout(retryTimerRef.current);
+    clearInterval(countdownRef.current);
+    const secs = Math.floor(Math.random() * 6) + 5;
+    setRetryCountdown(secs);
+    let remaining = secs;
+    countdownRef.current = setInterval(() => {
+      remaining -= 1;
+      setRetryCountdown(r => r !== null ? r - 1 : null);
+      if (remaining <= 0) clearInterval(countdownRef.current);
+    }, 1000);
+    retryTimerRef.current = setTimeout(() => {
+      setRetryCountdown(null);
+      doRequest();
+    }, secs * 1000);
+  }, []);
+
+  const launchScanner = useCallback(async (doRequest) => {
+    setLoading(true);
+    setPermState('granted');
     const scanner = new Html5Qrcode('qr-reader');
     scannerRef.current = scanner;
     const handleResult = (text) => {
       let result = text.trim();
       try { const parsed = JSON.parse(text); result = parsed.code || parsed.id || text; } catch {}
-      onScan(result.toUpperCase());
+      onScanRef.current(result.toUpperCase());
     };
-    startCameraScanner(scanner, handleResult, setError).finally(() => setLoading(false));
-    return () => scanner.stop().catch(() => {});
-  }, [onScan]);
+    const ok = await startCameraScanner(scanner, handleResult);
+    setLoading(false);
+    if (!ok) {
+      stopScanner();
+      setPermState('denied');
+      scheduleRetry(doRequest);
+    }
+  }, [stopScanner, scheduleRetry]);
+
+  const doRequest = useCallback(async () => {
+    setPermState('requesting');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(t => t.stop());
+      await launchScanner(doRequest);
+    } catch {
+      setPermState('denied');
+      scheduleRetry(doRequest);
+    }
+  }, [launchScanner, scheduleRetry]);
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const result = await navigator.permissions.query({ name: 'camera' });
+        if (result.state === 'granted') {
+          await launchScanner(doRequest);
+        } else {
+          setPermState('prompt');
+        }
+      } catch {
+        setPermState('prompt');
+      }
+    };
+    check();
+    return () => {
+      stopScanner();
+      clearTimeout(retryTimerRef.current);
+      clearInterval(countdownRef.current);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleClose = useCallback(() => {
+    clearTimeout(retryTimerRef.current);
+    clearInterval(countdownRef.current);
+    stopScanner();
+    onClose();
+  }, [stopScanner, onClose]);
+
+  const needsPermission = permState === 'prompt' || permState === 'denied' || permState === 'requesting';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
       <div className="relative rounded-3xl p-6 max-w-sm w-full mx-4" style={{ background: 'rgba(42,38,34,0.95)', border: '1px solid rgba(109,113,98,0.4)', backdropFilter: 'blur(20px)' }}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><X size={24} /></button>
+        <button onClick={handleClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><X size={24} /></button>
         <h3 className="text-xl font-bold mb-1 flex items-center gap-2" style={{ color: '#AD9E97' }}>
           <Camera size={20} style={{ color: '#795846' }} /> {title}
         </h3>
         {hint && <p className="text-slate-500 text-sm mb-4">{hint}</p>}
-        <div
-          id="qr-reader"
-          className="w-full rounded-2xl overflow-hidden"
-          style={{ border: '1px solid rgba(109,113,98,0.3)', minHeight: error ? 0 : 280, display: error ? 'none' : 'block' }}
-        />
-        {loading && !error && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(42,38,34,0.7)' }}>
-            <div className="text-center">
-              <Camera size={32} style={{ color: '#795846' }} className="mx-auto mb-2 animate-pulse" />
-              <p className="text-sm" style={{ color: '#AD9E97' }}>Starting camera…</p>
+
+        {needsPermission ? (
+          <div className="space-y-4 py-2">
+            <div className="flex flex-col items-center text-center py-4 px-2">
+              <div className="text-6xl mb-3">📷</div>
+              <h4 className="text-lg font-black mb-2" style={{ color: '#AD9E97' }}>Camera Access Needed</h4>
+              <p className="text-slate-400 text-sm leading-relaxed mb-1">
+                To scan your cards, please allow camera access when your browser asks for permission.
+              </p>
+              {permState === 'denied' && (
+                <p className="text-xs mt-1" style={{ color: '#d97559' }}>
+                  Access was denied. Tap the button below or allow the camera in your browser settings.
+                </p>
+              )}
             </div>
-          </div>
-        )}
-        {error && (
-          <div className="space-y-3">
-            <div className="p-4 rounded-xl text-sm" style={{ background: 'rgba(217,117,89,0.1)', border: '1px solid rgba(217,117,89,0.3)', color: '#d97559' }}>
-              📷 {error}
-            </div>
-            <p className="text-xs text-center" style={{ color: '#6D7162' }}>
-              On iOS: go to Settings → Safari → Camera → Allow<br/>
-              On Android: tap the lock icon in the address bar
-            </p>
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-xl text-sm font-bold"
-              style={{ background: 'rgba(109,113,98,0.2)', color: '#AD9E97' }}
-            >
+            {retryCountdown !== null ? (
+              <div className="text-center py-3 rounded-2xl" style={{ background: 'rgba(109,113,98,0.1)', border: '1px solid rgba(109,113,98,0.2)' }}>
+                <p className="text-slate-400 text-sm mb-1">Asking again in</p>
+                <p className="text-4xl font-black font-mono" style={{ color: '#795846' }}>{retryCountdown}</p>
+              </div>
+            ) : (
+              <button
+                onClick={doRequest}
+                disabled={permState === 'requesting'}
+                className="w-full py-4 rounded-2xl font-black text-white text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: 'linear-gradient(135deg, #795846, #a87a64)', opacity: permState === 'requesting' ? 0.7 : 1 }}
+              >
+                <Camera size={22} />
+                {permState === 'requesting' ? 'Requesting…' : 'Allow Camera Access'}
+              </button>
+            )}
+            <button onClick={handleClose} className="w-full py-2.5 rounded-xl text-sm font-bold" style={{ background: 'rgba(109,113,98,0.15)', color: '#6D7162' }}>
               Close
             </button>
           </div>
+        ) : (
+          <>
+            <div
+              id="qr-reader"
+              className="w-full rounded-2xl overflow-hidden"
+              style={{ border: '1px solid rgba(109,113,98,0.3)', minHeight: 280 }}
+            />
+            {(loading || permState === 'checking') && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(42,38,34,0.85)' }}>
+                <div className="text-center">
+                  <Camera size={32} style={{ color: '#795846' }} className="mx-auto mb-2 animate-pulse" />
+                  <p className="text-sm" style={{ color: '#AD9E97' }}>Starting camera…</p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -397,6 +524,125 @@ function SlideContent({ slide, playerState, inventory, objectives, t }) {
   );
 }
 
+function WhatToDoNow({
+  gamePhase, isScanSlide, scanDone, meIsReady, isLast,
+  isModule, isDoneTrading, hasSkippedTrade, isZombie,
+  initialScanCount,
+  onShowInitialScanner, onSlideReady, onDoneTrading, onSkipTrade, onOpenScanner,
+}) {
+  const [open, setOpen] = useState(false);
+
+  let icon = '❓';
+  let title = '';
+  let body = '';
+  let actions = [];
+
+  if (gamePhase === 'module_instructions') {
+    if (isScanSlide) {
+      if (!scanDone) {
+        icon = '📷';
+        title = 'Scan Your Starting Cards';
+        body = `You need to scan all 4 of your physical playing cards so the game knows which cards you have. You've scanned ${initialScanCount} of 4 so far. Tap the button below to open the camera and scan your next card.`;
+        actions = [{ label: `Scan Card ${initialScanCount + 1} of 4`, color: '#6D7162', onClick: () => { setOpen(false); onShowInitialScanner(); } }];
+      } else {
+        icon = '⏳';
+        title = 'All Cards Scanned!';
+        body = 'Great job — you have scanned all 4 of your cards. Just wait here while the other players finish scanning their cards. The game will move on automatically.';
+      }
+    } else if (!meIsReady) {
+      icon = '📖';
+      title = isLast ? "Tap 'I'm Ready'" : "Read & Tap Next";
+      body = isLast
+        ? "Read through the last slide carefully. When you understand everything, tap the green 'I'm Ready' button to let the teacher know you are good to go."
+        : "Read through the instructions on your screen. When you are done, tap the 'Next' button at the bottom to go to the next slide.";
+      actions = [{ label: isLast ? "I'm Ready ✓" : 'Next →', color: '#a8c4a0', dark: true, onClick: () => { setOpen(false); onSlideReady(); } }];
+    } else {
+      icon = '✅';
+      title = 'Waiting for Others';
+      body = "You're ready! Sit tight while the other players finish reading and tap Ready. The game will move on as soon as everyone is ready.";
+    }
+  } else if (gamePhase === 'round_active') {
+    if (isModule) {
+      if (!isDoneTrading) {
+        icon = '🤝';
+        title = 'Go Trade a Card!';
+        body = "Walk up to another player who hasn't traded yet and swap one physical card with them. After trading, come back and tap 'Done Trading'. If you can't find anyone to trade with, you can use your one-time Skip.";
+        actions = [
+          { label: 'Done Trading ✓', color: '#4ade80', dark: true, onClick: () => { setOpen(false); onDoneTrading(); } },
+          ...(!hasSkippedTrade ? [{ label: 'Skip Trade (1×)', color: '#d97559', onClick: () => { setOpen(false); onSkipTrade(); } }] : []),
+        ];
+      } else {
+        icon = '✅';
+        title = 'Done Trading!';
+        body = "You've marked yourself as done. Just wait here — the round will end once all the other players have finished trading.";
+      }
+    } else {
+      icon = isZombie ? '🧟' : '📷';
+      title = isZombie ? 'Infect Other Players!' : 'Scan a Card';
+      body = isZombie
+        ? "Your goal is to spread the infection. Ask a survivor to let you scan one of their cards using the Scan Card button — if they accept a card from you, they get infected!"
+        : "Use the Scan Card button to scan a card from another player. Be careful — if they are a zombie, you might get infected!";
+      actions = [{ label: 'Open Scanner 📷', color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
+    }
+  } else if (gamePhase === 'module_between_rounds') {
+    icon = '📦';
+    title = 'Scan Your Cards';
+    body = "The trading round is over! Scan any cards you received during the round using the Scan button, then tap 'Ready for Next Round' to continue.";
+    actions = [{ label: 'Open Scanner 📷', color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
+  } else {
+    return null;
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="fixed bottom-20 left-5 z-40 flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-lg transition-all hover:scale-105 active:scale-95"
+        style={{ background: 'rgba(42,38,34,0.95)', border: '1px solid rgba(109,113,98,0.5)', color: '#AD9E97', backdropFilter: 'blur(12px)' }}
+      >
+        <span className="text-base leading-none">{icon}</span>
+        What now?
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(26,22,18,0.87)' }}>
+          <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ background: 'rgba(30,27,24,0.98)', border: '1px solid rgba(109,113,98,0.4)', backdropFilter: 'blur(24px)' }}>
+            <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: 'rgba(109,113,98,0.2)' }}>
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">{icon}</span>
+                <h2 className="text-lg font-black" style={{ color: '#AD9E97' }}>{title}</h2>
+              </div>
+              <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                <X size={22} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-slate-300 text-sm leading-relaxed">{body}</p>
+              {actions.length > 0 && (
+                <div className="space-y-2">
+                  {actions.map((a, i) => (
+                    <button
+                      key={i}
+                      onClick={a.onClick}
+                      className="w-full py-3.5 rounded-2xl font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      style={{ background: a.color, color: a.dark ? '#0f1a0e' : '#fff' }}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={() => setOpen(false)} className="w-full py-2.5 rounded-xl text-sm font-bold" style={{ background: 'rgba(109,113,98,0.15)', color: '#6D7162' }}>
+                Got it, close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 const GameScreen = ({ mockData } = {}) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -414,6 +660,7 @@ const GameScreen = ({ mockData } = {}) => {
   const [showScanner, setShowScanner] = useState(false);
   const [showInitialScanner, setShowInitialScanner] = useState(false);
   const [showInfectionAlert, setShowInfectionAlert] = useState(false);
+  const [cardTakenByPlayer, setCardTakenByPlayer] = useState(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [scanFeedback, setScanFeedback] = useState(null);
   const [eduContext, setEduContext] = useState(null);
@@ -511,6 +758,10 @@ const GameScreen = ({ mockData } = {}) => {
         setTimeout(() => setScanFeedback(null), 2500);
         playSFX('scan_success');
         if (data.initial_cards_scanned >= 4) fetchState();
+      } else if (res.status === 409 && typeof data.detail === 'string' && data.detail.startsWith('already_owned_by:')) {
+        const owner = data.detail.split('already_owned_by:')[1];
+        setScanFeedback(null);
+        setCardTakenByPlayer(owner);
       } else {
         setScanFeedback({ status: 'error', message: data.detail || 'Unknown card code' });
         setTimeout(() => setScanFeedback(null), 3000);
@@ -627,6 +878,23 @@ const GameScreen = ({ mockData } = {}) => {
             hint={t('game_scan_starting_hint')}
           />
         )}
+        {cardTakenByPlayer && (
+          <CardTakenPopup
+            playerName={cardTakenByPlayer}
+            onClose={() => setCardTakenByPlayer(null)}
+          />
+        )}
+
+        <WhatToDoNow
+          gamePhase="module_instructions"
+          isScanSlide={isScanSlide}
+          scanDone={scanDone}
+          meIsReady={meIsReady}
+          isLast={isLast}
+          initialScanCount={initialScanCount}
+          onShowInitialScanner={() => setShowInitialScanner(true)}
+          onSlideReady={handleSlideReady}
+        />
 
         <div className="w-full max-w-lg">
           <div className="flex justify-center gap-1.5 mb-4 sm:mb-8">
@@ -771,6 +1039,18 @@ const GameScreen = ({ mockData } = {}) => {
       {eduContext && <EduPopup edu={eduContext} onDismiss={() => setEduContext(null)} />}
       {showInfoModal && <InfoModal onClose={() => setShowInfoModal(false)} t={t} />}
       <AudioToggle toggle={toggle} isEnabled={isEnabled} />
+
+      <WhatToDoNow
+        gamePhase={gamePhase}
+        isModule={isModule}
+        isDoneTrading={isDoneTrading}
+        hasSkippedTrade={hasSkippedTrade}
+        isZombie={isZombie}
+        initialScanCount={initialScanCount}
+        onDoneTrading={handleDoneTrading}
+        onSkipTrade={handleSkipTrade}
+        onOpenScanner={() => setShowScanner(true)}
+      />
 
       <button
         onClick={() => setShowInfoModal(true)}

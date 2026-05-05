@@ -178,11 +178,22 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
 
     inventory = json.loads(player.inventory or '[]')
 
-    # Prevent duplicate scan
+    # Prevent duplicate scan by same player
     if any(c['code'] == card_code for c in inventory):
         return {"message": "already_scanned", "card_type": card.card_type,
                 "initial_cards_scanned": player.initial_cards_scanned,
                 "inventory": inventory, "objectives": json.loads(player.objectives or '[]')}
+
+    # Check if card is already claimed by another player in the same group
+    for other in group.players:
+        if other.id == player.id:
+            continue
+        other_inv = json.loads(other.inventory or '[]')
+        if any(c['code'] == card_code for c in other_inv):
+            raise HTTPException(
+                status_code=409,
+                detail=f"already_owned_by:{other.user.username}"
+            )
 
     if player.initial_cards_scanned >= 4:
         raise HTTPException(status_code=400, detail="Already scanned 4 cards")

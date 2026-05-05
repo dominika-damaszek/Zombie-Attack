@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Loader2, Users, Wifi, WifiOff } from 'lucide-react';
+import { CheckCircle2, Loader2, Users, Wifi, WifiOff, Copy, Check } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
@@ -21,6 +21,7 @@ const WaitingRoom = () => {
   const [currentGroupData, setCurrentGroupData] = useState(groupData);
   const [players, setPlayers] = useState([]);
   const [savingReady, setSavingReady] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { lastMessage, connected } = useGameWebSocket(currentGroupData?.group_id, playerData?.id);
 
@@ -144,6 +145,33 @@ const WaitingRoom = () => {
                 : t('wait_gather_group')}
             </p>
           </div>
+
+          {currentGroupData?.join_code && (
+            <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
+              <p className="text-xs uppercase tracking-widest font-mono text-center mb-2" style={{ color: '#6D7162' }}>
+                Room Code — share with friends
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-4xl font-black font-mono tracking-[0.3em]" style={{ color: '#a8c4a0' }}>
+                  {currentGroupData.join_code}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentGroupData.join_code).catch(() => {});
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                  style={copied
+                    ? { background: 'rgba(168,196,160,0.2)', color: '#a8c4a0', border: '1px solid rgba(168,196,160,0.4)' }
+                    : { background: 'rgba(109,113,98,0.2)', color: '#AD9E97', border: '1px solid rgba(109,113,98,0.3)' }
+                  }
+                >
+                  {copied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy</>}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-5">
             <div className="flex items-center justify-between mb-3">
