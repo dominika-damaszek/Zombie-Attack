@@ -52,6 +52,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+
 def get_db():
     """
     FastAPI dependency that provides one database session per request and

@@ -174,7 +174,7 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
     # Look up card in master catalogue
     card = db.query(models.Card).filter_by(code=card_code).first()
     if not card:
-        raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}. Valid format: ZW-MED-01")
+        raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}. Valid format: QRC-XXXXXXXX")
 
     inventory = json.loads(player.inventory or '[]')
 
@@ -252,6 +252,11 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404)
+
+    # Idempotent: only advance if we are actually between rounds.
+    # Multiple bots/players may call this simultaneously; only the first call acts.
+    if group.game_state != "module_between_rounds":
+        return {"message": "already_advanced"}
 
     group.current_round += 1
     for p in group.players:
