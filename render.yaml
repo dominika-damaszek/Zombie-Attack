@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: zombieware-backend
+    name: zombie-attack
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
@@ -21,7 +21,7 @@ services:
         generateValue: true
 
   - type: static_site
-    name: zombieware-frontend
+    name: zombie-attack-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishPath: dist
@@ -32,6 +32,6 @@ services:
     envVars:
       - key: VITE_API_URL
         fromService:
-          name: zombieware-backend
+          name: zombie-attack
           type: web
           property: url
