@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime
+from datetime import datetime, timezone
 from sqlalchemy.orm import relationship
 from database import Base
 import uuid
@@ -71,11 +72,41 @@ class GroupPlayer(Base):
 class Item(Base):
     __tablename__ = "items"
 
+    # item.id stores the QR-code string (e.g. "ZW-MED-01") – this is the
+    # physical code printed on the card and never changes.
     id = Column(String, primary_key=True, index=True)
+
+    # Card category, copied from the Card catalogue at first-scan time.
+    # Storing it here avoids a JOIN on every read.
     type = Column(String, nullable=False)
+
+    # Which game room this card is currently active in.
     group_id = Column(String, ForeignKey("groups.id"), nullable=False)
+
+    # The player who currently holds the card (NULL = unassigned / not yet scanned).
     current_owner_id = Column(String, ForeignKey("group_players.id"), nullable=True)
+
+    # The player who held the card immediately before the current owner.
+    # Used to detect virus transmission: if previous_owner was infected,
+    # the card carries contamination to the new owner.
     previous_owner_id = Column(String, ForeignKey("group_players.id"), nullable=True)
+
+    # Timestamp recorded when this card first enters play (first scan).
+    # This is set once and never updated.
+    scanned_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    # Timestamp updated every time ownership changes (card is traded / re-scanned).
+    # Equals scanned_at on the first scan; updated on every subsequent transfer.
+    last_transferred_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     group = relationship("Group")
     current_owner = relationship("GroupPlayer", foreign_keys=[current_owner_id])

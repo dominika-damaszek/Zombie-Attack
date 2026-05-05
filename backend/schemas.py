@@ -14,7 +14,7 @@ class UserResponse(BaseModel):
     username: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class SessionCreate(BaseModel):
     game_mode: str = "normal"
@@ -31,7 +31,7 @@ class GroupResponse(BaseModel):
     secret_word: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class SessionResponse(BaseModel):
     id: str
@@ -40,7 +40,7 @@ class SessionResponse(BaseModel):
     groups: List[GroupResponse] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class JoinGroupRequest(BaseModel):
     join_code: str

@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
+import os
 import models, schemas, database
 import bcrypt
 from jose import jwt
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-SECRET_KEY = "ZOMBIEWARE_SECRET_KEY"  # In production, use env variable
+# SECRET_KEY is loaded from the .env file via database.py's load_dotenv() call
+# (load_dotenv runs at import time when database is first imported).
+# If the variable is missing, the fallback is used – change it before deploying!
+SECRET_KEY = os.getenv("SECRET_KEY", "ZOMBIEWARE_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 1 week
 
