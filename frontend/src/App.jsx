@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import { useState, useEffect } from 'react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import TopNav from './components/TopNav';
+import HelpButton from './components/HelpButton';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
 import HostGame from './pages/HostGame';
@@ -48,7 +49,7 @@ function App() {
     <LanguageProvider>
       <Router>
         <SpaRedirectHandler />
-        <div className="flex flex-col min-h-screen bg-slate-900 selection:bg-emerald-500/30">
+        <div className="flex flex-col min-h-screen bg-transparent selection:bg-emerald-500/30">
           {!isFullScreenGame && !isPreview && (
             <TopNav
               isAuthenticated={isAuthenticated}
@@ -59,6 +60,7 @@ function App() {
           )}
 
           <main className="flex-1 overflow-y-auto relative">
+            <HelpButton />
             <div className="relative z-10">
               <Routes>
                 <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
@@ -100,6 +102,14 @@ function App() {
 
             <div className="fixed top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none -z-0" />
             <div className="fixed bottom-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -z-0" />
+            {/* Floating Viruses */}
+            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+              <img src="/uiv1.png" alt="" className="absolute top-[10%] left-[10%] w-32 animate-float-slow" />
+              <img src="/uiv1.png" alt="" className="absolute top-[60%] left-[80%] w-24 animate-float-medium" style={{ animationDelay: '2s' }} />
+              <img src="/uiv1.png" alt="" className="absolute top-[0%] left-[50%] w-28 animate-float-fast" style={{ animationDelay: '4s' }} />
+              <img src="/uiv1.png" alt="" className="absolute top-[80%] left-[20%] w-20 animate-float-slow" style={{ animationDelay: '6s' }} />
+              <img src="/uiv1.png" alt="" className="absolute top-[2%] left-[50%] w-16 animate-float-medium" style={{ animationDelay: '1s' }} />
+            </div>
           </main>
         </div>
       </Router>

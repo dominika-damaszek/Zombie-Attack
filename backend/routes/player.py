@@ -43,6 +43,7 @@ async def join_group(join_data: schemas.JoinGroupRequest, token: str, db: Sessio
         "group_number": group.group_number,
         "player_count": len(group.players),
         "player_id": player_id,
+        "join_code": group.join_code,
     }
 
 @router.get("/{player_id}/group", response_model=schemas.JoinGroupResponse)
@@ -58,4 +59,5 @@ def get_player_group(player_id: str, db: Session = Depends(database.get_db)):
         "group_number": group.group_number,
         "player_count": len(group.players),
         "player_id": player_id,
+        "join_code": group.join_code,
     }

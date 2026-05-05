@@ -42,14 +42,10 @@ const Home = ({ isAuthenticated }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] sm:min-h-[calc(100vh-73px)] text-center px-4 py-8">
       <div className="flex flex-col items-center gap-5 mb-8 sm:mb-14">
-        <div className="relative">
-          <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 rounded-full scale-150" />
-          <img
-            src="/zombie-logo.svg"
-            alt="Zombieware"
-            className="w-28 h-28 sm:w-48 sm:h-48 relative drop-shadow-[0_0_32px_rgba(52,211,153,0.4)]"
-          />
-        </div>
+        <div
+          className="absolute inset-0 pointer-events-none z-[-1] opacity-70 bg-cover bg-center"
+          style={{ backgroundImage: "url('/bgzombies1.png')" }}
+        />
         <div>
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight leading-none mb-3">
             Zombieware
@@ -63,20 +59,19 @@ const Home = ({ isAuthenticated }) => {
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
         <button
           onClick={handleJoin}
-          className="flex-1 flex flex-col items-center justify-center gap-2 sm:gap-3 py-7 sm:py-10 px-6 sm:px-8 rounded-3xl font-black text-xl sm:text-2xl text-slate-900 bg-gradient-to-br from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-[0_0_40px_rgba(52,211,153,0.25)] hover:shadow-[0_0_60px_rgba(52,211,153,0.4)] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
-        >
+          className="group flex-1 flex flex-col items-center justify-center gap-3 py-10 px-8 rounded-3xl text-2xl neon-btn transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]">
           <Users size={36} strokeWidth={2.5} />
           {t('home_join')}
-          <span className="text-sm font-medium text-slate-700 -mt-1">{t('home_join_sub')}</span>
+          <span className="text-sm font-medium group-hover:text-black group-hover:font-bold -mt-1">Enter a classroom</span>
         </button>
 
         <button
           onClick={handleHost}
-          className="flex-1 flex flex-col items-center justify-center gap-2 sm:gap-3 py-7 sm:py-10 px-6 sm:px-8 rounded-3xl font-black text-xl sm:text-2xl text-slate-900 bg-gradient-to-br from-cyan-400 to-blue-400 hover:from-cyan-300 hover:to-blue-300 shadow-[0_0_40px_rgba(6,182,212,0.2)] hover:shadow-[0_0_60px_rgba(6,182,212,0.35)] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+          className="group flex-1 flex flex-col items-center justify-center gap-3 py-10 px-8 rounded-3xl text-2xl neon-btn-alt transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
         >
           <Monitor size={36} strokeWidth={2.5} />
           {t('home_host')}
-          <span className="text-sm font-medium text-slate-700 -mt-1">{t('home_host_sub')}</span>
+          <span className="text-sm font-medium text-[var(--neon-cyan)] group-hover:text-black  group-hover:font-bold -mt-1">Create a class session</span>
         </button>
       </div>
 
@@ -106,7 +101,32 @@ const Home = ({ isAuthenticated }) => {
           </>
         )}
       </div>
+      <div className="absolute bottom-[5%]  hidden lg:flex gap-10 flex-row w-[70%] justify-center">
+        <div className="flex flex-row gap-3 items-center">
+          <img src="/nrp1.png" alt="Players" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
+          <p className="text-slate-400 text-lg max-w-md mx-auto">
+            6-11 players
+          </p>
+        </div>
+        <div className="flex flex-row gap-3 items-center">
+          <img src="/time1.png" alt="Duration" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
+          <p className="text-slate-400 text-lg max-w-md mx-auto">
+            15-20 minutes
+          </p>
+        </div>
+        <div className="flex flex-row gap-3 items-center">
+          <img src="/age1.png" alt="Age" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
+          <p className="text-slate-400 text-lg max-w-md mx-auto">
+            14+ years old
+          </p>
+        </div>
+      </div>
+
+      <div className="fixed right-[-10px] bottom-[30px] w-[100px] h-[100px] lg:w-[200px] lg:h-[200px] opacity-90 pointer-events-none">
+        <img src="/uil1.png" alt="Lock" className="w-full h-full object-contain drop-shadow-[0px_0_20px_rgba(255,255,255,100)]" />
+      </div>
     </div>
+
   );
 };
 

@@ -53,8 +53,8 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
   ];
 
   return (
-    <header className="w-full flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 z-30 relative">
-      <div className="flex items-center gap-1 sm:gap-2" ref={menuRef}>
+    <header className="w-full flex items-center justify-between px-6 py-0 bg-[var(--grid-color)]/90 backdrop-blur-xl border-b border-[var(--neon-cyan-glow)]/50 z-30 relative">
+      <div className="flex items-center gap-3 sm:gap-2" ref={menuRef}>
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -66,7 +66,7 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
 
           {menuOpen && (
             <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl shadow-2xl overflow-hidden z-50"
-                 style={{ background: 'rgba(15,23,42,0.98)', border: '1px solid rgba(71,85,105,0.5)', backdropFilter: 'blur(20px)' }}>
+              style={{ background: 'rgba(15,23,42,0.98)', border: '1px solid rgba(71,85,105,0.5)', backdropFilter: 'blur(20px)' }}>
               <div className="px-4 py-3 border-b border-slate-700/50">
                 <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">{t('nav_menu')}</p>
               </div>
@@ -135,8 +135,8 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
           onClick={() => navigate('/')}
           className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity"
         >
-          <img src="/zombie-logo.svg" alt="Logo" className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
-          <span className="text-lg sm:text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-tight">
+          <img src="/zombie-logo.svg" alt="Logo" className="w-25 h-25 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
+          <span className="text-lg font-black text-[var(--neon-light-green)] drop-shadow-[0_0_5px_var(--neon-green)] tracking-tight">
             Zombieware
           </span>
         </button>
