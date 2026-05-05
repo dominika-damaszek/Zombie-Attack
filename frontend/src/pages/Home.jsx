@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Monitor } from 'lucide-react';
+import { API_URLS } from '../services/api';
 
 const Home = ({ isAuthenticated }) => {
   const navigate = useNavigate();
+  const [serverStatus, setServerStatus] = useState('waking');
+
+  useEffect(() => {
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        await fetch(`${API_URLS.BASE}/`, { method: 'GET' });
+        if (!cancelled) setServerStatus('ready');
+      } catch {
+        if (!cancelled) setServerStatus('error');
+      }
+    };
+    ping();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleJoin = () => {
     if (!isAuthenticated) {
@@ -67,6 +83,27 @@ const Home = ({ isAuthenticated }) => {
           Login required to play.
         </p>
       )}
+
+      <div className="mt-8 flex items-center gap-2 text-xs">
+        {serverStatus === 'waking' && (
+          <>
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-slate-500">Waking up server…</span>
+          </>
+        )}
+        {serverStatus === 'ready' && (
+          <>
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-slate-600">Server ready</span>
+          </>
+        )}
+        {serverStatus === 'error' && (
+          <>
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <span className="text-slate-500">Server unreachable — try again shortly</span>
+          </>
+        )}
+      </div>
     </div>
   );
 };
