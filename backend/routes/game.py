@@ -20,7 +20,7 @@ ROUND_EVENTS = [
     {"id": "zero_trust",    "title": "🚫 Zero Trust Mode", "desc": "No item trades for 30 seconds. Trust no one."},
 ]
 
-ALL_CARD_TYPES = ["remedio", "comida", "arma", "roupa", "ferramentas"]
+ALL_CARD_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", "security_layer"]
 TOTAL_SLIDES = 7  # slides 0–6 per module
 
 # ── WebSocket ──────────────────────────────────────────────────────────────────
@@ -458,12 +458,15 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
 
     else:
         # ── 3. TRADE: Card belongs to someone else → reassign ─────────────────
+        prev_owner_id_before_trade = item.current_owner_id
         item.previous_owner_id = item.current_owner_id
         item.current_owner_id  = player.id
-        
+
         # Auto-ready the player upon completing a trade
         player.is_ready = True
-        # last_transferred_at updates automatically via onupdate on the column
+
+        # ── Trading point: +1 for completing a trade ───────────────────────────
+        player.score = (player.score or 0) + 1
 
         # ── 4. INFECTION CHECK (only in modes with zombies) ───────────────────
         if zombies_enabled:
@@ -480,6 +483,8 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
                 if prev_owner and prev_owner.is_infected:
                     player.infected_by_id = prev_owner.id
                     player.infected_in_round = group.current_round
+                    # ── Infection point: +3 to the infector immediately ────────
+                    prev_owner.score = (prev_owner.score or 0) + 3
 
                 # Mark ALL cards the player currently holds as contaminated
                 owned_items = db.query(models.Item).filter_by(
@@ -632,6 +637,10 @@ async def end_game_manual(group_id: str, db: DBSession = Depends(get_db)):
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
+    # Award final round points if ending mid-game
+    if group.game_state in ("round_active", "module_between_rounds"):
+        db_queries.award_round_points(db, group_id, is_final_round=True)
+
     group.game_state = "end_game"
     db.commit()
 
@@ -651,18 +660,39 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
     surv    = [p for p in group.players if not p.is_infected]
     infection_rate = round(len(zombies) / total * 100) if total else 0
 
+    # ── Per-player enriched data ──────────────────────────────────────────────
+    def _player_entry(p):
+        # Count trades completed (cards received from others — items where previous_owner != None and current_owner == p)
+        trades = db.query(models.Item).filter(
+            models.Item.current_owner_id == p.id,
+            models.Item.previous_owner_id != None,
+        ).count()
+
+        # Count infections caused by this player
+        infections_caused = db.query(models.GroupPlayer).filter(
+            models.GroupPlayer.infected_by_id == p.id
+        ).count()
+
+        # Count objectives met
+        owned_types = {i.type for i in db.query(models.Item).filter_by(current_owner_id=p.id).all()}
+        objectives = json.loads(p.objectives or '[]')
+        objectives_met = len([obj for obj in objectives if obj in owned_types])
+
+        return {
+            "username":          p.user.username,
+            "score":             p.score or 0,
+            "role":              p.role or "survivor",
+            "is_infected":       p.is_infected,
+            "is_initial_zombie": p.is_initial_zombie or False,
+            "trades":            trades,
+            "infections_caused": infections_caused,
+            "objectives_met":    objectives_met,
+            "objectives_total":  len(objectives),
+        }
+
     # ── Build ranked scoreboard ───────────────────────────────────────────────
     scoreboard = sorted(
-        [
-            {
-                "username":         p.user.username,
-                "score":            p.score or 0,
-                "role":             p.role or "survivor",
-                "is_infected":      p.is_infected,
-                "is_initial_zombie": p.is_initial_zombie or False,
-            }
-            for p in group.players
-        ],
+        [_player_entry(p) for p in group.players],
         key=lambda x: x["score"],
         reverse=True,
     )

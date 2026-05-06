@@ -386,24 +386,19 @@ import json as _json
 
 def award_round_points(db: DBSession, group_id: str, is_final_round: bool = False) -> list[dict]:
     """
-    Award points to all players at the end of a round.
+    Award end-of-round points to all players.
 
-    Scoring rules:
-      Zombie (is_initial_zombie=True)  who caused infections THIS round: +2 per infection
-      Zombie (is_initial_zombie=False) who caused infections THIS round: +1 per infection
-      Survivor who survived the round:                                    +1
-      Survivor who completed all 3 objectives:                            +3
-      Survivor who survives to the end of the final round:                +2
-
-    Infection points are awarded ONCE — only in the round the infection occurred,
-    using the infected_by_id / infected_in_round fields on GroupPlayer.
+    Scoring rules (trade and infection points are awarded immediately in scan_item):
+      🛡️  Survivor who survived the round:            +2
+      🎯  Per objective met at round end:              +1 each (max +3)
+      🏆  All 3 objectives met (bonus):                +2
+      🌟  Final-round survivor bonus:                  +5
     """
     group = (
         db.query(models.Group)
           .filter(models.Group.id == group_id)
           .first()
     )
-    current_round = group.current_round if group else 0
 
     players = (
         db.query(models.GroupPlayer)
@@ -411,34 +406,18 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
           .all()
     )
 
-    # Build a map: infector_id → count of players they infected THIS round
-    infections_this_round: dict[str, int] = {}
-    for p in players:
-        if p.infected_in_round == current_round and p.infected_by_id:
-            infections_this_round[p.infected_by_id] = (
-                infections_this_round.get(p.infected_by_id, 0) + 1
-            )
-
-    # Build a lookup for quick access
-    player_map = {p.id: p for p in players}
-
     results = []
 
     for player in players:
         delta = 0
+        breakdown = []
 
-        if player.is_infected:
-            # ── Zombie: points only for infections caused THIS round ───────────
-            infections_caused = infections_this_round.get(player.id, 0)
-            if infections_caused > 0:
-                pts_per = 2 if player.is_initial_zombie else 1
-                delta += pts_per * infections_caused
+        if not player.is_infected:
+            # ── Survived this round ────────────────────────────────────────────
+            delta += 2
+            breakdown.append({"reason": "Survived round", "pts": 2})
 
-        else:
-            # ── Survivor: survived this round ─────────────────────────────────
-            delta += 1
-
-            # +3 if objectives are all met
+            # ── Objectives met ─────────────────────────────────────────────────
             owned_types = {
                 i.type
                 for i in db.query(models.Item)
@@ -446,12 +425,21 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
                              .all()
             }
             objectives = _json.loads(player.objectives or '[]')
-            if objectives and all(obj in owned_types for obj in objectives):
-                delta += 3
+            objectives_met = [obj for obj in objectives if obj in owned_types]
+            obj_pts = len(objectives_met)
+            if obj_pts > 0:
+                delta += obj_pts
+                breakdown.append({"reason": f"Objectives met ({obj_pts}/3)", "pts": obj_pts})
 
-            # +2 bonus for reaching the end of the game as a survivor
-            if is_final_round:
+            # ── All 3 objectives bonus ─────────────────────────────────────────
+            if objectives and len(objectives_met) >= len(objectives):
                 delta += 2
+                breakdown.append({"reason": "All objectives complete!", "pts": 2})
+
+            # ── Final-round survivor bonus ─────────────────────────────────────
+            if is_final_round:
+                delta += 5
+                breakdown.append({"reason": "Final survivor bonus", "pts": 5})
 
         player.score = (player.score or 0) + delta
         results.append({
@@ -460,6 +448,7 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
             "delta":      delta,
             "score":      player.score,
             "is_zombie":  player.is_infected,
+            "breakdown":  breakdown,
         })
 
     db.commit()

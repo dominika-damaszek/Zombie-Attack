@@ -45,6 +45,8 @@ Optional: `SECRET_KEY` (JWT signing; defaults to a dev placeholder — set in pr
 - Gameplay flows: Lobby → Instructions → Initial Card Scan (4 physical cards) → Trading Rounds → End Game Recap
 - Modules toggle mechanics: zombie infection, password authentication, zero-trust scoring
 - Real-time game state synced via WebSockets
+- **Individual scoring**: 🤝 Trade +1 (immediate), ☣️ Infect +3 (immediate to infector), 🛡️ Survive round +2, 🎯 Per objective met +1, 🏆 All objectives +2 bonus, 🌟 Final survivor +5
+- **End-game leaderboard**: ranked podium (top 3) + full individual ranked list with stat pills (trades, infections, objectives) + scoring key; served from `/endgame` via `/api/game/{id}/recap`
 
 ## User preferences
 
