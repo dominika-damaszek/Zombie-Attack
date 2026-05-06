@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Play, Users, Skull, RefreshCw, ChevronRight, X } from 'lucide-react';
+import { Play, Users, Skull, RefreshCw, ChevronRight, X, Maximize2 } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -22,6 +22,7 @@ const Dashboard = ({ setHasSession }) => {
   const [groupStats, setGroupStats] = useState({});
   const [actionLoading, setActionLoading] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [qrFullscreen, setQrFullscreen] = useState(null); // { url, code }
 
   const joinUrlBase = `${window.location.origin}/join/`;
 
@@ -141,6 +142,31 @@ const Dashboard = ({ setHasSession }) => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {qrFullscreen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+          style={{ background: 'rgba(10,12,18,0.96)', backdropFilter: 'blur(12px)' }}
+          onClick={() => setQrFullscreen(null)}
+        >
+          <div className="flex flex-col items-center gap-6" onClick={e => e.stopPropagation()}>
+            <div className="bg-white p-6 rounded-3xl shadow-2xl">
+              <QRCodeSVG value={qrFullscreen.url} size={280} bgColor="#ffffff" fgColor="#0f172a" level="H" />
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">{t('dash_join_code')}</p>
+              <p className="text-5xl font-mono font-black text-cyan-400 tracking-widest">{qrFullscreen.code}</p>
+              <p className="text-slate-500 text-sm mt-3">{qrFullscreen.url}</p>
+            </div>
+            <button
+              onClick={() => setQrFullscreen(null)}
+              className="px-8 py-3 rounded-2xl font-bold text-slate-300 transition-all hover:scale-[1.02]"
+              style={{ background: 'rgba(109,113,98,0.2)', border: '1px solid rgba(109,113,98,0.3)' }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <BackButton to="/host" />
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -179,8 +205,17 @@ const Dashboard = ({ setHasSession }) => {
         <div className="glass-panel rounded-3xl border-2 border-dashed border-cyan-500/40 p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
             <div className="flex items-center gap-5">
-              <div className="bg-white p-2 rounded-2xl shadow-inner">
-                <QRCodeSVG value={`${joinUrlBase}${lobbyGroup.join_code}`} size={90} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+              <div className="relative group/qr">
+                <div className="bg-white p-2 rounded-2xl shadow-inner">
+                  <QRCodeSVG value={`${joinUrlBase}${lobbyGroup.join_code}`} size={90} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+                </div>
+                <button
+                  onClick={() => setQrFullscreen({ url: `${joinUrlBase}${lobbyGroup.join_code}`, code: lobbyGroup.join_code })}
+                  className="absolute -top-2 -right-2 p-1.5 rounded-lg bg-cyan-500 text-white opacity-0 group-hover/qr:opacity-100 transition-opacity shadow-lg"
+                  title="Expand QR"
+                >
+                  <Maximize2 size={12} />
+                </button>
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">{t('dash_global_lobby')}</p>
@@ -231,8 +266,17 @@ const Dashboard = ({ setHasSession }) => {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <div className="bg-white p-2 rounded-xl shadow-inner flex-shrink-0">
-                      <QRCodeSVG value={`${joinUrlBase}${group.join_code}`} size={72} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+                    <div className="relative group/qr flex-shrink-0">
+                      <div className="bg-white p-2 rounded-xl shadow-inner">
+                        <QRCodeSVG value={`${joinUrlBase}${group.join_code}`} size={72} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+                      </div>
+                      <button
+                        onClick={() => setQrFullscreen({ url: `${joinUrlBase}${group.join_code}`, code: group.join_code })}
+                        className="absolute -top-2 -right-2 p-1.5 rounded-lg bg-emerald-500 text-white opacity-0 group-hover/qr:opacity-100 transition-opacity shadow-lg"
+                        title="Expand QR"
+                      >
+                        <Maximize2 size={11} />
+                      </button>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{t('dash_join_code')}</p>

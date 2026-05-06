@@ -149,7 +149,7 @@ def get_room_cards_by_type(db: DBSession, group_id: str) -> dict[str, int]:
           .all()
     )
     # Return a complete dict with 0 for card types not yet in play
-    ALL_TYPES = ["remedio", "comida", "arma", "roupa", "ferramentas"]
+    ALL_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", "security_layer"]
     counts = {card_type: 0 for card_type in ALL_TYPES}
     for card_type, qty in rows:
         counts[card_type] = qty
@@ -175,7 +175,7 @@ def get_player_cards_by_type(db: DBSession, player_id: str) -> dict[str, int]:
           .group_by(models.Item.type)
           .all()
     )
-    ALL_TYPES = ["remedio", "comida", "arma", "roupa", "ferramentas"]
+    ALL_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", "security_layer"]
     counts = {card_type: 0 for card_type in ALL_TYPES}
     for card_type, qty in rows:
         counts[card_type] = qty

@@ -89,43 +89,46 @@ def seed_cards():
     db = SessionLocal()
     try:
         count = db.query(models.Card).count()
-        if count >= 54:
+        if count >= 54 and db.query(models.Card).filter(models.Card.card_type == 'security_patch').count() > 0:
             return
         
         CARDS_DATA = [
-            # Medicine / Remedio (11 cards)
-            ("QRC-8F2K9L1M", "remedio"), ("QRC-4X7P3N8V", "remedio"), ("QRC-9B6T2R5Y", "remedio"),
-            ("QRC-1M8Z4K7Q", "remedio"), ("QRC-7D3L9W2X", "remedio"), ("QRC-5H1V8N4P", "remedio"),
-            ("QRC-2R7Y6F9K", "remedio"), ("QRC-8J4Q1T3M", "remedio"), ("QRC-6N9X2L5B", "remedio"),
-            ("QRC-3P7K8V1D", "remedio"), ("QRC-9W2M4R6H", "remedio"),
+            # Security Patch (11 cards)
+            ("QRC-8F2K9L1M", "security_patch"), ("QRC-4X7P3N8V", "security_patch"), ("QRC-9B6T2R5Y", "security_patch"),
+            ("QRC-1M8Z4K7Q", "security_patch"), ("QRC-7D3L9W2X", "security_patch"), ("QRC-5H1V8N4P", "security_patch"),
+            ("QRC-2R7Y6F9K", "security_patch"), ("QRC-8J4Q1T3M", "security_patch"), ("QRC-6N9X2L5B", "security_patch"),
+            ("QRC-3P7K8V1D", "security_patch"), ("QRC-9W2M4R6H", "security_patch"),
 
-            # Food / Comida (11 cards)
-            ("QRC-1X5T7N8J", "comida"), ("QRC-4L9B2Q6Y", "comida"), ("QRC-7V3K1M8F", "comida"),
-            ("QRC-2H6P9X4T", "comida"), ("QRC-8R1D5N7W", "comida"), ("QRC-5Q7L3V9K", "comida"),
-            ("QRC-3T8M2Y6P", "comida"), ("QRC-9N4F1X7J", "comida"), ("QRC-6K2W8R5L", "comida"),
-            ("QRC-1P9V4T3H", "comida"), ("QRC-7X5M2Q8D", "comida"),
+            # System Boost (11 cards)
+            ("QRC-1X5T7N8J", "system_boost"), ("QRC-4L9B2Q6Y", "system_boost"), ("QRC-7V3K1M8F", "system_boost"),
+            ("QRC-2H6P9X4T", "system_boost"), ("QRC-8R1D5N7W", "system_boost"), ("QRC-5Q7L3V9K", "system_boost"),
+            ("QRC-3T8M2Y6P", "system_boost"), ("QRC-9N4F1X7J", "system_boost"), ("QRC-6K2W8R5L", "system_boost"),
+            ("QRC-1P9V4T3H", "system_boost"), ("QRC-7X5M2Q8D", "system_boost"),
 
-            # Weapon / Arma (11 cards)
-            ("QRC-4R8N6L1Y", "arma"), ("QRC-2J3K9W7P", "arma"), ("QRC-8B6T1V4M", "arma"),
-            ("QRC-5Y2L7Q9X", "arma"), ("QRC-3N8P4R6K", "arma"), ("QRC-9D1M5T7H", "arma"),
-            ("QRC-6V4X2K8J", "arma"), ("QRC-1Q7W9L3F", "arma"), ("QRC-7P2N6Y8R", "arma"),
-            ("QRC-4M9K1T5D", "arma"), ("QRC-2X8V3L7H", "arma"),
+            # Hacking Tool (11 cards)
+            ("QRC-4R8N6L1Y", "hacking_tool"), ("QRC-2J3K9W7P", "hacking_tool"), ("QRC-8B6T1V4M", "hacking_tool"),
+            ("QRC-5Y2L7Q9X", "hacking_tool"), ("QRC-3N8P4R6K", "hacking_tool"), ("QRC-9D1M5T7H", "hacking_tool"),
+            ("QRC-6V4X2K8J", "hacking_tool"), ("QRC-1Q7W9L3F", "hacking_tool"), ("QRC-7P2N6Y8R", "hacking_tool"),
+            ("QRC-4M9K1T5D", "hacking_tool"), ("QRC-2X8V3L7H", "hacking_tool"),
 
-            # Clothing / Roupa (11 cards)
-            ("QRC-8T5Q4N1J", "roupa"), ("QRC-5R7B9M2W", "roupa"), ("QRC-3L1Y6K8P", "roupa"),
-            ("QRC-9H4X7T2V", "roupa"), ("QRC-6N8Q5P1D", "roupa"), ("QRC-1V3M9R7K", "roupa"),
-            ("QRC-7K2T8L4Y", "roupa"), ("QRC-4P6X1N9J", "roupa"), ("QRC-2W7M5Q3H", "roupa"),
-            ("QRC-8D4R9V6L", "roupa"), ("QRC-5J1T7K2P", "roupa"),
+            # Firewall (11 cards)
+            ("QRC-8T5Q4N1J", "firewall"), ("QRC-5R7B9M2W", "firewall"), ("QRC-3L1Y6K8P", "firewall"),
+            ("QRC-9H4X7T2V", "firewall"), ("QRC-6N8Q5P1D", "firewall"), ("QRC-1V3M9R7K", "firewall"),
+            ("QRC-7K2T8L4Y", "firewall"), ("QRC-4P6X1N9J", "firewall"), ("QRC-2W7M5Q3H", "firewall"),
+            ("QRC-8D4R9V6L", "firewall"), ("QRC-5J1T7K2P", "firewall"),
 
-            # Tools / Ferramentas (10 cards)
-            ("QRC-3X9N4B8F", "ferramentas"), ("QRC-9Q6L2M5W", "ferramentas"), ("QRC-6Y3P8T1D", "ferramentas"),
-            ("QRC-1R7V4K9H", "ferramentas"), ("QRC-7N2X6Q5J", "ferramentas"), ("QRC-4T8M1L3P", "ferramentas"),
-            ("QRC-2K5W9R7D", "ferramentas"), ("QRC-8V1P4Y6N", "ferramentas"), ("QRC-5M7Q2T8H", "ferramentas"),
-            ("QRC-5Q3T4K7D", "ferramentas")
+            # Security Layer (10 cards)
+            ("QRC-3X9N4B8F", "security_layer"), ("QRC-9Q6L2M5W", "security_layer"), ("QRC-6Y3P8T1D", "security_layer"),
+            ("QRC-1R7V4K9H", "security_layer"), ("QRC-7N2X6Q5J", "security_layer"), ("QRC-4T8M1L3P", "security_layer"),
+            ("QRC-2K5W9R7D", "security_layer"), ("QRC-8V1P4Y6N", "security_layer"), ("QRC-5M7Q2T8H", "security_layer"),
+            ("QRC-5Q3T4K7D", "security_layer")
         ]
 
         for code, card_type in CARDS_DATA:
-            if not db.query(models.Card).filter_by(code=code).first():
+            existing = db.query(models.Card).filter_by(code=code).first()
+            if existing:
+                existing.card_type = card_type
+            else:
                 db.add(models.Card(code=code, card_type=card_type))
         db.commit()
     finally:

@@ -12,19 +12,16 @@ import { API_URLS } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const CARD_TYPES = {
-  remedio:     { emoji: '💊', labelKey: 'info_medicine',  color: 'text-rose-400',    bg: 'bg-rose-500/20 border-rose-500/30' },
-  comida:      { emoji: '🍎', labelKey: 'info_food',      color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' },
-  arma:        { emoji: '🔫', labelKey: 'info_weapon',    color: 'text-orange-400',  bg: 'bg-orange-500/20 border-orange-500/30' },
-  roupa:       { emoji: '👕', labelKey: 'info_clothing',  color: 'text-blue-400',    bg: 'bg-blue-500/20 border-blue-500/30' },
-  ferramentas: { emoji: '🔧', labelKey: 'info_tools',     color: 'text-yellow-400',  bg: 'bg-yellow-500/20 border-yellow-500/30' },
-  unknown:     { emoji: '📦', labelKey: null,             color: 'text-slate-400',   bg: 'bg-slate-500/20 border-slate-500/30' },
+  security_patch:  { emoji: '🩹', label: 'Security Patch',  color: 'text-rose-400',    bg: 'bg-rose-500/20 border-rose-500/30',     desc: 'A critical software fix that closes known vulnerabilities. Rare and highly valuable — every network needs it.' },
+  system_boost:    { emoji: '⚡', label: 'System Boost',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20 border-yellow-500/30', desc: 'Optimizes system performance and processing speed. Common but essential for keeping operations running smoothly.' },
+  hacking_tool:    { emoji: '💻', label: 'Hacking Tool',    color: 'text-orange-400',  bg: 'bg-orange-500/20 border-orange-500/30', desc: 'Offensive software used to probe and exploit systems. Powerful in the right hands — dangerous in the wrong ones.' },
+  firewall:        { emoji: '🧱', label: 'Firewall',        color: 'text-blue-400',    bg: 'bg-blue-500/20 border-blue-500/30',     desc: 'Blocks unauthorized access to your network. A solid defensive barrier that keeps threats from getting in.' },
+  security_layer:  { emoji: '🔒', label: 'Security Layer',  color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30',desc: 'An additional encryption or access-control mechanism. Stacks with other defenses to make your system much harder to breach.' },
+  unknown:         { emoji: '📦', label: 'Unknown',         color: 'text-slate-400',   bg: 'bg-slate-500/20 border-slate-500/30',   desc: 'Unidentified item. Scan it to reveal what type it is.' },
 };
 
-function getCardLabel(key, t) {
-  const ct = CARD_TYPES[key];
-  if (!ct) return 'Unknown';
-  if (ct.labelKey) return t(ct.labelKey);
-  return 'Unknown';
+function getCardLabel(key) {
+  return CARD_TYPES[key]?.label || 'Unknown';
 }
 
 function getModuleSlides(t) {
@@ -66,13 +63,9 @@ function getModuleSlides(t) {
 
 function getInfoSections(t) {
   return [
-    { title: t('game_card_types_title'), items: [
-      { emoji: '💊', label: t('info_medicine'),  desc: t('info_medicine_desc') },
-      { emoji: '🍎', label: t('info_food'),      desc: t('info_food_desc') },
-      { emoji: '🔫', label: t('info_weapon'),    desc: t('info_weapon_desc') },
-      { emoji: '👕', label: t('info_clothing'),  desc: t('info_clothing_desc') },
-      { emoji: '🔧', label: t('info_tools'),     desc: t('info_tools_desc') },
-    ]},
+    { title: 'Item Types', items: Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([, ct]) => ({
+      emoji: ct.emoji, label: ct.label, desc: ct.desc,
+    }))},
     { title: t('game_roles_title'), items: [
       { emoji: '🛡️', label: t('game_survivor'),  desc: t('info_survivor_desc') },
       { emoji: '🧟', label: t('game_zombie'),    desc: t('info_zombie_desc') },
@@ -82,6 +75,21 @@ function getInfoSections(t) {
       { emoji: '🎯', label: t('info_objectives'), desc: t('info_objectives_desc') },
       { emoji: '⏭️', label: t('info_skip_round'), desc: t('info_skip_round_desc') },
     ]},
+  ];
+}
+
+function getNormalSlides() {
+  return [
+    { type: 'story', emoji: '🌐', title: 'Cybersecurity Threat Alert',
+      text: 'A malware outbreak is spreading through the network.\nYou hold the tools needed to fight back — but you must trade carefully.\nTrust no one until you verify.' },
+    { type: 'info',  emoji: '🃏', title: 'Setup: Distribute & Scan',
+      text: 'Take 4 physical cards each.\nScan them using the camera so the game knows what you have.\nKeep your cards secret — your hand is private!' },
+    { type: 'scan',  emoji: '📱', title: 'Scan Your Starting Cards',
+      text: 'Point the camera at each card\'s QR code to register it.\nYou need to scan all 4 before the game begins.' },
+    { type: 'info',  emoji: '🎯', title: 'How to Win',
+      text: 'Each round, trade exactly 1 card with another player.\nComplete your objectives to score points.\nWhen a round ends, scan any new cards you received.\nBeware — infected cards can spread malware to you!' },
+    { type: 'final', emoji: '⚡', title: 'Ready to Play?',
+      text: 'You can use the Skip button to skip instructions at any time.\nWhen you\'re ready, tap the button below!' },
   ];
 }
 
@@ -199,12 +207,17 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
   const retryTimerRef = useRef(null);
   const countdownRef = useRef(null);
   const onScanRef = useRef(onScan);
+  const hasScannedRef = useRef(false);
+  const pendingLaunchRef = useRef(null); // stores doRequest fn when we need to start after DOM renders
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
   const stopScanner = useCallback(() => {
     if (scannerRef.current) {
-      scannerRef.current.stop().catch(() => {});
-      scannerRef.current = null;
+      try {
+        const s = scannerRef.current;
+        scannerRef.current = null;
+        s.stop().catch(() => {});
+      } catch { scannerRef.current = null; }
     }
   }, []);
 
@@ -225,12 +238,17 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
     }, secs * 1000);
   }, []);
 
-  const launchScanner = useCallback(async (doRequest) => {
+  const startScannerNow = useCallback(async (doRequest) => {
     setLoading(true);
-    setPermState('granted');
+    const el = document.getElementById('qr-reader');
+    if (!el) { setPermState('denied'); scheduleRetry(doRequest); setLoading(false); return; }
     const scanner = new Html5Qrcode('qr-reader');
     scannerRef.current = scanner;
     const handleResult = (text) => {
+      if (hasScannedRef.current) return;
+      hasScannedRef.current = true;
+      // Stop the scanner immediately to prevent repeated callbacks
+      if (scannerRef.current) { scannerRef.current.stop().catch(() => {}); scannerRef.current = null; }
       let result = text.trim();
       try { const parsed = JSON.parse(text); result = parsed.code || parsed.id || text; } catch {}
       onScanRef.current(result.toUpperCase());
@@ -244,12 +262,27 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
     }
   }, [stopScanner, scheduleRetry]);
 
+  // When permState becomes 'granted', the qr-reader div is now in the DOM — start scanner
+  useEffect(() => {
+    if (permState === 'granted' && pendingLaunchRef.current) {
+      const doRequest = pendingLaunchRef.current;
+      pendingLaunchRef.current = null;
+      startScannerNow(doRequest);
+    }
+  }, [permState, startScannerNow]);
+
+  const launchScanner = useCallback((doRequest) => {
+    hasScannedRef.current = false;
+    pendingLaunchRef.current = doRequest;
+    setPermState('granted'); // triggers re-render → qr-reader div mounts → useEffect starts scanner
+  }, []);
+
   const doRequest = useCallback(async () => {
     setPermState('requesting');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach(t => t.stop());
-      await launchScanner(doRequest);
+      launchScanner(doRequest);
     } catch {
       setPermState('denied');
       scheduleRetry(doRequest);
@@ -261,7 +294,7 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
       try {
         const result = await navigator.permissions.query({ name: 'camera' });
         if (result.state === 'granted') {
-          await launchScanner(doRequest);
+          launchScanner(doRequest);
         } else {
           setPermState('prompt');
         }
@@ -420,7 +453,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t }) {
   if (!slide) return null;
   const { type, emoji, title, text, lines } = slide;
 
-  const cardLabel = (key) => getCardLabel(key, t);
+  const cardLabel = (key) => getCardLabel(key);
 
   if (type === 'items') {
     return (
@@ -432,7 +465,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t }) {
           {Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([key, ct]) => (
             <div key={key} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${ct.bg}`}>
               <span className="text-3xl">{ct.emoji}</span>
-              <span className={`text-xs font-bold ${ct.color}`}>{cardLabel(key)}</span>
+              <span className={`text-xs font-bold ${ct.color}`}>{ct.label}</span>
             </div>
           ))}
         </div>
@@ -456,7 +489,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t }) {
               <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${owned ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-slate-800/60 border-slate-700/50'}`}>
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{ct.emoji}</span>
-                  <span className={`font-bold ${owned ? 'text-emerald-300' : 'text-slate-200'}`}>{cardLabel(type)}</span>
+                  <span className={`font-bold ${owned ? 'text-emerald-300' : 'text-slate-200'}`}>{getCardLabel(type)}</span>
                 </div>
                 {owned ? <CheckCircle2 size={20} className="text-emerald-400" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-600" />}
               </div>
@@ -673,6 +706,8 @@ const GameScreen = ({ mockData } = {}) => {
   const [objectives, setObjectives] = useState([]);
 
   const gameModeRef = useRef('module_1');
+  const [localNormalSlideIndex, setLocalNormalSlideIndex] = useState(0);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const { playSFX, toggle, isEnabled } = useAudio();
   const { lastMessage } = useGameWebSocket(
@@ -772,7 +807,6 @@ const GameScreen = ({ mockData } = {}) => {
   const handleScan = useCallback(async (cardCode) => {
     setShowScanner(false);
     setScanFeedback({ status: 'scanning' });
-    playSFX('button_click');
     try {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/scan`, {
         method: 'POST',
@@ -859,10 +893,12 @@ const GameScreen = ({ mockData } = {}) => {
   const otherZombies = gameState?.players?.filter(p => p.is_infected && p.id !== playerData?.id) || [];
 
   if (gamePhase === 'module_instructions') {
+    const isNormalMode = gameMode === 'normal';
     const MODULE_SLIDES = getModuleSlides(t);
-    MODULE_SLIDES.normal = MODULE_SLIDES.module_3;
-    const slides = MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1;
-    const slideIndex = mockData ? 0 : (gameState?.instruction_slide ?? 0);
+    const slides = isNormalMode ? getNormalSlides() : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
+    const slideIndex = isNormalMode
+      ? (mockData ? 0 : localNormalSlideIndex)
+      : (mockData ? 0 : (gameState?.instruction_slide ?? 0));
     const slide = slides[Math.min(slideIndex, slides.length - 1)];
     const isLast = slideIndex >= slides.length - 1;
     const isScanSlide = slide?.type === 'scan';
@@ -873,6 +909,19 @@ const GameScreen = ({ mockData } = {}) => {
     const notReady = gameState?.not_ready ?? [];
 
     const meIsReady = localSlideReady || (gameState?.players?.find(p => p.id === playerData?.id)?.is_ready ?? false);
+
+    const handleNormalNext = () => {
+      if (isLast) {
+        setLocalSlideReady(true);
+        handleSlideReady();
+      } else {
+        setLocalNormalSlideIndex(i => Math.min(i + 1, slides.length - 1));
+      }
+    };
+
+    const handleNormalSkipAll = () => {
+      setLocalNormalSlideIndex(slides.length - 1);
+    };
 
     return (
       <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 px-4 overflow-y-auto py-8">
@@ -939,7 +988,7 @@ const GameScreen = ({ mockData } = {}) => {
                     return (
                       <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl border text-sm ${ct.bg}`}>
                         <span className="text-xl">{ct.emoji}</span>
-                        <span className={`font-semibold ${ct.color}`}>{getCardLabel(card.type, t)}</span>
+                        <span className={`font-semibold ${ct.color}`}>{getCardLabel(card.type)}</span>
                       </div>
                     );
                   })}
@@ -974,42 +1023,74 @@ const GameScreen = ({ mockData } = {}) => {
 
           {!isScanSlide && (
             <div className="mt-8">
-              {meIsReady ? (
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <CheckCircle2 size={20} className="text-cyan-400" />
-                    <span className="text-cyan-400 font-bold">{t('game_youre_ready')}</span>
+              {isNormalMode ? (
+                meIsReady ? (
+                  <div className="text-center py-4">
+                    <CheckCircle2 size={28} className="text-cyan-400 mx-auto mb-2" />
+                    <p className="text-cyan-400 font-bold">You're ready!</p>
+                    <p className="text-slate-500 text-xs mt-1 animate-pulse">Waiting for the teacher to start the game…</p>
                   </div>
-                  <div className="rounded-xl p-3" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.2)' }}>
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <Users size={14} style={{ color: '#6D7162' }} />
-                      <span className="text-xs font-mono" style={{ color: '#6D7162' }}>
-                        {readyCount}/{totalPlayers} {t('game_players_ready')}
-                      </span>
-                    </div>
-                    {notReady.length > 0 && (
-                      <p className="text-xs text-slate-600 text-center">
-                        {t('game_waiting_for')} {notReady.join(', ')}…
-                      </p>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleNormalNext}
+                      className="w-full py-4 sm:py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      style={isLast
+                        ? { background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 30px rgba(6,182,212,0.25)', color: '#fff' }
+                        : { background: '#a8c4a0', color: '#0f1a0e' }
+                      }
+                    >
+                      {isLast ? <><CheckCircle2 size={22} /> I'm Ready</> : <>Next <ChevronRight size={22} /></>}
+                    </button>
+                    {!isLast && (
+                      <button
+                        onClick={handleNormalSkipAll}
+                        className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
+                        style={{ background: 'rgba(109,113,98,0.15)', color: '#6D7162' }}
+                      >
+                        Skip All Instructions →
+                      </button>
                     )}
-                    <div className="flex gap-1 mt-2">
-                      {Array.from({ length: totalPlayers }).map((_, i) => (
-                        <div key={i} className={`flex-1 h-1 rounded-full ${i < readyCount ? 'bg-cyan-500' : 'bg-slate-700'}`} />
-                      ))}
+                  </div>
+                )
+              ) : (
+                meIsReady ? (
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <CheckCircle2 size={20} className="text-cyan-400" />
+                      <span className="text-cyan-400 font-bold">{t('game_youre_ready')}</span>
+                    </div>
+                    <div className="rounded-xl p-3" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.2)' }}>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Users size={14} style={{ color: '#6D7162' }} />
+                        <span className="text-xs font-mono" style={{ color: '#6D7162' }}>
+                          {readyCount}/{totalPlayers} {t('game_players_ready')}
+                        </span>
+                      </div>
+                      {notReady.length > 0 && (
+                        <p className="text-xs text-slate-600 text-center">
+                          {t('game_waiting_for')} {notReady.join(', ')}…
+                        </p>
+                      )}
+                      <div className="flex gap-1 mt-2">
+                        {Array.from({ length: totalPlayers }).map((_, i) => (
+                          <div key={i} className={`flex-1 h-1 rounded-full ${i < readyCount ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <button
-                  onClick={handleSlideReady}
-                  className="w-full py-4 sm:py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={isLast
-                    ? { background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 30px rgba(6,182,212,0.25)', color: '#fff' }
-                    : { background: '#a8c4a0', color: '#0f1a0e' }
-                  }
-                >
-                  {isLast ? <><CheckCircle2 size={22} /> {t('game_im_ready')}</> : <>{t('game_next')} <ChevronRight size={22} /></>}
-                </button>
+                ) : (
+                  <button
+                    onClick={handleSlideReady}
+                    className="w-full py-4 sm:py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    style={isLast
+                      ? { background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 30px rgba(6,182,212,0.25)', color: '#fff' }
+                      : { background: '#a8c4a0', color: '#0f1a0e' }
+                    }
+                  >
+                    {isLast ? <><CheckCircle2 size={22} /> {t('game_im_ready')}</> : <>{t('game_next')} <ChevronRight size={22} /></>}
+                  </button>
+                )
               )}
             </div>
           )}
@@ -1020,6 +1101,7 @@ const GameScreen = ({ mockData } = {}) => {
 
   const isTimeUp = gamePhase === 'round_active' && gameState?.round_end_time && (gameState.round_end_time - Math.floor(Date.now() / 1000)) <= 0;
   const isModule = gameMode?.startsWith('module');
+  const isNormal = gameMode === 'normal';
   const showScanButton = !isModule || gamePhase !== 'round_active';
 
   return (
@@ -1044,6 +1126,30 @@ const GameScreen = ({ mockData } = {}) => {
       )}
       {eduContext && <EduPopup edu={eduContext} onDismiss={() => setEduContext(null)} />}
       {showInfoModal && <InfoModal onClose={() => setShowInfoModal(false)} t={t} />}
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(26,22,18,0.87)' }} onClick={() => setSelectedItem(null)}>
+          <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ background: 'rgba(30,27,24,0.99)', border: `2px solid ${(CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).bg.split(' ')[0].replace('bg-', 'rgba(').replace('/20', ',0.5)')}`, backdropFilter: 'blur(24px)' }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="text-6xl mb-3">{(CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).emoji}</div>
+              <h2 className={`text-2xl font-black mb-1 ${(CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).color}`}>
+                {getCardLabel(selectedItem.type)}
+              </h2>
+              <p className="text-xs font-mono mb-4" style={{ color: '#454D3E' }}>{selectedItem.code}</p>
+              <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.2)' }}>
+                <p className="text-slate-300 text-sm leading-relaxed">{(CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).desc}</p>
+              </div>
+              {selectedItem.contaminated && (
+                <div className="rounded-xl px-4 py-2 mb-4 text-sm font-bold text-rose-400 flex items-center justify-center gap-2" style={{ background: 'rgba(80,30,20,0.5)', border: '1px solid rgba(217,117,89,0.3)' }}>
+                  ☣️ This card is contaminated with malware
+                </div>
+              )}
+              <button onClick={() => setSelectedItem(null)} className="w-full py-3 rounded-2xl font-bold text-slate-300 transition-all" style={{ background: 'rgba(109,113,98,0.2)' }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <AudioToggle toggle={toggle} isEnabled={isEnabled} />
 
       <WhatToDoNow
@@ -1112,7 +1218,7 @@ const GameScreen = ({ mockData } = {}) => {
                   <div key={idx} className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${owned ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'}`}>
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl">{ct.emoji}</span>
-                      <span className={`font-bold text-sm ${owned ? 'text-emerald-300' : 'text-slate-300'}`}>{getCardLabel(type, t)}</span>
+                      <span className={`font-bold text-sm ${owned ? 'text-emerald-300' : 'text-slate-300'}`}>{getCardLabel(type)}</span>
                     </div>
                     {owned ? <CheckCircle2 size={18} className="text-emerald-400" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-600" />}
                   </div>
@@ -1189,6 +1295,30 @@ const GameScreen = ({ mockData } = {}) => {
           </div>
         )}
 
+        {isNormal && gamePhase === 'round_active' && (
+          <div className="mb-3 rounded-2xl p-4" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
+            <p className="text-xs uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
+              🤝 Trading
+            </p>
+            {!isDoneTrading ? (
+              <div className="flex gap-2">
+                <button onClick={handleDoneTrading} className="flex-1 py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
+                  {t('game_done_trading')}
+                </button>
+                <button
+                  onClick={handleSkipTrade}
+                  disabled={hasSkippedTrade}
+                  className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
+                >
+                  {t('game_skip_round')} {hasSkippedTrade ? '(used)' : '(1×)'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-emerald-400 font-bold text-sm animate-pulse text-center">{t('game_already_done')}</p>
+            )}
+          </div>
+        )}
+
         {gamePhase === 'module_between_rounds' && (
           <div className="mb-3 glass-panel p-4 rounded-2xl text-center">
             <h3 className="font-black text-xl mb-1" style={{ color: '#AD9E97' }}>
@@ -1217,7 +1347,7 @@ const GameScreen = ({ mockData } = {}) => {
             {scanFeedback.status === 'error' && <AlertTriangle size={18} style={{ color: '#d97559' }} />}
             {scanFeedback.status === 'scanning' && <Camera size={18} style={{ color: '#AD9E97' }} />}
             <p className="text-sm font-semibold text-slate-300">
-              {scanFeedback.status === 'success' && (() => { const ct = CARD_TYPES[scanFeedback.item?.type] || CARD_TYPES.unknown; return `${ct.emoji} ${getCardLabel(scanFeedback.item?.type, t)} ${t('game_scanned')}`; })()}
+              {scanFeedback.status === 'success' && (() => { const ct = CARD_TYPES[scanFeedback.item?.type] || CARD_TYPES.unknown; return `${ct.emoji} ${getCardLabel(scanFeedback.item?.type)} ${t('game_scanned')}`; })()}
               {scanFeedback.status === 'error' && scanFeedback.message}
               {scanFeedback.status === 'scanning' && t('game_verifying')}
             </p>
@@ -1241,14 +1371,18 @@ const GameScreen = ({ mockData } = {}) => {
               {inventory.map((card, idx) => {
                 const ct = CARD_TYPES[card.type] || CARD_TYPES.unknown;
                 return (
-                  <div key={idx} className={`flex items-center gap-2 p-3 rounded-xl border ${card.contaminated ? 'bg-rose-500/10 border-rose-500/30' : ct.bg}`}>
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedItem(card)}
+                    className={`flex items-center gap-2 p-3 rounded-xl border text-left w-full transition-all hover:scale-[1.02] active:scale-[0.98] ${card.contaminated ? 'bg-rose-500/10 border-rose-500/30' : ct.bg}`}
+                  >
                     <span className="text-2xl">{ct.emoji}</span>
                     <div className="min-w-0">
-                      <p className={`font-bold text-sm truncate ${ct.color}`}>{getCardLabel(card.type, t)}</p>
+                      <p className={`font-bold text-sm truncate ${ct.color}`}>{getCardLabel(card.type)}</p>
                       {card.contaminated && <p className="text-xs text-rose-400 font-mono">☣️ infected</p>}
                       <p className="text-xs font-mono truncate" style={{ color: '#454D3E' }}>{card.code}</p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
