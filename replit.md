@@ -1,88 +1,64 @@
 # Zombieware
 
-A multiplayer classroom trading card game platform. Teachers host sessions; students join via QR code and simulate cybersecurity concepts (malware, authentication, zero-trust) through physical card trading.
+A multiplayer classroom trading card game platform that teaches cybersecurity concepts (malware, authentication, zero-trust) through physical card trading and a digital backend.
 
-## Architecture
+## Run & Operate
 
-- **Frontend**: React 19 + Vite on port 5000 (`cd frontend && npm run dev`)
-- **Backend**: FastAPI + SQLAlchemy on port 8000 (`cd backend && uvicorn main:app --host localhost --port 8000 --reload`)
-- **Database**: PostgreSQL (via `DATABASE_URL` env var) or SQLite fallback (`zombieware.db`)
+- **Frontend**: `cd frontend && npm run dev` (port 5000)
+- **Backend**: `cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload` (port 8000)
+- **Run button**: Starts both "Start application" (frontend) and "Backend API" (backend) workflows in parallel
 
-## Game Flow
+Required env vars (auto-set by Replit DB): `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`  
+Optional: `SECRET_KEY` (JWT signing; defaults to a dev placeholder — set in production)
 
-1. Teacher creates session (Module 1/2/3 or Normal game)
-2. Students join lobby via QR/code → auto-split into groups of 6–11
-3. Teacher starts game → roles assigned (survivor/zombie)
-4. **Instruction phase**: 6 fullscreen slides (Space/arrow nav) — all players press "I'm Ready!"
-5. **Initial scan phase**: each player scans their 4 physical starting cards
-6. **Round active** (3 rounds × 3 min): physical card trading
-7. **Between rounds**: players scan cards received during trading
-8. Game over → EndGame recap
+## Stack
 
-## Game Modes
+- **Frontend**: React 19, Vite 8, Tailwind CSS 4, React Router 7, html5-qrcode, qrcode.react, Lucide React
+- **Backend**: FastAPI (Python 3.12), Uvicorn, SQLAlchemy 2, Pydantic
+- **Auth**: Custom JWT (python-jose) + Fernet encryption (cryptography) for teacher PINs
+- **Database**: Replit PostgreSQL (dev) — uses the `game` schema for all tables
+- **Real-time**: WebSockets via FastAPI + custom `websocket_manager.py`
 
-- **Module 1** — Trading only, no zombies (concept: data sharing)
-- **Module 2** — Zombies introduced, no passwords (concept: malware)
-- **Module 3** — Zombies + secret passwords (concept: authentication / Zero Trust)
-- **Normal** — Full game with zombies + passwords
+## Where things live
 
-## Key Features
+- `frontend/src/pages/` — main views (Home, Auth, Dashboard, GameScreen, etc.)
+- `frontend/src/hooks/useGameWebSocket.js` — real-time game state hook
+- `frontend/src/services/` — API config and WS connection management
+- `backend/main.py` — app entry point; runs migrations and seeds cards on startup
+- `backend/models.py` — SQLAlchemy ORM (all in `game` schema)
+- `backend/routes/` — auth, session, player, game endpoints
+- `backend/websocket_manager.py` — WebSocket broadcast logic
+- `frontend/vite.config.js` — proxy config routing `/auth`, `/session`, `/player`, `/api` to backend
 
-- Back button on every page (below top nav, not inside nav)
-- HostGame: modules displayed side by side (grid 3-col)
-- Single game mode button (no difficulty levels)
-- 6-slide fullscreen instructions per module with keyboard nav
-- Per-player "Ready" tracking for instructions → initial scan transition
-- Card master table: 54 cards (💊 Medicine ×11, 🍎 Food ×11, 🔫 Weapon ×11, 👕 Clothing ×11, 🔧 Tools ×10)
-- Player inventory (JSON) + 3 random objectives assigned after initial scan
-- Zombie Network: zombies see other zombie names
-- Info modal (?) explaining all cards, roles, mechanics
-- `/preview` route: no-auth demo page showing all UI states
+## Architecture decisions
 
-## Tech Stack
+- All DB tables live in the `game` PostgreSQL schema — must be created manually (`CREATE SCHEMA IF NOT EXISTS game`) before first run
+- Frontend proxies API calls through Vite dev server; no CORS issues in development
+- Backend falls back to SQLite if `DATABASE_URL` is unset (local dev only)
+- JWT tokens stored in localStorage; teacher PIN stored encrypted with Fernet (not bcrypt)
+- Cards seeded from a 54-card catalog on startup; migration adds new columns safely via try/except
 
-- **Frontend**: React 19, React Router 7, Tailwind CSS 4, Vite 8, qrcode.react, html5-qrcode, lucide-react
-- **Backend**: FastAPI, SQLAlchemy, Pydantic, python-jose (JWT), passlib/bcrypt, uvicorn
-- **Real-time**: WebSockets via custom ConnectionManager
+## Product
 
-## DB Schema (key tables)
+- Teachers register, log in, and host classroom sessions with configurable groups and game modes
+- Students join via a QR code or group join code
+- Gameplay flows: Lobby → Instructions → Initial Card Scan (4 physical cards) → Trading Rounds → End Game Recap
+- Modules toggle mechanics: zombie infection, password authentication, zero-trust scoring
+- Real-time game state synced via WebSockets
 
-- `users` — teachers (username + PIN hash)
-- `sessions` — teacher's session (game_mode, status)
-- `groups` — game rooms (join_code, game_state, current_round, secret_word)
-- `group_players` — player state (role, is_infected, inventory JSON, objectives JSON, initial_cards_scanned)
-- `items` — QR-scanned items with ownership chain
-- `cards` — master catalogue of 54 physical cards (code, card_type)
+## User preferences
 
-## Project Structure
+_Populate as you build_
 
-```
-/frontend      - React app (port 5000)
-  /src/pages   - Home, Auth, Dashboard, HostGame, JoinGame, WaitingRoom, GameScreen, EndGame, PreviewPage
-  /src/components - TopNav, BackButton, AudioToggle, EduPopup
-  /src/hooks   - useGameWebSocket.js, useAudio.js
-  /src/services - api.js
+## Gotchas
 
-/backend       - FastAPI app (port 8000)
-  main.py      - App entry, startup migration + card seeding
-  models.py    - SQLAlchemy models
-  database.py  - DB connection
-  /routes      - auth.py, session.py, player.py, game.py
-  websocket_manager.py
-```
+- The `game` schema must exist in PostgreSQL before the backend can start — run `CREATE SCHEMA IF NOT EXISTS game;` once
+- Backend workflow must use `python -m uvicorn` (not bare `uvicorn`) due to PATH in Replit's Nix environment
+- `SECRET_KEY` env var defaults to a hardcoded dev value — always set a real secret in production
 
-## API Endpoints (game)
+## Pointers
 
-- `POST /api/game/{id}/start` — start game, assign roles
-- `POST /api/game/{id}/finish_instructions` — mark player ready (all ready → initial_scan_phase)
-- `POST /api/game/{id}/initial_scan` — scan one of 4 starting cards (4th → assign objectives)
-- `POST /api/game/{id}/scan` — end-of-round card scan
-- `POST /api/game/{id}/trade_done` — player finished trading
-- `POST /api/game/{id}/skip_trade` — use skip round (1×)
-- `POST /api/game/{id}/next_round` — advance to next round
-- `GET  /api/game/{id}/state` — full game state (incl. inventory, objectives)
-- `GET  /api/game/{id}/recap` — end-game results
-
-## Startup Migrations
-
-`main.py` safely adds new columns via `ALTER TABLE IF NOT EXISTS` on startup and seeds the 54 card catalogue if not already present.
+- DB schema: `backend/models.py`
+- API routes: `backend/routes/`
+- WS protocol: `backend/websocket_manager.py`
+- Vite proxy: `frontend/vite.config.js`
