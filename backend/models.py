@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime
+from datetime import datetime, timezone
 from sqlalchemy.orm import relationship
 from database import Base
 import uuid
@@ -8,6 +9,7 @@ def generate_uuid():
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {'schema': 'game'}
 
     id = Column(String, primary_key=True, default=generate_uuid, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -18,9 +20,10 @@ class User(Base):
 
 class Session(Base):
     __tablename__ = "sessions"
+    __table_args__ = {'schema': 'game'}
 
     id = Column(String, primary_key=True, default=generate_uuid, index=True)
-    teacher_id = Column(String, ForeignKey("users.id"), nullable=False)
+    teacher_id = Column(String, ForeignKey("game.users.id"), nullable=False)
     num_groups = Column(Integer, default=0)
     players_per_group = Column(Integer, default=0)
     game_mode = Column(String, default="normal")
@@ -31,9 +34,10 @@ class Session(Base):
 
 class Group(Base):
     __tablename__ = "groups"
+    __table_args__ = {'schema': 'game'}
 
     id = Column(String, primary_key=True, default=generate_uuid, index=True)
-    session_id = Column(String, ForeignKey("sessions.id"), nullable=False)
+    session_id = Column(String, ForeignKey("game.sessions.id"), nullable=False)
     group_number = Column(Integer, nullable=False)
     join_code = Column(String, unique=True, index=True, nullable=False)
 
@@ -50,32 +54,79 @@ class Group(Base):
 
 class GroupPlayer(Base):
     __tablename__ = "group_players"
+    __table_args__ = {'schema': 'game'}
 
     id = Column(String, primary_key=True, default=generate_uuid, index=True)
-    group_id = Column(String, ForeignKey("groups.id"), nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    group_id = Column(String, ForeignKey("game.groups.id"), nullable=False)
+    user_id = Column(String, ForeignKey("game.users.id"), nullable=False)
 
     group = relationship("Group", back_populates="players")
     user = relationship("User", back_populates="group_memberships")
 
     role = Column(String, nullable=True)
     is_infected = Column(Boolean, default=False)
+    # True only for the player randomly selected as zombie at game start.
+    # Never changes during gameplay, even if others are later infected.
+    is_initial_zombie = Column(Boolean, default=False)
     is_ready = Column(Boolean, default=False)
     has_skipped_trade = Column(Boolean, default=False)
 
+    # Infection tracking: who infected this player and in which round.
+    # Used to award one-time infection points to the infector.
+    infected_by_id = Column(String, nullable=True)
+    infected_in_round = Column(Integer, nullable=True)
+
     # Card inventory & objectives (JSON stored as Text)
+    # NOTE: inventory is deprecated as source-of-truth; game.items is now authoritative.
     inventory = Column(Text, default='[]')
     objectives = Column(Text, default='[]')
     initial_cards_scanned = Column(Integer, default=0)
+    # Cumulative points accumulated across all rounds.
+    score = Column(Integer, default=0, nullable=False)
 
 class Item(Base):
     __tablename__ = "items"
+    __table_args__ = {'schema': 'game'}
 
+    # item.id stores the QR-code string (e.g. "ZW-MED-01") – this is the
+    # physical code printed on the card and never changes.
     id = Column(String, primary_key=True, index=True)
+
+    # Card category, copied from the Card catalogue at first-scan time.
+    # Storing it here avoids a JOIN on every read.
     type = Column(String, nullable=False)
-    group_id = Column(String, ForeignKey("groups.id"), nullable=False)
-    current_owner_id = Column(String, ForeignKey("group_players.id"), nullable=True)
-    previous_owner_id = Column(String, ForeignKey("group_players.id"), nullable=True)
+
+    # Which game room this card is currently active in.
+    group_id = Column(String, ForeignKey("game.groups.id"), nullable=False)
+
+    # The player who currently holds the card (NULL = unassigned / not yet scanned).
+    current_owner_id = Column(String, ForeignKey("game.group_players.id"), nullable=True)
+
+    # The player who held the card immediately before the current owner.
+    # Used to detect virus transmission: if previous_owner was infected,
+    # the card carries contamination to the new owner.
+    previous_owner_id = Column(String, ForeignKey("game.group_players.id"), nullable=True)
+
+    # True if this card was ever held by an infected player.
+    # Once contaminated, always contaminated (infection persists on the card).
+    is_contaminated = Column(Boolean, default=False, nullable=False)
+
+    # Timestamp recorded when this card first enters play (first scan).
+    # This is set once and never updated.
+    scanned_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    # Timestamp updated every time ownership changes (card is traded / re-scanned).
+    # Equals scanned_at on the first scan; updated on every subsequent transfer.
+    last_transferred_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     group = relationship("Group")
     current_owner = relationship("GroupPlayer", foreign_keys=[current_owner_id])
@@ -84,6 +135,7 @@ class Item(Base):
 # ── Master card catalogue (54 physical cards) ─────────────────────────────────
 class Card(Base):
     __tablename__ = "cards"
+    __table_args__ = {'schema': 'game'}
 
     code = Column(String, primary_key=True, index=True)
     card_type = Column(String, nullable=False)

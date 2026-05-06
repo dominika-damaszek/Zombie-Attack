@@ -6,6 +6,7 @@ from websocket_manager import manager
 import random
 import time
 import json
+import db_queries
 
 router = APIRouter(prefix="/api/game", tags=["game"])
 
@@ -47,13 +48,20 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
     mode = payload.get("game_mode", group.game_mode or "normal")
     group.game_mode = mode
 
+    # Clean up any items from a previous game in this group
+    db.query(models.Item).filter(models.Item.group_id == group_id).delete()
+
     for p in players:
         p.role = "survivor"
         p.is_infected = False
+        p.is_initial_zombie = False
         p.is_ready = False
         p.inventory = '[]'
         p.objectives = '[]'
         p.initial_cards_scanned = 0
+        p.score = 0
+        p.infected_by_id = None
+        p.infected_in_round = None
 
     event = None
 
@@ -78,6 +86,7 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
         for p in zombie_players:
             p.role = "zombie"
             p.is_infected = True
+            p.is_initial_zombie = True  # permanent record of original assignment
 
     group.game_state = "module_instructions"
     group.current_round = 0
@@ -176,38 +185,71 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
     if not card:
         raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}. Valid format: QRC-XXXXXXXX")
 
-    inventory = json.loads(player.inventory or '[]')
-
-    # Prevent duplicate scan by same player
-    if any(c['code'] == card_code for c in inventory):
-        return {"message": "already_scanned", "card_type": card.card_type,
-                "initial_cards_scanned": player.initial_cards_scanned,
-                "inventory": inventory, "objectives": json.loads(player.objectives or '[]')}
-
     # Check if card is already claimed by another player in the same group
-    for other in group.players:
-        if other.id == player.id:
-            continue
-        other_inv = json.loads(other.inventory or '[]')
-        if any(c['code'] == card_code for c in other_inv):
-            raise HTTPException(
-                status_code=409,
-                detail=f"already_owned_by:{other.user.username}"
-            )
+    existing_item = db.query(models.Item).filter(models.Item.id == card_code).first()
+    if existing_item and existing_item.current_owner_id and existing_item.current_owner_id != player.id:
+        owner = db.query(models.GroupPlayer).filter_by(id=existing_item.current_owner_id).first()
+        raise HTTPException(
+            status_code=409,
+            detail=f"already_owned_by:{owner.user.username if owner else 'someone'}"
+        )
 
-    if player.initial_cards_scanned >= 4:
-        raise HTTPException(status_code=400, detail="Already scanned 4 cards")
+    # Check if player already scanned this card
+    if existing_item and existing_item.current_owner_id == player.id:
+        pass # Idempotent, already scanned
+    else:
+        if player.initial_cards_scanned >= 4:
+            raise HTTPException(status_code=400, detail="Already scanned 4 cards")
 
-    inventory.append({"code": card_code, "type": card.card_type, "contaminated": player.is_infected})
-    player.inventory = json.dumps(inventory)
-    player.initial_cards_scanned = (player.initial_cards_scanned or 0) + 1
-    db.commit()
+        try:
+            db_queries.assign_card_to_player(db, group_id, player.id, card_code)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        # Tag the card as contaminated if this player is already infected
+        if player.is_infected:
+            new_item = db.query(models.Item).filter_by(id=card_code).first()
+            if new_item:
+                new_item.is_contaminated = True
+
+        player.initial_cards_scanned = (player.initial_cards_scanned or 0) + 1
+        db.commit()
+
+    # Re-fetch inventory directly from DB items table
+    inventory_items = db.query(models.Item).filter_by(current_owner_id=player.id).all()
+    inventory = [{"code": i.id, "type": i.type, "contaminated": i.is_contaminated} for i in inventory_items]
 
     objectives = json.loads(player.objectives or '[]')
 
-    if player.initial_cards_scanned >= 4:
-        # Assign 3 random objectives from card types in this game
-        objectives = random.sample(ALL_CARD_TYPES, 3)
+    if player.initial_cards_scanned >= 4 and not objectives:
+        # ── Distribute Objectives ─────────────────────────────────────────────
+        # Rule: 3 objectives. Preferably 0 from cards the player already has, max 1.
+        # Prefer types that are currently in play in the room.
+
+        player_types = list(set(i.type for i in inventory_items))
+        room_cards = db_queries.get_room_cards_by_type(db, group_id)
+        room_types = list(room_cards.keys())
+
+        # Types player does NOT have
+        not_owned_in_room = [t for t in room_types if t not in player_types]
+        all_not_owned = [t for t in ALL_CARD_TYPES if t not in player_types]
+
+        pool_not_owned = not_owned_in_room.copy()
+        for t in all_not_owned:
+            if t not in pool_not_owned:
+                pool_not_owned.append(t)
+
+        random.shuffle(pool_not_owned)
+        random.shuffle(player_types)
+
+        # Take as many as possible from not_owned (up to 3)
+        objectives = pool_not_owned[:3]
+        
+        # If we couldn't get 3 (e.g. player holds 3 or 4 types), we must take from player_types
+        needed = 3 - len(objectives)
+        if needed > 0:
+            objectives.extend(player_types[:needed])
+
         player.objectives = json.dumps(objectives)
         player.is_ready = True
         db.commit()
@@ -250,12 +292,19 @@ async def finish_round(group_id: str, db: DBSession = Depends(get_db)):
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404)
+
+    is_final = (group.current_round or 0) >= 3
+    score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
+
     group.game_state = "module_between_rounds"
     for p in group.players:
         p.is_ready = False
     db.commit()
-    await manager.broadcast_to_group(group_id, {"type": "ROUND_ENDED"})
-    return {"message": "success"}
+    await manager.broadcast_to_group(group_id, {
+        "type": "ROUND_ENDED",
+        "scores": score_results,
+    })
+    return {"message": "success", "scores": score_results}
 
 
 @router.post("/{group_id}/next_round")
@@ -298,11 +347,17 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
 
     group = player.group
     if all(p.is_ready for p in group.players):
+        is_final = (group.current_round or 0) >= 3
+        score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
         group.game_state = "module_between_rounds"
         for p in group.players:
             p.is_ready = False
         db.commit()
-        await manager.broadcast_to_group(group_id, {"type": "ROUND_ENDED"})
+        await manager.broadcast_to_group(group_id, {
+            "type": "ROUND_ENDED",
+            "scores": score_results,
+        })
+        return {"message": "success", "scores": score_results}
     else:
         await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
 
@@ -325,111 +380,172 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
 
     group = player.group
     if all(p.is_ready for p in group.players):
+        is_final = (group.current_round or 0) >= 3
+        score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
         group.game_state = "module_between_rounds"
         for p in group.players:
             p.is_ready = False
         db.commit()
-        await manager.broadcast_to_group(group_id, {"type": "ROUND_ENDED"})
+        await manager.broadcast_to_group(group_id, {
+            "type": "ROUND_ENDED",
+            "scores": score_results,
+        })
+        return {"message": "success", "scores": score_results}
     else:
         await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
 
     return {"message": "success"}
 
 
-# ── Scan Item (end-of-round) ────────────────────────────────────────────────────
+# ── Scan Item (trade / round scan) ─────────────────────────────────────────────
 @router.post("/{group_id}/scan")
 async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db)):
     player_id = payload.get("player_id")
-    item_data  = payload.get("item")
+    card_code  = payload.get("card_code") or (payload.get("item") or {}).get("id")
 
-    if not player_id or not item_data or not item_data.get("id"):
-        raise HTTPException(status_code=400, detail="Invalid payload")
+    if not player_id or not card_code:
+        raise HTTPException(status_code=400, detail="Missing player_id or card_code")
+
+    card_code = card_code.strip().upper()
 
     player = db.query(models.GroupPlayer).filter(
         models.GroupPlayer.id == player_id,
-        models.GroupPlayer.group_id == group_id
+        models.GroupPlayer.group_id == group_id,
     ).first()
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
 
     group = player.group
     mode  = group.game_mode or "normal"
+    zombies_enabled = (mode != "module_1")
 
-    item_id = item_data["id"]
-    item = db.query(models.Item).filter(models.Item.id == item_id).first()
+    # ── 1. Validate the QR code against the master catalogue ──────────────────
+    catalogue_card = db.query(models.Card).filter_by(code=card_code).first()
+    if not catalogue_card:
+        raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}")
+
+    # ── 2. Look up the live item row (scoped to THIS group) ─────────────────
+    item = db.query(models.Item).filter_by(id=card_code, group_id=group_id).first()
     edu_context = None
+    newly_infected = False
 
     if not item:
+        # Card has never been scanned in this group before — create it.
+        # Delete any stale item from a previous game (same PK, different group).
+        db.query(models.Item).filter(models.Item.id == card_code).delete()
+        db.flush()
         item = models.Item(
-            id=item_id,
-            type=item_data.get("type", "unknown"),
+            id=card_code,
+            type=catalogue_card.card_type,
             group_id=group_id,
             current_owner_id=player.id,
             previous_owner_id=None,
+            is_contaminated=player.is_infected,
         )
         db.add(item)
-        # Add to player inventory
-        inventory = json.loads(player.inventory or '[]')
-        inventory.append({"code": item_id, "type": item_data.get("type", "unknown"),
-                          "contaminated": player.is_infected})
-        player.inventory = json.dumps(inventory)
         edu_context = {
             "title": "📦 Item Acquired",
             "body": "You picked up a new item. In cybersecurity, this is like downloading a file — always verify the source!",
             "tag": "phishing_awareness",
         }
+
+    elif item.current_owner_id == player.id:
+        # Idempotent – player already owns this card, nothing to do
+        pass
+
     else:
-        if item.current_owner_id != player.id:
-            item.previous_owner_id = item.current_owner_id
-            item.current_owner_id  = player.id
+        # ── 3. TRADE: Card belongs to someone else → reassign ─────────────────
+        item.previous_owner_id = item.current_owner_id
+        item.current_owner_id  = player.id
+        
+        # Auto-ready the player upon completing a trade
+        player.is_ready = True
+        # last_transferred_at updates automatically via onupdate on the column
 
-            prev_owner = None
-            if item.previous_owner_id:
-                prev_owner = db.query(models.GroupPlayer).filter(
-                    models.GroupPlayer.id == item.previous_owner_id
-                ).first()
+        # ── 4. INFECTION CHECK (only in modes with zombies) ───────────────────
+        if zombies_enabled:
+            if item.is_contaminated and not player.is_infected:
+                # Receiving a contaminated card infects the player
+                player.is_infected = True
+                player.role = "zombie"
+                newly_infected = True
 
-            newly_infected = False
+                # Record who infected them (the previous card owner)
+                prev_owner = db.query(models.GroupPlayer).filter_by(
+                    id=item.previous_owner_id
+                ).first() if item.previous_owner_id else None
+                if prev_owner and prev_owner.is_infected:
+                    player.infected_by_id = prev_owner.id
+                    player.infected_in_round = group.current_round
 
-            if mode != "module_1":
-                if prev_owner and prev_owner.is_infected and not player.is_infected:
-                    player.is_infected = True
-                    player.role = "zombie"
-                    newly_infected = True
-                    # Mark card as contaminated in inventory
-                    inventory = json.loads(player.inventory or '[]')
-                    inventory.append({"code": item_id, "type": item.type, "contaminated": True})
-                    player.inventory = json.dumps(inventory)
-                    edu_context = {
-                        "title": "🦠 Malware Transferred!",
-                        "body": "You received a file from an infected source. This is how malware spreads — always verify who you receive files from (Zero Trust).",
-                        "tag": "malware_spread",
-                    }
-                    await manager.broadcast_to_group(group_id, {
-                        "type": "PLAYER_INFECTED",
-                        "player_id": player.id,
-                    })
-                else:
-                    inventory = json.loads(player.inventory or '[]')
-                    inventory.append({"code": item_id, "type": item.type, "contaminated": False})
-                    player.inventory = json.dumps(inventory)
-            else:
-                inventory = json.loads(player.inventory or '[]')
-                inventory.append({"code": item_id, "type": item.type, "contaminated": False})
-                player.inventory = json.dumps(inventory)
+                # Mark ALL cards the player currently holds as contaminated
+                owned_items = db.query(models.Item).filter_by(
+                    current_owner_id=player.id
+                ).all()
+                for owned in owned_items:
+                    owned.is_contaminated = True
+
                 edu_context = {
-                    "title": "✅ Item Received",
-                    "body": "Item logged. In real networks, receiving files triggers integrity checks to ensure the file wasn't tampered with.",
-                    "tag": "integrity_check",
+                    "title": "🦠 Malware Transferred!",
+                    "body": "You received a file from an infected source. This is how malware spreads — always verify who you receive files from (Zero Trust).",
+                    "tag": "malware_spread",
                 }
+                await manager.broadcast_to_group(group_id, {
+                    "type": "PLAYER_INFECTED",
+                    "player_id": player.id,
+                    "username": player.user.username,
+                })
+
+            elif player.is_infected:
+                # Player receiving card is already infected → card becomes contaminated
+                item.is_contaminated = True
+
+        else:
+            # module_1: no infection, just log the trade
+            edu_context = {
+                "title": "✅ Item Received",
+                "body": "Item logged. In real networks, receiving files triggers integrity checks to ensure the file wasn't tampered with.",
+                "tag": "integrity_check",
+            }
 
     db.commit()
+
+    # ── Check if this auto-ready triggers the end of the round ────────────────
+    round_ended = False
+    scores = None
+    if all(p.is_ready for p in group.players):
+        is_final = (group.current_round or 0) >= 3
+        scores = db_queries.award_round_points(db, group_id, is_final_round=is_final)
+        group.game_state = "module_between_rounds"
+        for p in group.players:
+            p.is_ready = False
+        db.commit()
+        
+        # We need to broadcast asynchronously, but we are inside an async function
+        await manager.broadcast_to_group(group_id, {
+            "type": "ROUND_ENDED",
+            "scores": scores,
+        })
+        round_ended = True
+    elif player.is_ready:
+        await manager.broadcast_to_group(group_id, {
+            "type": "PLAYER_READY",
+        })
+
+    # ── 5. Build inventory from DB (no JSON blob) ─────────────────────────────
+    inventory = [
+        {"code": i.id, "type": i.type, "contaminated": i.is_contaminated}
+        for i in db.query(models.Item).filter_by(current_owner_id=player.id).all()
+    ]
 
     return {
         "message": "Scan processed",
         "infected": player.is_infected,
+        "newly_infected": newly_infected,
         "edu": edu_context,
-        "inventory": json.loads(player.inventory or '[]'),
+        "inventory": inventory,
+        "round_ended": round_ended,
+        "scores": scores,
     }
 
 
@@ -440,14 +556,22 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
+    def _player_inventory(p):
+        return [
+            {"code": i.id, "type": i.type, "contaminated": i.is_contaminated}
+            for i in db.query(models.Item).filter_by(current_owner_id=p.id).all()
+        ]
+
     players_data = [{
         "id": p.id,
         "user_id": p.user_id,
         "username": p.user.username,
         "role": p.role,
         "is_infected": p.is_infected,
+        "is_initial_zombie": p.is_initial_zombie or False,
         "is_ready": getattr(p, "is_ready", False),
-        "inventory": json.loads(p.inventory or '[]'),
+        "score": p.score or 0,
+        "inventory": _player_inventory(p),
         "objectives": json.loads(p.objectives or '[]'),
         "initial_cards_scanned": p.initial_cards_scanned or 0,
         "has_skipped_trade": p.has_skipped_trade or False,
@@ -512,7 +636,7 @@ async def end_game_manual(group_id: str, db: DBSession = Depends(get_db)):
     return {"message": "Game ended manually"}
 
 
-# ── End-Game Recap ─────────────────────────────────────────────────────────────
+# ── End-Game Recap & Scoreboard ────────────────────────────────────────────────
 @router.get("/{group_id}/recap")
 async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
@@ -523,6 +647,32 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
     zombies = [p for p in group.players if p.is_infected]
     surv    = [p for p in group.players if not p.is_infected]
     infection_rate = round(len(zombies) / total * 100) if total else 0
+
+    # ── Build ranked scoreboard ───────────────────────────────────────────────
+    scoreboard = sorted(
+        [
+            {
+                "username":         p.user.username,
+                "score":            p.score or 0,
+                "role":             p.role or "survivor",
+                "is_infected":      p.is_infected,
+                "is_initial_zombie": p.is_initial_zombie or False,
+            }
+            for p in group.players
+        ],
+        key=lambda x: x["score"],
+        reverse=True,
+    )
+    # Assign podium ranks (ties get the same rank)
+    prev_score = None
+    prev_rank  = 0
+    for i, entry in enumerate(scoreboard):
+        if entry["score"] != prev_score:
+            prev_rank = i + 1
+        entry["rank"] = prev_rank
+        prev_score = entry["score"]
+
+    podium = scoreboard[:3]   # top 3 for highlighted display
 
     lessons = [
         {"icon": "🔑", "concept": "Authentication",  "lesson": "Passwords are like secret words — only share them with verified parties."},
@@ -540,4 +690,6 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
         "lessons":        lessons,
         "zombie_names":   [p.user.username for p in zombies],
         "survivor_names": [p.user.username for p in surv],
+        "scoreboard":     scoreboard,
+        "podium":         podium,
     }

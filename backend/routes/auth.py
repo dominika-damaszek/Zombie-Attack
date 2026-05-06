@@ -1,14 +1,20 @@
 import asyncio
 import os
+import base64
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import models, schemas, database
-import bcrypt
+from cryptography.fernet import Fernet
 from jose import jwt
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 SECRET_KEY = os.getenv("SECRET_KEY", "ZOMBIEWARE_SECRET_KEY_DEV_ONLY")
+# We need a 32-url-safe-base64-encoded string for Fernet.
+# Pad or truncate SECRET_KEY to 32 bytes and base64 encode it.
+_fernet_key = base64.urlsafe_b64encode(SECRET_KEY.ljust(32, '0')[:32].encode('utf-8'))
+cipher_suite = Fernet(_fernet_key)
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
@@ -40,13 +46,10 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(database
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
 
-    loop = asyncio.get_event_loop()
-    hashed_pin = await loop.run_in_executor(
-        None,
-        lambda: bcrypt.hashpw(user_data.pin.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
-    )
+    # Encrypt the pin with Fernet (two-way encryption instead of bcrypt hash)
+    encrypted_pin = cipher_suite.encrypt(user_data.pin.encode("utf-8")).decode("utf-8")
 
-    new_user = models.User(username=user_data.username, pin_hash=hashed_pin)
+    new_user = models.User(username=user_data.username, pin_hash=encrypted_pin)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -61,11 +64,13 @@ async def login(user_data: schemas.UserLogin, db: Session = Depends(database.get
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or pin")
 
-    loop = asyncio.get_event_loop()
-    is_valid = await loop.run_in_executor(
-        None,
-        lambda: bcrypt.checkpw(user_data.pin.encode("utf-8"), user.pin_hash.encode("utf-8")),
-    )
+    # Decrypt the stored pin and compare it with the provided pin
+    try:
+        decrypted_pin = cipher_suite.decrypt(user.pin_hash.encode("utf-8")).decode("utf-8")
+        is_valid = (decrypted_pin == user_data.pin)
+    except Exception:
+        # Fallback for old accounts if any
+        is_valid = False
 
     if not is_valid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or pin")
