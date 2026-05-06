@@ -1,149 +1,25 @@
 -- =============================================================================
 -- Zombieware Game – Neon PostgreSQL Schema
 -- =============================================================================
--- Run this file ONCE against your Neon database to initialise all tables.
--- Neon dashboard → SQL Editor → paste & run.
+-- The backend's SQLAlchemy ORM is now fully mapped to the "game" schema.
+-- When the backend starts, it will automatically create all necessary tables
+-- (users, sessions, groups, group_players, items, cards) inside this schema.
 --
--- Schema namespace: "game"
--- All game data lives here, keeping it separate from any future schemas.
+-- Run this file ONCE against your Neon database to initialise the schema
+-- and seed the master physical card catalogue.
 -- =============================================================================
 
 CREATE SCHEMA IF NOT EXISTS game;
 
--- Drop tables in reverse-dependency order so foreign keys don't block the drop.
-DROP TABLE IF EXISTS game.items        CASCADE;
-DROP TABLE IF EXISTS game.cards        CASCADE;
-DROP TABLE IF EXISTS game.item_types   CASCADE;
-DROP TABLE IF EXISTS game.players      CASCADE;
-DROP TABLE IF EXISTS game.rooms        CASCADE;
-
--- Also add the CARDS table (catalogue) before ITEMS (which references it)
-
--- -----------------------------------------------------------------------------
--- ROOMS
--- A "room" is one active game group.  Players join a room via its room_code.
--- session_id is a free-text reference back to the teacher's session (UUID string).
--- -----------------------------------------------------------------------------
-CREATE TABLE game.rooms (
-    room_id    UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    -- Short alphanumeric code players type to join (e.g. "AB12CD")
-    room_code  CHAR(6)      NOT NULL UNIQUE,
-
-    -- Links to the teacher session that owns this room (not a FK – stored as text
-    -- so the rooms table stays self-contained even if sessions are managed elsewhere)
-    session_id TEXT         NOT NULL,
-
-    -- Current phase of the game ("lobby", "round_active", "end_game", …)
-    game_state VARCHAR(30)  NOT NULL DEFAULT 'lobby',
-
-    -- Which module/mode is being played ("normal", "module_1", …)
-    game_mode  VARCHAR(20)  NOT NULL DEFAULT 'normal',
-
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
-);
-
-
--- -----------------------------------------------------------------------------
--- PLAYERS
--- One row per player per room.  When a user joins a room the backend inserts
--- (or upserts) a row here so the room-membership is persisted in the database.
--- -----------------------------------------------------------------------------
-CREATE TABLE game.players (
-    player_id   UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    -- Display name chosen by the student
-    player_name VARCHAR(20)  NOT NULL,
-
-    -- Which room this player belongs to
-    room_id     UUID         NOT NULL
-                REFERENCES game.rooms(room_id) ON DELETE CASCADE,
-
-    -- "survivor" or "zombie" – assigned when the game starts
-    role        VARCHAR(10)  NOT NULL DEFAULT 'survivor',
-
-    -- TRUE once the zombie virus has been transferred to this player
-    is_infected BOOLEAN      NOT NULL DEFAULT FALSE,
-
-    joined_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
-);
-
-
--- -----------------------------------------------------------------------------
--- ITEM_TYPES  (card-type catalogue)
--- Fixed lookup table for the five card categories.
--- Seeded once (see INSERT below) – never changes during a game.
--- -----------------------------------------------------------------------------
-CREATE TABLE game.item_types (
-    item_type_id   SERIAL       PRIMARY KEY,
-
-    -- Human-readable category name matching what is printed on the physical card
-    item_type_name VARCHAR(20)  NOT NULL UNIQUE
-);
-
-
--- -----------------------------------------------------------------------------
--- ITEMS  (individual scanned cards)
--- One row per physical card that has been scanned during a game.
--- When a player scans a QR code the backend upserts a row here and sets
--- owner_id to the scanning player.  This replaces the old JSON inventory field.
---
--- Why store room_id here?
---   It allows single-table queries for "cards in play per room" and
---   "cards of each type per room" without joining through players.
--- -----------------------------------------------------------------------------
-CREATE TABLE game.items (
-    item_id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    -- QR-code value printed on the physical card (e.g. "ZW-MED-01").
-    -- Must exist in game.cards – validated before this row is created.
-    item_code       VARCHAR(20)  NOT NULL UNIQUE
-                    REFERENCES game.cards(card_code) ON UPDATE CASCADE,
-
-    -- Category of this card (denormalised from game.cards for fast reads)
-    item_type_id    INT          NOT NULL
-                    REFERENCES game.item_types(item_type_id) ON DELETE CASCADE,
-
-    -- Which room this card is currently being used in
-    room_id         UUID         NOT NULL
-                    REFERENCES game.rooms(room_id) ON DELETE CASCADE,
-
-    -- The player who currently holds the card (NULL = not yet assigned)
-    owner_id        UUID
-                    REFERENCES game.players(player_id) ON DELETE SET NULL,
-
-    -- TRUE if the card was handed over by an infected player (carries the virus)
-    is_contaminated BOOLEAN      NOT NULL DEFAULT FALSE,
-
-    -- Timestamp set once when the card is first scanned into this game session.
-    -- Never updated after creation.
-    scanned_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
-
-    -- Timestamp updated every time the card changes hands (trade / re-scan).
-    -- On first scan this equals scanned_at; updated on every ownership transfer.
-    last_transferred_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
+-- (The backend will automatically create game.cards and other tables when started)
 
 -- =============================================================================
--- SEED DATA
+-- SEED DATA: Physical card catalogue (54 cards)
 -- =============================================================================
-
--- ── 1. Item types (card categories) ──────────────────────────────────────────
--- Five fixed categories. ON CONFLICT makes this safe to re-run.
-INSERT INTO game.item_types (item_type_name) VALUES
-    ('remedio'),
-    ('comida'),
-    ('arma'),
-    ('roupa'),
-    ('ferramentas')
-ON CONFLICT (item_type_name) DO NOTHING;
-
-
--- ── 2. Physical card catalogue (54 cards) ────────────────────────────────────
 -- Every physical QR-coded card that exists in the real world.
--- The codes (e.g. ZW-MED-01) are printed on the cards and never change.
+-- The codes (e.g. QRC-...) are printed on the cards and never change.
 -- When a player scans a code, the backend looks up this table first.
+
 INSERT INTO game.cards (card_code, card_type) VALUES
     -- Medicine / Remedio (11 cards)
     ('QRC-8F2K9L1M','remedio'), ('QRC-4X7P3N8V','remedio'), ('QRC-9B6T2R5Y','remedio'),
@@ -176,24 +52,4 @@ INSERT INTO game.cards (card_code, card_type) VALUES
     ('QRC-5Q3T4K7D','ferramentas')
 ON CONFLICT (card_code) DO NOTHING;
 
--- =============================================================================
--- INDEXES
--- =============================================================================
 
--- Fast lookup of all players in a room (JOIN / GROUP BY room queries)
-CREATE INDEX IF NOT EXISTS idx_players_room_id   ON game.players(room_id);
-
--- Fast lookup of all items in a room (room-level card analytics)
-CREATE INDEX IF NOT EXISTS idx_items_room_id     ON game.items(room_id);
-
--- Fast lookup of all items owned by a specific player
-CREATE INDEX IF NOT EXISTS idx_items_owner_id    ON game.items(owner_id);
-
--- Fast lookup of all items of a given type (type-level analytics)
-CREATE INDEX IF NOT EXISTS idx_items_type_id     ON game.items(item_type_id);
-
--- Composite index: all items of a given type within a specific room
-CREATE INDEX IF NOT EXISTS idx_items_room_type   ON game.items(room_id, item_type_id);
-
--- Composite index: all items of a given type owned by a specific player
-CREATE INDEX IF NOT EXISTS idx_items_owner_type  ON game.items(owner_id, item_type_id);

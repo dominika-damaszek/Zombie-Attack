@@ -59,19 +59,24 @@ QRC_CATALOG = [
 def run_migrations():
     with engine.connect() as conn:
         new_cols = [
-            ("group_players", "inventory",             "TEXT DEFAULT '[]'"),
-            ("group_players", "objectives",            "TEXT DEFAULT '[]'"),
-            ("group_players", "initial_cards_scanned", "INTEGER DEFAULT 0"),
-            ("group_players", "has_skipped_trade",     "BOOLEAN DEFAULT FALSE"),
-            ("groups",        "instruction_slide",     "INTEGER DEFAULT 0"),
-            ("groups",        "scan_end_time",         "INTEGER"),
+            ("game.group_players", "inventory",             "TEXT DEFAULT '[]'"),
+            ("game.group_players", "objectives",            "TEXT DEFAULT '[]'"),
+            ("game.group_players", "initial_cards_scanned", "INTEGER DEFAULT 0"),
+            ("game.group_players", "has_skipped_trade",     "BOOLEAN DEFAULT FALSE"),
+            ("game.group_players", "is_initial_zombie",     "BOOLEAN DEFAULT FALSE"),
+            ("game.group_players", "score",                 "INTEGER DEFAULT 0 NOT NULL"),
+            ("game.group_players", "infected_by_id",        "VARCHAR"),
+            ("game.group_players", "infected_in_round",     "INTEGER"),
+            ("game.groups",        "instruction_slide",     "INTEGER DEFAULT 0"),
+            ("game.groups",        "scan_end_time",         "INTEGER"),
+            ("game.items",         "is_contaminated",       "BOOLEAN DEFAULT FALSE"),
         ]
         for table, col, definition in new_cols:
             try:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {definition}"))
                 conn.commit()
             except Exception:
-                pass  # column already exists
+                conn.rollback()  # reset the aborted transaction so subsequent ALTERs work
 
 
 def seed_cards():
