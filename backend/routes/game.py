@@ -401,7 +401,10 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
 @router.post("/{group_id}/scan")
 async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db)):
     player_id = payload.get("player_id")
-    card_code  = payload.get("card_code") or (payload.get("item") or {}).get("id")
+    raw_item  = payload.get("item")
+    card_code = payload.get("card_code") or (
+        raw_item.get("id") if isinstance(raw_item, dict) else raw_item
+    )
 
     if not player_id or not card_code:
         raise HTTPException(status_code=400, detail="Missing player_id or card_code")

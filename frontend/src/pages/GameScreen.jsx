@@ -769,33 +769,39 @@ const GameScreen = ({ mockData } = {}) => {
     } catch { setScanFeedback({ status: 'error', message: 'Scan failed. Try again.' }); setTimeout(() => setScanFeedback(null), 3000); }
   };
 
-  const handleScan = useCallback(async (item) => {
+  const handleScan = useCallback(async (cardCode) => {
     setShowScanner(false);
-    setScanFeedback({ status: 'scanning', item });
+    setScanFeedback({ status: 'scanning' });
     playSFX('button_click');
     try {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player_id: playerData.id, item }),
+        body: JSON.stringify({ player_id: playerData.id, card_code: cardCode }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setScanFeedback({ status: 'error', message: data.detail || 'Scan failed. Try again.' });
+        setTimeout(() => setScanFeedback(null), 3000);
+        return;
+      }
       if (data.inventory) setInventory(data.inventory);
       if (data.edu) setEduContext(data.edu);
-      if (data.infected) {
+      if (data.newly_infected) {
         setShowInfectionAlert(true);
         setPlayerState(p => ({ ...p, role: 'zombie', is_infected: true }));
         setScanFeedback(null);
       } else {
         playSFX('scan_success');
-        setScanFeedback({ status: 'success', item });
+        setScanFeedback({ status: 'success', item: { type: data.inventory?.find(i => i.code === cardCode)?.type } });
         setTimeout(() => setScanFeedback(null), 3000);
       }
+      if (data.round_ended) fetchState();
     } catch {
       setScanFeedback({ status: 'error', message: 'Scan failed. Try again.' });
       setTimeout(() => setScanFeedback(null), 3000);
     }
-  }, [groupData?.group_id, playerData?.id, playSFX]);
+  }, [groupData?.group_id, playerData?.id, playSFX, fetchState]);
 
   const handleDoneTrading = async () => {
     try {

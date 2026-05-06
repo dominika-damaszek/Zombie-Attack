@@ -6,9 +6,6 @@ from sqlalchemy import text
 
 from routes import auth, session, player, game
 
-# Create DB Tables
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="Zombieware API", version="0.1.0")
 
 app.add_middleware(
@@ -54,6 +51,15 @@ QRC_CATALOG = [
     ("QRC-2K5W9R7D", "unknown"), ("QRC-8V1P4Y6N", "unknown"),
     ("QRC-5M7Q2T8H", "unknown"), ("QRC-5Q3T4K7D", "unknown"),
 ]
+
+
+def ensure_game_schema():
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("CREATE SCHEMA IF NOT EXISTS game"))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
 
 def run_migrations():
@@ -128,6 +134,8 @@ def seed_cards():
 
 @app.on_event("startup")
 async def startup():
+    ensure_game_schema()
+    models.Base.metadata.create_all(bind=engine)
     run_migrations()
     seed_cards()
 
