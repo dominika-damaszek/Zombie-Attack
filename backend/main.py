@@ -67,6 +67,18 @@ def ensure_game_schema():
 
 def run_migrations():
     with engine.connect() as conn:
+        # If the items table still uses the old schema (card code as PK, no 'code' column),
+        # drop it so create_all() can recreate it with the new UUID PK + code column.
+        try:
+            conn.execute(text("SELECT code FROM game.items LIMIT 1"))
+        except Exception:
+            conn.rollback()
+            try:
+                conn.execute(text("DROP TABLE IF EXISTS game.items CASCADE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
         new_cols = [
             ("game.group_players", "inventory",             "TEXT DEFAULT '[]'"),
             ("game.group_players", "objectives",            "TEXT DEFAULT '[]'"),
@@ -80,7 +92,6 @@ def run_migrations():
             ("game.groups",        "scan_end_time",         "INTEGER"),
             ("game.groups",        "last_activity",         "INTEGER"),
             ("game.sessions",      "note",                  "VARCHAR"),
-            ("game.items",         "is_contaminated",       "BOOLEAN DEFAULT FALSE"),
         ]
         for table, col, definition in new_cols:
             try:

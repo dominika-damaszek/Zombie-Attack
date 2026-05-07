@@ -200,7 +200,11 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}. Valid format: QRC-XXXXXXXX")
 
     # Check if card is already claimed by another player in the same group
-    existing_item = db.query(models.Item).filter(models.Item.id == card_code).first()
+    existing_item = (
+        db.query(models.Item)
+          .filter(models.Item.code == card_code, models.Item.group_id == group_id)
+          .first()
+    )
     if existing_item and existing_item.current_owner_id and existing_item.current_owner_id != player.id:
         owner = db.query(models.GroupPlayer).filter_by(id=existing_item.current_owner_id).first()
         raise HTTPException(
@@ -231,7 +235,7 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
 
     # Re-fetch inventory directly from DB items table
     inventory_items = db.query(models.Item).filter_by(current_owner_id=player.id).all()
-    inventory = [{"code": i.id, "type": i.type, "contaminated": i.is_contaminated} for i in inventory_items]
+    inventory = [{"code": i.code, "type": i.type, "contaminated": i.is_contaminated} for i in inventory_items]
 
     objectives = json.loads(player.objectives or '[]')
 
@@ -445,17 +449,14 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         raise HTTPException(status_code=400, detail=f"Unknown card code: {card_code}")
 
     # ── 2. Look up the live item row (scoped to THIS group) ─────────────────
-    item = db.query(models.Item).filter_by(id=card_code, group_id=group_id).first()
+    item = db.query(models.Item).filter_by(code=card_code, group_id=group_id).first()
     edu_context = None
     newly_infected = False
 
     if not item:
         # Card has never been scanned in this group before — create it.
-        # Delete any stale item from a previous game (same PK, different group).
-        db.query(models.Item).filter(models.Item.id == card_code).delete()
-        db.flush()
         item = models.Item(
-            id=card_code,
+            code=card_code,
             type=catalogue_card.card_type,
             group_id=group_id,
             current_owner_id=player.id,
@@ -560,7 +561,7 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
 
     # ── 5. Build inventory from DB (no JSON blob) ─────────────────────────────
     inventory = [
-        {"code": i.id, "type": i.type, "contaminated": i.is_contaminated}
+        {"code": i.code, "type": i.type, "contaminated": i.is_contaminated}
         for i in db.query(models.Item).filter_by(current_owner_id=player.id).all()
     ]
 
@@ -584,7 +585,7 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
 
     def _player_inventory(p):
         return [
-            {"code": i.id, "type": i.type, "contaminated": i.is_contaminated}
+            {"code": i.code, "type": i.type, "contaminated": i.is_contaminated}
             for i in db.query(models.Item).filter_by(current_owner_id=p.id).all()
         ]
 

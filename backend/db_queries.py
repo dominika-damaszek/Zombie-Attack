@@ -86,12 +86,12 @@ def get_player_cards(db: DBSession, player_id: str) -> list[dict]:
 
     Each dict contains:
         item_id         – UUID of the Item row
-        item_code       – QR-code value (e.g. "ZW-MED-01")
-        card_type       – category string (e.g. "remedio")
-        is_contaminated – True if the card was received from an infected player
+        item_code       – QR-code value (e.g. "QRC-8F2K9L1M")
+        card_type       – category string
+        is_contaminated – True if the card carries infection
 
     SQL equivalent:
-        SELECT i.id, i.id AS item_code, i.type, i.group_id
+        SELECT i.id, i.code, i.type, i.is_contaminated
         FROM items i
         WHERE i.current_owner_id = :player_id
     """
@@ -103,12 +103,10 @@ def get_player_cards(db: DBSession, player_id: str) -> list[dict]:
 
     return [
         {
-            "item_id":        item.id,
-            "item_code":      item.id,   # item.id IS the QR code (e.g. ZW-MED-01)
-            "card_type":      item.type,
-            "is_contaminated": False,    # contamination flag will be read from
-                                         # GroupPlayer.inventory JSON until the
-                                         # Item model grows its own column
+            "item_id":         item.id,
+            "item_code":       item.code,
+            "card_type":       item.type,
+            "is_contaminated": item.is_contaminated,
         }
         for item in items
     ]
@@ -323,22 +321,25 @@ def assign_card_to_player(
     is_contaminated = False
     now = datetime.now(timezone.utc)
 
-    # ── Step 3a/3b: Check whether an Item row exists for this card ────────────
-    # item.id IS the QR-code string (the same value as card_code).
-    item = db.query(models.Item).filter(models.Item.id == card_code).first()
+    # ── Step 3a/3b: Check whether an Item row exists for this card IN THIS GROUP ─
+    # Same physical card code can exist in multiple groups simultaneously;
+    # the unique constraint is on (code, group_id).
+    item = (
+        db.query(models.Item)
+          .filter(models.Item.code == card_code, models.Item.group_id == group_id)
+          .first()
+    )
 
     if item is None:
-        # ── FIRST SCAN: card enters play for the first time ───────────────────
-        # Create one Item row for this physical card in this game.
-        # scanned_at is set here and will never be changed again.
+        # ── FIRST SCAN: card enters play in this group for the first time ─────
         item = models.Item(
-            id=card_code,                   # permanent QR code – never changes
+            code=card_code,                 # QR code string (not the PK)
             type=card_type,                 # from catalogue
             group_id=group_id,
             current_owner_id=player.id,
             previous_owner_id=None,
-            scanned_at=now,                 # first-scan timestamp (immutable)
-            last_transferred_at=now,        # also set on creation
+            scanned_at=now,
+            last_transferred_at=now,
         )
         db.add(item)
 

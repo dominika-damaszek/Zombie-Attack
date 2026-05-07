@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime, UniqueConstraint
 from datetime import datetime, timezone
 from sqlalchemy.orm import relationship
 from database import Base
@@ -89,14 +89,20 @@ class GroupPlayer(Base):
 
 class Item(Base):
     __tablename__ = "items"
-    __table_args__ = {'schema': 'game'}
+    __table_args__ = (
+        UniqueConstraint('code', 'group_id', name='uq_item_code_group'),
+        {'schema': 'game'},
+    )
 
-    # item.id stores the QR-code string (e.g. "ZW-MED-01") – this is the
-    # physical code printed on the card and never changes.
-    id = Column(String, primary_key=True, index=True)
+    # UUID primary key — allows the same physical card to exist in multiple
+    # groups simultaneously (each group gets its own row per card code).
+    id = Column(String, primary_key=True, default=generate_uuid, index=True)
+
+    # The QR-code string printed on the physical card (e.g. "QRC-8F2K9L1M").
+    # Unique only within a group — the same code can appear in different groups.
+    code = Column(String, nullable=False, index=True)
 
     # Card category, copied from the Card catalogue at first-scan time.
-    # Storing it here avoids a JOIN on every read.
     type = Column(String, nullable=False)
 
     # Which game room this card is currently active in.
