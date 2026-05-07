@@ -51,6 +51,7 @@ class Group(Base):
     secret_word = Column(String, nullable=True)
     game_mode = Column(String, default="normal")
     instruction_slide = Column(Integer, default=0)
+    last_activity = Column(Integer, nullable=True)
 
 class GroupPlayer(Base):
     __tablename__ = "group_players"

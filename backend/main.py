@@ -1,3 +1,5 @@
+import asyncio
+import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models
@@ -5,6 +7,7 @@ from database import engine, SessionLocal
 from sqlalchemy import text
 
 from routes import auth, session, player, game
+from websocket_manager import manager
 
 app = FastAPI(title="Zombieware API", version="0.1.0")
 
@@ -75,6 +78,7 @@ def run_migrations():
             ("game.group_players", "infected_in_round",     "INTEGER"),
             ("game.groups",        "instruction_slide",     "INTEGER DEFAULT 0"),
             ("game.groups",        "scan_end_time",         "INTEGER"),
+            ("game.groups",        "last_activity",         "INTEGER"),
             ("game.items",         "is_contaminated",       "BOOLEAN DEFAULT FALSE"),
         ]
         for table, col, definition in new_cols:
@@ -135,12 +139,46 @@ def seed_cards():
         db.close()
 
 
+INACTIVITY_TIMEOUT = 15 * 60  # 15 minutes in seconds
+INACTIVITY_CHECK_INTERVAL = 60  # check every 60 seconds
+
+async def auto_close_inactive_games():
+    """Background task: close games inactive for more than 15 minutes."""
+    await asyncio.sleep(30)  # let the server fully start first
+    while True:
+        try:
+            db = SessionLocal()
+            threshold = int(time.time()) - INACTIVITY_TIMEOUT
+            active_states = ["lobby", "module_instructions", "initial_scan_phase",
+                             "round_active", "module_between_rounds"]
+            groups = (
+                db.query(models.Group)
+                  .filter(models.Group.game_state.in_(active_states))
+                  .all()
+            )
+            for group in groups:
+                activity = group.last_activity
+                if activity is None or activity < threshold:
+                    print(f"[auto_close] Closing inactive game {group.id} (last_activity={activity})")
+                    group.game_state = "end_game"
+                    db.commit()
+                    await manager.broadcast_to_group(group.id, {
+                        "type": "GAME_ENDED",
+                        "reason": "inactivity",
+                    })
+            db.close()
+        except Exception as e:
+            print(f"[auto_close] Error: {e}")
+        await asyncio.sleep(INACTIVITY_CHECK_INTERVAL)
+
+
 @app.on_event("startup")
 async def startup():
     ensure_game_schema()
     models.Base.metadata.create_all(bind=engine)
     run_migrations()
     seed_cards()
+    asyncio.create_task(auto_close_inactive_games())
 
 app.include_router(auth.router)
 app.include_router(session.router)

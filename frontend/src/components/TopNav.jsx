@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, LayoutDashboard, History, Menu, X, BookOpen, Users, ChevronRight } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, History, Menu, X, BookOpen, Users, ChevronRight, UserCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession }) => {
@@ -50,6 +50,13 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
       path: '/about',
       color: 'hover:bg-cyan-500/10',
     },
+    ...(isAuthenticated ? [{
+      icon: <UserCircle size={18} className="text-purple-400" />,
+      label: 'My Profile',
+      sublabel: 'Stats & game history',
+      path: '/profile',
+      color: 'hover:bg-purple-500/10',
+    }] : []),
   ];
 
   return (

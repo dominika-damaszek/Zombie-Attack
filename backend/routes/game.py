@@ -10,6 +10,18 @@ import db_queries
 
 router = APIRouter(prefix="/api/game", tags=["game"])
 
+
+def _touch(group):
+    """Update last_activity timestamp on the group (call before db.commit)."""
+    group.last_activity = int(time.time())
+
+
+# ── List all physical cards (used by bots / admin) ────────────────────────────
+@router.get("/cards")
+async def list_cards(db: DBSession = Depends(get_db)):
+    cards = db.query(models.Card).all()
+    return [{"code": c.code, "type": c.card_type} for c in cards]
+
 WORDS = ["ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT",
          "CIPHER", "PROXY", "TOKEN", "VAULT", "SHIELD", "PATCH"]
 
@@ -92,6 +104,7 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
     group.current_round = 0
     group.round_end_time = None
     group.instruction_slide = 0
+    _touch(group)
 
     db.commit()
 
@@ -138,6 +151,7 @@ async def slide_ready(group_id: str, payload: dict = {}, db: DBSession = Depends
         return {"ready": ready, "total": len(group.players), "slide": group.instruction_slide or 0}
 
     player.is_ready = True
+    _touch(group)
     db.commit()
 
     ready = sum(1 for p in group.players if p.is_ready)
@@ -297,6 +311,7 @@ async def finish_round(group_id: str, db: DBSession = Depends(get_db)):
     score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
 
     group.game_state = "module_between_rounds"
+    _touch(group)
     for p in group.players:
         p.is_ready = False
     db.commit()
@@ -329,6 +344,7 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
     else:
         group.game_state = "round_active"
         group.round_end_time = int(time.time()) + 180
+        _touch(group)
         db.commit()
         await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
 
@@ -343,6 +359,7 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
         raise HTTPException(status_code=404)
 
     player.is_ready = True
+    _touch(player.group)
     db.commit()
 
     group = player.group
@@ -516,6 +533,7 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
                 "tag": "integrity_check",
             }
 
+    _touch(group)
     db.commit()
 
     # ── Check if this auto-ready triggers the end of the round ────────────────

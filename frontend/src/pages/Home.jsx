@@ -9,6 +9,11 @@ const Home = ({ isAuthenticated }) => {
   const { t } = useLanguage();
   const [serverStatus, setServerStatus] = useState('waking');
 
+  const activeGame = (() => {
+    try { return JSON.parse(localStorage.getItem('player_session') || 'null'); } catch { return null; }
+  })();
+  const hasActiveGame = !!(activeGame?.groupData?.group_id && activeGame?.playerData?.id);
+
   useEffect(() => {
     let cancelled = false;
     const ping = async () => {
@@ -41,6 +46,24 @@ const Home = ({ isAuthenticated }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] sm:min-h-[calc(100vh-73px)] text-center px-4 py-8">
+      {hasActiveGame && (
+        <button
+          onClick={() => navigate('/game', { state: activeGame })}
+          className="fixed top-16 left-0 right-0 z-20 mx-auto w-full max-w-md px-4 mt-2"
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div className="flex items-center justify-between gap-3 px-5 py-3 rounded-2xl border border-emerald-500/50 bg-emerald-500/10 backdrop-blur-md hover:bg-emerald-500/20 transition-all shadow-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-xl animate-pulse">🎮</span>
+              <div className="text-left">
+                <p className="text-emerald-400 font-bold text-sm">Game in progress!</p>
+                <p className="text-slate-400 text-xs">Tap to rejoin your current game</p>
+              </div>
+            </div>
+            <span className="text-emerald-400 font-bold text-sm">Rejoin →</span>
+          </div>
+        </button>
+      )}
       <div className="flex flex-col items-center gap-5 mb-8 sm:mb-14">
         <div
           className="absolute inset-0 pointer-events-none z-[-1] opacity-70 bg-cover bg-center"

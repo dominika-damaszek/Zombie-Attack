@@ -705,6 +705,13 @@ const GameScreen = ({ mockData } = {}) => {
   const [inventory, setInventory] = useState([]);
   const [objectives, setObjectives] = useState([]);
 
+  // Persist session to localStorage so page reload can rejoin the game
+  useEffect(() => {
+    if (groupData?.group_id && playerData?.id) {
+      localStorage.setItem('player_session', JSON.stringify({ groupData, playerData }));
+    }
+  }, [groupData?.group_id, playerData?.id]);
+
   const gameModeRef = useRef('module_1');
   const [localNormalSlideIndex, setLocalNormalSlideIndex] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -732,6 +739,7 @@ const GameScreen = ({ mockData } = {}) => {
       }
       if (data.game_state === 'end_game') {
         localStorage.setItem('endgame_group_id', groupData.group_id);
+        localStorage.removeItem('player_session');
         navigate('/endgame', { state: { groupId: groupData.group_id } });
       }
     } catch (e) { console.error(e); }

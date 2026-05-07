@@ -118,3 +118,71 @@ def get_history(token: str, db: Session = Depends(database.get_db)):
         })
 
     return {"as_teacher": as_teacher, "as_student": as_student}
+
+
+@router.get("/stats")
+def get_stats(token: str, db: Session = Depends(database.get_db)):
+    """Return aggregate player stats and recent game history for the profile page."""
+    user = get_current_user(token, db)
+
+    memberships = (
+        db.query(models.GroupPlayer)
+          .filter(models.GroupPlayer.user_id == user.id)
+          .all()
+    )
+
+    finished_games = []
+    for gp in memberships:
+        group = gp.group
+        if group is None or group.group_number == 0:
+            continue
+        if group.game_state != "end_game":
+            continue
+
+        # Compute rank within this group
+        all_players = sorted(group.players, key=lambda p: p.score or 0, reverse=True)
+        rank = next((i + 1 for i, p in enumerate(all_players) if p.id == gp.id), None)
+        total_players = len(all_players)
+
+        # Count trades and infections caused
+        trades = db.query(models.Item).filter(
+            models.Item.current_owner_id == gp.id,
+            models.Item.previous_owner_id != None,
+        ).count()
+        infections_caused = db.query(models.GroupPlayer).filter(
+            models.GroupPlayer.infected_by_id == gp.id
+        ).count()
+
+        finished_games.append({
+            "group_id":         group.id,
+            "game_mode":        group.game_mode or "normal",
+            "role":             gp.role or "survivor",
+            "survived":         not gp.is_infected,
+            "score":            gp.score or 0,
+            "rank":             rank,
+            "total_players":    total_players,
+            "trades":           trades,
+            "infections_caused": infections_caused,
+            "rounds_played":    group.current_round or 0,
+        })
+
+    scores = [g["score"] for g in finished_games]
+    total_games = len(finished_games)
+    total_score = sum(scores)
+    best_score  = max(scores) if scores else 0
+    avg_score   = round(total_score / total_games, 1) if total_games else 0
+    wins        = sum(1 for g in finished_games if g["rank"] == 1)
+    survived    = sum(1 for g in finished_games if g["survived"])
+
+    recent = sorted(finished_games, key=lambda g: g["score"], reverse=True)[:10]
+
+    return {
+        "username":    user.username,
+        "total_games": total_games,
+        "total_score": total_score,
+        "best_score":  best_score,
+        "avg_score":   avg_score,
+        "wins":        wins,
+        "survived":    survived,
+        "recent_games": recent,
+    }
