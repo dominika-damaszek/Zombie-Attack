@@ -1,0 +1,227 @@
+PS C:\Users\maria\Desktop\skill_project\skill_project\Zombie-Attack\backend\scripts> python bot.py FF1QMZ
+--- ZOMBIEWARE BOT SETUP ---
+Use local server (127.0.0.1:8000)? (y/n): n
+Enter backend URL (e.g. https://your-backend.com): https://zombie-attack.onrender.com
+
+[CONFIG] API: https://zombie-attack.onrender.com
+[CONFIG] WS: wss://zombie-attack.onrender.com/api/game/ws
+
+Starting 18 bot players for room FF1QMZ...
+[bot_2] In lobby. Waiting for matchmaking...
+[bot_8] In lobby. Waiting for matchmaking...
+[bot_17] In lobby. Waiting for matchmaking...
+[bot_11] In lobby. Waiting for matchmaking...
+[bot_15] In lobby. Waiting for matchmaking...
+[bot_18] In lobby. Waiting for matchmaking...
+[bot_14] In lobby. Waiting for matchmaking...
+[bot_13] In lobby. Waiting for matchmaking...
+[bot_12] In lobby. Waiting for matchmaking...
+[bot_5] In lobby. Waiting for matchmaking...
+[bot_6] In lobby. Waiting for matchmaking...
+[bot_9] In lobby. Waiting for matchmaking...
+[bot_10] In lobby. Waiting for matchmaking...
+[bot_4] In lobby. Waiting for matchmaking...
+[bot_3] In lobby. Waiting for matchmaking...
+[bot_1] In lobby. Waiting for matchmaking...
+[bot_16] In lobby. Waiting for matchmaking...
+[bot_7] In lobby. Waiting for matchmaking...
+[bot_8] Matchmaking complete!
+[bot_9] Matchmaking complete!
+[bot_2] Matchmaking complete!
+[bot_17] Matchmaking complete!
+[bot_7] Matchmaking complete!
+[bot_5] Matchmaking complete!
+[bot_6] Matchmaking complete!
+[bot_15] Matchmaking complete!
+[bot_14] Matchmaking complete!
+[bot_11] Matchmaking complete!
+[bot_12] Matchmaking complete!
+[bot_18] Matchmaking complete!
+[bot_1] Matchmaking complete!
+[bot_10] Matchmaking complete!
+[bot_4] Matchmaking complete!
+[bot_16] Matchmaking complete!
+[bot_3] Matchmaking complete!
+[bot_13] Matchmaking complete!
+[bot_2] Pressed Ready! (waiting room) → 200
+[bot_3] Pressed Ready! (waiting room) → 200
+[bot_4] Pressed Ready! (waiting room) → 200
+[bot_7] Pressed Ready! (waiting room) → 200
+[bot_11] Pressed Ready! (waiting room) → 200
+[bot_13] Pressed Ready! (waiting room) → 200
+[bot_14] Pressed Ready! (waiting room) → 200
+[bot_10] Pressed Ready! (waiting room) → 200
+[bot_5] Pressed Ready! (waiting room) → 200
+[bot_17] Pressed Ready! (waiting room) → 200
+[bot_16] Pressed Ready! (waiting room) → 200
+[bot_15] Pressed Ready! (waiting room) → 200
+[bot_12] Pressed Ready! (waiting room) → 200
+[bot_9] Pressed Ready! (waiting room) → 200
+[bot_6] Pressed Ready! (waiting room) → 200
+[bot_18] Pressed Ready! (waiting room) → 200
+[bot_1] Pressed Ready! (waiting room) → 200
+[bot_8] Pressed Ready! (waiting room) → 200
+[bot_7] Scanned QRC-5J1T7K2P (hacking-tool) → 1/4
+[bot_2] Scanned QRC-1V3M9R7K (security_layer) → 1/4
+[bot_14] Scanned QRC-9Q6L2M5W (hacking-tool) → 1/4
+[bot_8] Scanned QRC-5R7B9M2W (security_layer) → 1/4
+[bot_7] Scanned QRC-5M7Q2T8H (hacking-tool) → 2/4
+[bot_12] Scanned QRC-8J4Q1T3M (security_patch) → 1/4
+[bot_2] Scanned QRC-1X5T7N8J (system_boost) → 2/4
+[bot_1] Scanned QRC-1M8Z4K7Q (security_patch) → 1/4
+[bot_14] Scanned QRC-9W2M4R6H (security_patch) → 2/4
+[bot_8] Scanned QRC-5Y2L7Q9X (firewall) → 2/4
+[bot_18] Scanned QRC-3P7K8V1D (security_patch) → 1/4
+[bot_9] Scanned QRC-6N9X2L5B (security_patch) → 1/4
+[bot_7] Scanned QRC-5Q3T4K7D (hacking-tool) → 3/4
+[bot_12] Scanned QRC-8R1D5N7W (system_boost) → 2/4
+[bot_2] Scanned QRC-2H6P9X4T (system_boost) → 3/4
+[bot_1] Scanned QRC-1P9V4T3H (system_boost) → 2/4
+[bot_8] Scanned QRC-6K2W8R5L (system_boost) → 3/4
+[bot_6] Scanned QRC-4R8N6L1Y (firewall) → 1/4
+[bot_18] Scanned QRC-3T8M2Y6P (system_boost) → 2/4
+[bot_11] Scanned QRC-7X5M2Q8D (system_boost) → 1/4
+[bot_17] Scanned QRC-2W7M5Q3H (security_layer) → 1/4
+[bot_7] Scanned QRC-5Q7L3V9K (system_boost) → 4/4
+[bot_12] Scanned QRC-8T5Q4N1J (security_layer) → 3/4
+[bot_2] Scanned QRC-2J3K9W7P (firewall) → 4/4
+[bot_7] Initial scan done: 4/4 cards claimed.
+[bot_5] Scanned QRC-3X9N4B8F (hacking-tool) → 1/4
+[bot_3] Scanned QRC-2K5W9R7D (hacking-tool) → 1/4
+[bot_2] Initial scan done: 4/4 cards claimed.
+[bot_4] Scanned QRC-3L1Y6K8P (security_layer) → 1/4
+[bot_13] Scanned QRC-9B6T2R5Y (security_patch) → 1/4
+[bot_9] Scanned QRC-6V4X2K8J (firewall) → 2/4
+[bot_16] Scanned QRC-2H6P9X4T (system_boost) → 1/4
+[bot_15] Scanned QRC-1Q7W9L3F (firewall) → 1/4
+[bot_10] Scanned QRC-7K2T8L4Y (security_layer) → 1/4
+[bot_1] Scanned QRC-1Q7W9L3F (firewall) → 3/4
+[bot_8] Scanned QRC-6N8Q5P1D (security_layer) → 4/4
+[bot_11] Scanned QRC-8B6T1V4M (firewall) → 2/4
+[bot_18] Scanned QRC-3X9N4B8F (hacking-tool) → 3/4
+[bot_8] Initial scan done: 4/4 cards claimed.
+[bot_17] Scanned QRC-2X8V3L7H (firewall) → 2/4
+[bot_9] Scanned QRC-6Y3P8T1D (hacking-tool) → 3/4
+[bot_12] Scanned QRC-8V1P4Y6N (hacking-tool) → 4/4
+[bot_13] Scanned QRC-9D1M5T7H (firewall) → 2/4
+[bot_4] Scanned QRC-3N8P4R6K (firewall) → 2/4
+[bot_12] Initial scan done: 4/4 cards claimed.
+[bot_5] Scanned QRC-4L9B2Q6Y (system_boost) → 2/4
+[bot_6] Scanned QRC-4T8M1L3P (hacking-tool) → 2/4
+[bot_3] Scanned QRC-2R7Y6F9K (security_patch) → 2/4
+[bot_7] Caught up: slide_ready (slide 0) → 200
+[bot_15] Scanned QRC-1R7V4K9H (hacking-tool) → 2/4
+[bot_2] GAME_STARTED → scanned + slide_ready → 200
+[bot_10] Scanned QRC-7N2X6Q5J (hacking-tool) → 2/4
+[bot_1] Scanned QRC-1R7V4K9H (hacking-tool) → 4/4
+[bot_1] Initial scan done: 4/4 cards claimed.
+[bot_16] Scanned QRC-2J3K9W7P (firewall) → 2/4
+[bot_11] Scanned QRC-8D4R9V6L (security_layer) → 3/4
+[bot_18] Scanned QRC-4L9B2Q6Y (system_boost) → 4/4
+[bot_4] Scanned QRC-3P7K8V1D (security_patch) → 3/4
+[bot_8] Caught up: slide_ready (slide 0) → 200
+[bot_13] Scanned QRC-9H4X7T2V (security_layer) → 3/4
+[bot_18] Initial scan done: 4/4 cards claimed.
+[bot_9] Scanned QRC-7D3L9W2X (security_patch) → 4/4
+[bot_5] Scanned QRC-4M9K1T5D (firewall) → 3/4
+[bot_9] Initial scan done: 4/4 cards claimed.
+[bot_6] Scanned QRC-4X7P3N8V (security_patch) → 3/4
+[bot_10] Scanned QRC-7P2N6Y8R (firewall) → 3/4
+[bot_12] Caught up: slide_ready (slide 0) → 200
+[bot_15] Scanned QRC-1V3M9R7K (security_layer) → 3/4
+[bot_11] Scanned QRC-8F2K9L1M (security_patch) → 4/4
+[bot_11] Initial scan done: 4/4 cards claimed.
+[bot_4] Scanned QRC-3T8M2Y6P (system_boost) → 4/4
+[bot_1] Caught up: slide_ready (slide 0) → 200
+[bot_18] Caught up: slide_ready (slide 0) → 200
+[bot_4] Initial scan done: 4/4 cards claimed.
+[bot_5] Scanned QRC-4P6X1N9J (security_layer) → 4/4
+[bot_5] Initial scan done: 4/4 cards claimed.
+[bot_13] Scanned QRC-9N4F1X7J (system_boost) → 4/4
+[bot_9] Caught up: slide_ready (slide 0) → 200
+[bot_13] Initial scan done: 4/4 cards claimed.
+[bot_10] Scanned QRC-7V3K1M8F (system_boost) → 4/4
+[bot_6] Scanned QRC-5H1V8N4P (security_patch) → 4/4
+[bot_7] Scanned QRC-5J1T7K2P (hacking-tool) → 4/4
+[bot_10] Initial scan done: 4/4 cards claimed.
+[bot_15] Scanned QRC-1X5T7N8J (system_boost) → 4/4
+[bot_6] Initial scan done: 4/4 cards claimed.
+[bot_7] Initial scan done: 4/4 cards claimed.
+[bot_15] Initial scan done: 4/4 cards claimed.
+[bot_4] GAME_STARTED → scanned + slide_ready → 200
+[bot_5] GAME_STARTED → scanned + slide_ready → 200
+[bot_11] GAME_STARTED → scanned + slide_ready → 200
+[bot_13] GAME_STARTED → scanned + slide_ready → 200
+[bot_10] GAME_STARTED → scanned + slide_ready → 200
+[bot_6] Caught up: slide_ready (slide 0) → 200
+[bot_15] GAME_STARTED → scanned + slide_ready → 200
+[bot_7] GAME_STARTED → scanned + slide_ready → 200
+[bot_14] Scanned QRC-2K5W9R7D (hacking-tool) → 3/4
+[bot_14] Scanned QRC-2R7Y6F9K (security_patch) → 4/4
+[bot_17] Scanned QRC-4R8N6L1Y (firewall) → 3/4
+[bot_14] Initial scan done: 4/4 cards claimed.
+[bot_17] Scanned QRC-4T8M1L3P (hacking-tool) → 4/4
+[bot_17] Initial scan done: 4/4 cards claimed.
+[bot_14] Caught up: slide_ready (slide 0) → 200
+[bot_3] Scanned QRC-4X7P3N8V (security_patch) → 3/4
+[bot_17] GAME_STARTED → scanned + slide_ready → 200
+[bot_3] Scanned QRC-5H1V8N4P (security_patch) → 4/4
+[bot_3] Initial scan done: 4/4 cards claimed.
+[bot_7] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_9] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_18] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_3] GAME_STARTED → scanned + slide_ready → 200
+[bot_12] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_8] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_2] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_1] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_6] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_14] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_16] Scanned QRC-5J1T7K2P (hacking-tool) → 3/4
+[bot_16] Scanned QRC-5M7Q2T8H (hacking-tool) → 4/4
+[bot_16] Initial scan done: 4/4 cards claimed.
+[bot_7] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_14] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_2] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_8] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_16] GAME_STARTED → scanned + slide_ready → 200
+[bot_12] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_9] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_6] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_18] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_1] SLIDE_ADVANCED (slide 2) → slide_ready → 200
+[bot_3] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_17] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_4] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_11] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_15] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_5] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_13] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_10] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_16] SLIDE_ADVANCED (slide 1) → slide_ready → 200
+[bot_7] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_6] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_9] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_14] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_2] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_1] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_8] SLIDE_ADVANCED (slide 3) → slide_ready → 200
+[bot_12] Game WS error:
+[bot_18] Game WS error:
+[bot_3] Game WS error:
+[bot_17] Game WS error:
+[bot_15] Game WS error:
+[bot_5] Game WS error:
+[bot_13] Game WS error:
+[bot_10] Game WS error:
+[bot_4] Game WS error:
+[bot_2] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_7] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_14] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_9] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_1] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_6] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_8] Game WS error: sent 1011 (internal error) keepalive ping timeout; no close frame received
+[bot_11] Game WS error:
+[bot_16] Game WS error:
+PS C:\Users\maria\Desktop\skill_project\skill_project\Zombie-Attack\backend\scripts>
