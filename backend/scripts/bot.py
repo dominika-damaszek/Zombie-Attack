@@ -189,20 +189,18 @@ async def bot_flow(bot_id, join_code):
                     msg_type = data.get("type")
 
                     if msg_type == "GAME_STARTED":
-                        # Scan 4 cards, then acknowledge the first instruction slide
+                        # Scan 4 cards. The scan itself advances the first instruction slide
+                        # once all players are done — no extra slide_ready call needed here.
                         await asyncio.sleep(1.5)
                         await scan_initial_cards(client, current_group, player_id, bot_id, username)
-                        await asyncio.sleep(0.5)
-                        r = await client.post(
-                            f"{API}/api/game/{current_group}/slide_ready",
-                            json={"player_id": player_id}
-                        )
-                        print(f"[{username}] GAME_STARTED → scanned + slide_ready → {r.status_code}")
+                        print(f"[{username}] GAME_STARTED → scanned cards (slide advance driven by scan)")
 
                     elif msg_type == "SLIDE_ADVANCED":
                         slide = data.get("slide", 0)
-                        await asyncio.sleep(1.5)
-                        # Check if we still need to scan cards (scan slide in the middle)
+                        # Wait a realistic amount of time so human players can read each slide.
+                        # 10 seconds per slide gives ~1 minute for 7-slide modules.
+                        await asyncio.sleep(10)
+                        # Scan any cards we still need (shouldn't happen, but safety net)
                         state = await get_game_state(client, current_group)
                         me = next((p for p in state.get("players", []) if p["id"] == player_id), None)
                         if me and me.get("initial_cards_scanned", 0) < 4:

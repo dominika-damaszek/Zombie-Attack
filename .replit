@@ -62,3 +62,8 @@ externalPort = 8000
 [deployment]
 deploymentTarget = "autoscale"
 run = ["bash", "-c", "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000"]
+
+[userenv]
+
+[userenv.shared]
+NEON_DATABASE_URL = "postgresql://neondb_owner:npg_YZ9T4MEsCKoU@ep-late-lake-alacfcyx-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require"

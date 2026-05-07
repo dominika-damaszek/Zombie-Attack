@@ -33,7 +33,20 @@ ROUND_EVENTS = [
 ]
 
 ALL_CARD_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", "security_layer"]
-TOTAL_SLIDES = 7  # slides 0–6 per module
+
+# Number of instruction slides per game mode.
+# Must match the slide arrays defined in frontend/src/pages/GameScreen.jsx.
+# module_1/2/3: 7 slides (indices 0–6)
+# normal (Full Game): 5 slides (indices 0–4)
+SLIDES_PER_MODE = {
+    "module_1": 7,
+    "module_2": 7,
+    "module_3": 7,
+    "normal":   5,
+}
+
+def get_total_slides(mode: str) -> int:
+    return SLIDES_PER_MODE.get(mode or "module_1", 7)
 
 # ── WebSocket ──────────────────────────────────────────────────────────────────
 @router.websocket("/ws/{group_id}/{player_id}")
@@ -119,10 +132,11 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
 
 # ── Slide advancement helper ───────────────────────────────────────────────────
 async def _advance_slide(group, db, group_id: str):
+    total_slides = get_total_slides(group.game_mode)
     nxt = (group.instruction_slide or 0) + 1
     for p in group.players:
         p.is_ready = False
-    if nxt >= TOTAL_SLIDES:
+    if nxt >= total_slides:
         group.game_state = "round_active"
         group.current_round = 1
         group.round_end_time = int(time.time()) + 180

@@ -64,11 +64,11 @@ export default function Rules() {
   ];
 
   const cardTypes = [
-    { emoji: '💊', label: t('info_medicine'),  desc: t('info_medicine_desc'),  color: 'text-rose-400',    bg: 'bg-rose-500/15 border-rose-500/25' },
-    { emoji: '🍎', label: t('info_food'),      desc: t('info_food_desc'),      color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/25' },
-    { emoji: '🔫', label: t('info_weapon'),    desc: t('info_weapon_desc'),    color: 'text-orange-400',  bg: 'bg-orange-500/15 border-orange-500/25' },
-    { emoji: '👕', label: t('info_clothing'),  desc: t('info_clothing_desc'),  color: 'text-blue-400',    bg: 'bg-blue-500/15 border-blue-500/25' },
-    { emoji: '🔧', label: t('info_tools'),     desc: t('info_tools_desc'),     color: 'text-yellow-400',  bg: 'bg-yellow-500/15 border-yellow-500/25' },
+    { emoji: '🩹', label: t('info_medicine'),  desc: t('info_medicine_desc'),  color: 'text-rose-400',    bg: 'bg-rose-500/15 border-rose-500/25' },
+    { emoji: '⚡', label: t('info_food'),      desc: t('info_food_desc'),      color: 'text-yellow-400',  bg: 'bg-yellow-500/15 border-yellow-500/25' },
+    { emoji: '💻', label: t('info_weapon'),    desc: t('info_weapon_desc'),    color: 'text-orange-400',  bg: 'bg-orange-500/15 border-orange-500/25' },
+    { emoji: '🧱', label: t('info_clothing'),  desc: t('info_clothing_desc'),  color: 'text-blue-400',    bg: 'bg-blue-500/15 border-blue-500/25' },
+    { emoji: '🔒', label: t('info_tools'),     desc: t('info_tools_desc'),     color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/25' },
   ];
 
   return (
