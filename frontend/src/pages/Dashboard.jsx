@@ -201,7 +201,7 @@ const Dashboard = ({ setHasSession }) => {
               className="px-8 py-3 rounded-2xl font-bold text-slate-300 transition-all hover:scale-[1.02]"
               style={{ background: 'rgba(109,113,98,0.2)', border: '1px solid rgba(109,113,98,0.3)' }}
             >
-              Close
+              {t('dash_close')}
             </button>
           </div>
         </div>
@@ -221,7 +221,7 @@ const Dashboard = ({ setHasSession }) => {
             <div className="sticky top-0 glass-panel rounded-t-3xl flex items-center justify-between px-6 py-4 border-b border-slate-700/50 z-10">
               <div className="flex items-center gap-2">
                 <BarChart2 size={18} className="text-emerald-400" />
-                <span className="font-bold text-white">Group Stats</span>
+                <span className="font-bold text-white">{t('dash_stats_title')}</span>
                 {statsModal.data?.session_note && (
                   <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-mono truncate max-w-[160px]">
                     {statsModal.data.session_note}
@@ -242,9 +242,9 @@ const Dashboard = ({ setHasSession }) => {
                 {/* Summary pills */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: '👥', label: 'Players',  value: statsModal.data.total_players },
-                    { icon: '🛡️', label: 'Survived', value: statsModal.data.survivors },
-                    { icon: '🧟', label: 'Infected', value: statsModal.data.zombies },
+                    { icon: '👥', label: t('end_players'),  value: statsModal.data.total_players },
+                    { icon: '🛡️', label: t('end_survived'), value: statsModal.data.survivors },
+                    { icon: '🧟', label: t('end_infected'), value: statsModal.data.zombies },
                   ].map(({ icon, label, value }) => (
                     <div key={label} className="bg-slate-800/60 rounded-2xl p-3 text-center">
                       <p className="text-xl">{icon}</p>
@@ -257,19 +257,19 @@ const Dashboard = ({ setHasSession }) => {
                 {/* Infection bar */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-emerald-400">{statsModal.data.survivors} survived</span>
-                    <span className="text-rose-400">{statsModal.data.infection_rate}% infection rate</span>
+                    <span className="text-emerald-400">{statsModal.data.survivors} {t('end_survived_label')}</span>
+                    <span className="text-rose-400">{statsModal.data.infection_rate}% {t('dash_infection_rate')}</span>
                   </div>
                   <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
                     <div className="h-full rounded-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all" style={{ width: `${statsModal.data.infection_rate}%` }} />
                   </div>
-                  <p className="text-slate-600 text-xs mt-1 text-right font-mono">{statsModal.data.rounds_played} rounds · {(statsModal.data.game_mode || 'normal').replace('_', ' ')}</p>
+                  <p className="text-slate-600 text-xs mt-1 text-right font-mono">{statsModal.data.rounds_played} {t('dash_rounds_played')} · {(statsModal.data.game_mode || 'normal').replace('_', ' ')}</p>
                 </div>
 
                 {/* Scoreboard */}
                 <div>
                   <p className="text-xs uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-1">
-                    <Trophy size={12} /> Scoreboard
+                    <Trophy size={12} /> {t('dash_scoreboard')}
                   </p>
                   <div className="flex flex-col gap-2">
                     {statsModal.data.scoreboard?.map((player, idx) => (
@@ -288,7 +288,7 @@ const Dashboard = ({ setHasSession }) => {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-white font-black">{player.score}</p>
-                          <p className="text-xs text-slate-600">pts</p>
+                          <p className="text-xs text-slate-600">{t('end_pts')}</p>
                         </div>
                       </div>
                     ))}
@@ -342,7 +342,7 @@ const Dashboard = ({ setHasSession }) => {
           value={note}
           onChange={e => { setNote(e.target.value); setNoteSaved(false); }}
           onKeyDown={e => e.key === 'Enter' && saveNote()}
-          placeholder="Add a class note (e.g. Class 3B · Thursday)…"
+          placeholder={t('dash_note_placeholder')}
           className="flex-1 bg-transparent text-slate-300 placeholder-slate-600 text-sm outline-none"
           maxLength={120}
         />
@@ -355,7 +355,7 @@ const Dashboard = ({ setHasSession }) => {
               : 'bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/25 disabled:opacity-40'
           }`}
         >
-          {noteSaved ? <><Check size={12} /> Saved</> : 'Save'}
+          {noteSaved ? <><Check size={12} /> {t('dash_saved')}</> : t('dash_save')}
         </button>
       </div>
 
@@ -464,7 +464,7 @@ const Dashboard = ({ setHasSession }) => {
                       onClick={() => openStats(group.id)}
                       className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all text-sm font-semibold"
                     >
-                      <BarChart2 size={14} /> Stats
+                      <BarChart2 size={14} /> {t('dash_stats_btn')}
                     </button>
                     <button
                       onClick={() => isActive ? endGame(group.id) : startGame(group.id)}

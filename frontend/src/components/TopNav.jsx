@@ -52,8 +52,8 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
     },
     ...(isAuthenticated ? [{
       icon: <UserCircle size={18} className="text-purple-400" />,
-      label: 'My Profile',
-      sublabel: 'Stats & game history',
+      label: t('nav_profile'),
+      sublabel: t('nav_profile_sub'),
       path: '/profile',
       color: 'hover:bg-purple-500/10',
     }] : []),

@@ -149,7 +149,7 @@ const WaitingRoom = () => {
           {currentGroupData?.join_code && (
             <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
               <p className="text-xs uppercase tracking-widest font-mono text-center mb-2" style={{ color: '#6D7162' }}>
-                Room Code — share with friends
+                {t('wait_room_code')}
               </p>
               <div className="flex items-center justify-center gap-3">
                 <span className="text-4xl font-black font-mono tracking-[0.3em]" style={{ color: '#a8c4a0' }}>
@@ -167,7 +167,7 @@ const WaitingRoom = () => {
                     : { background: 'rgba(109,113,98,0.2)', color: '#AD9E97', border: '1px solid rgba(109,113,98,0.3)' }
                   }
                 >
-                  {copied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy</>}
+                  {copied ? <><Check size={13} /> {t('wait_copied')}</> : <><Copy size={13} /> {t('wait_copy')}</>}
                 </button>
               </div>
             </div>

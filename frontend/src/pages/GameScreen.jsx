@@ -63,7 +63,7 @@ function getModuleSlides(t) {
 
 function getInfoSections(t) {
   return [
-    { title: 'Item Types', items: Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([, ct]) => ({
+    { title: t('game_item_types_title'), items: Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([, ct]) => ({
       emoji: ct.emoji, label: ct.label, desc: ct.desc,
     }))},
     { title: t('game_roles_title'), items: [
@@ -78,26 +78,21 @@ function getInfoSections(t) {
   ];
 }
 
-function getNormalSlides() {
+function getNormalSlides(t) {
   return [
-    { type: 'story', emoji: '🌐', title: 'Cybersecurity Threat Alert',
-      text: 'A malware outbreak is spreading through the network.\nYou hold the tools needed to fight back — but you must trade carefully.\nTrust no one until you verify.' },
-    { type: 'info',  emoji: '🃏', title: 'Setup: Distribute & Scan',
-      text: 'Take 4 physical cards each.\nScan them using the camera so the game knows what you have.\nKeep your cards secret — your hand is private!' },
-    { type: 'scan',  emoji: '📱', title: 'Scan Your Starting Cards',
-      text: 'Point the camera at each card\'s QR code to register it.\nYou need to scan all 4 before the game begins.' },
-    { type: 'info',  emoji: '🎯', title: 'How to Win',
-      text: 'Each round, trade exactly 1 card with another player.\nComplete your objectives to score points.\nWhen a round ends, scan any new cards you received.\nBeware — infected cards can spread malware to you!' },
-    { type: 'final', emoji: '⚡', title: 'Ready to Play?',
-      text: 'You can use the Skip button to skip instructions at any time.\nWhen you\'re ready, tap the button below!' },
+    { type: 'story', emoji: '🌐', title: t('slide_n0_title'), text: t('slide_n0_text') },
+    { type: 'info',  emoji: '🃏', title: t('slide_n1_title'), text: t('slide_n1_text') },
+    { type: 'scan',  emoji: '📱', title: t('slide_n2_title'), text: t('slide_n2_text') },
+    { type: 'info',  emoji: '🎯', title: t('slide_n3_title'), text: t('slide_n3_text') },
+    { type: 'final', emoji: '⚡', title: t('slide_n4_title'), text: t('slide_n4_text') },
   ];
 }
 
 function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
   const isZombie = role === 'zombie';
   const cfg = isZombie
-    ? { emoji: '🧟', label: t('game_zombie'),   color: '#d97559', border: 'rgba(217,117,89,0.5)', glow: 'rgba(217,117,89,0.3)', desc: 'Infect survivors by contaminating their item cards. Spread the malware!' }
-    : { emoji: '🛡️', label: t('game_survivor'), color: '#a8c4a0', border: 'rgba(168,196,160,0.5)', glow: 'rgba(168,196,160,0.25)', desc: 'Trade cards, collect your objectives, and protect the network from zombies.' };
+    ? { emoji: '🧟', label: t('game_zombie'),   color: '#d97559', border: 'rgba(217,117,89,0.5)', glow: 'rgba(217,117,89,0.3)', desc: t('game_zombie_desc') }
+    : { emoji: '🛡️', label: t('game_survivor'), color: '#a8c4a0', border: 'rgba(168,196,160,0.5)', glow: 'rgba(168,196,160,0.25)', desc: t('game_survivor_desc') };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.97)' }}>
@@ -130,24 +125,25 @@ function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
 }
 
 function CardTakenPopup({ playerName, onClose }) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
       <div className="relative rounded-3xl p-7 max-w-sm w-full mx-4 text-center" style={{ background: 'rgba(42,38,34,0.97)', border: '2px solid rgba(217,117,89,0.5)', backdropFilter: 'blur(20px)' }}>
         <div className="text-5xl mb-3">🚫</div>
-        <h3 className="text-xl font-black mb-2" style={{ color: '#d97559' }}>Card Already Taken</h3>
+        <h3 className="text-xl font-black mb-2" style={{ color: '#d97559' }}>{t('game_card_taken_title')}</h3>
         <p className="text-slate-300 text-sm mb-1 leading-relaxed">
-          This card has already been scanned by
+          {t('game_card_taken_body')}
         </p>
         <p className="text-lg font-black mb-3" style={{ color: '#AD9E97' }}>{playerName}</p>
         <p className="text-slate-500 text-xs mb-5 leading-relaxed">
-          Each card can only belong to one player during this phase. Please scan a different card.
+          {t('game_card_taken_sub')}
         </p>
         <button
           onClick={onClose}
           className="w-full py-3.5 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
           style={{ background: 'linear-gradient(135deg, #795846, #a87a64)' }}
         >
-          Got it, scan another card
+          {t('game_card_taken_ok')}
         </button>
       </div>
     </div>
@@ -200,6 +196,7 @@ async function startCameraScanner(scanner, handleResult) {
 }
 
 function QRScannerModal({ onScan, onClose, title, hint }) {
+  const { t } = useLanguage();
   const [permState, setPermState] = useState('checking'); // 'checking'|'prompt'|'requesting'|'granted'|'denied'
   const [retryCountdown, setRetryCountdown] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -332,19 +329,19 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
           <div className="space-y-4 py-2">
             <div className="flex flex-col items-center text-center py-4 px-2">
               <div className="text-6xl mb-3">📷</div>
-              <h4 className="text-lg font-black mb-2" style={{ color: '#AD9E97' }}>Camera Access Needed</h4>
+              <h4 className="text-lg font-black mb-2" style={{ color: '#AD9E97' }}>{t('scan_camera_needed')}</h4>
               <p className="text-slate-400 text-sm leading-relaxed mb-1">
-                To scan your cards, please allow camera access when your browser asks for permission.
+                {t('scan_camera_allow_desc')}
               </p>
               {permState === 'denied' && (
                 <p className="text-xs mt-1" style={{ color: '#d97559' }}>
-                  Access was denied. Tap the button below or allow the camera in your browser settings.
+                  {t('scan_camera_denied')}
                 </p>
               )}
             </div>
             {retryCountdown !== null ? (
               <div className="text-center py-3 rounded-2xl" style={{ background: 'rgba(109,113,98,0.1)', border: '1px solid rgba(109,113,98,0.2)' }}>
-                <p className="text-slate-400 text-sm mb-1">Asking again in</p>
+                <p className="text-slate-400 text-sm mb-1">{t('scan_retry_in')}</p>
                 <p className="text-4xl font-black font-mono" style={{ color: '#795846' }}>{retryCountdown}</p>
               </div>
             ) : (
@@ -355,11 +352,11 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
                 style={{ background: 'linear-gradient(135deg, #795846, #a87a64)', opacity: permState === 'requesting' ? 0.7 : 1 }}
               >
                 <Camera size={22} />
-                {permState === 'requesting' ? 'Requesting…' : 'Allow Camera Access'}
+                {permState === 'requesting' ? t('scan_requesting') : t('scan_allow_camera')}
               </button>
             )}
             <button onClick={handleClose} className="w-full py-2.5 rounded-xl text-sm font-bold" style={{ background: 'rgba(109,113,98,0.15)', color: '#6D7162' }}>
-              Close
+              {t('game_close')}
             </button>
           </div>
         ) : (
@@ -373,7 +370,7 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
               <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(42,38,34,0.85)' }}>
                 <div className="text-center">
                   <Camera size={32} style={{ color: '#795846' }} className="mx-auto mb-2 animate-pulse" />
-                  <p className="text-sm" style={{ color: '#AD9E97' }}>Starting camera…</p>
+                  <p className="text-sm" style={{ color: '#AD9E97' }}>{t('scan_starting')}</p>
                 </div>
               </div>
             )}
@@ -564,6 +561,7 @@ function WhatToDoNow({
   onShowInitialScanner, onSlideReady, onDoneTrading, onSkipTrade, onOpenScanner,
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
 
   let icon = '❓';
   let title = '';
@@ -574,54 +572,50 @@ function WhatToDoNow({
     if (isScanSlide) {
       if (!scanDone) {
         icon = '📷';
-        title = 'Scan Your Starting Cards';
-        body = `You need to scan all 4 of your physical playing cards so the game knows which cards you have. You've scanned ${initialScanCount} of 4 so far. Tap the button below to open the camera and scan your next card.`;
-        actions = [{ label: `Scan Card ${initialScanCount + 1} of 4`, color: '#6D7162', onClick: () => { setOpen(false); onShowInitialScanner(); } }];
+        title = t('game_scan_starting_cards_title');
+        body = t('wtd_body_scan_cards').replace('{n}', initialScanCount);
+        actions = [{ label: `${t('game_scan_card_n')} ${initialScanCount + 1} ${t('game_of_4')}`, color: '#6D7162', onClick: () => { setOpen(false); onShowInitialScanner(); } }];
       } else {
         icon = '⏳';
-        title = 'All Cards Scanned!';
-        body = 'Great job — you have scanned all 4 of your cards. Just wait here while the other players finish scanning their cards. The game will move on automatically.';
+        title = t('wtd_all_cards_scanned');
+        body = t('wtd_body_all_scanned');
       }
     } else if (!meIsReady) {
       icon = '📖';
-      title = isLast ? "Tap 'I'm Ready'" : "Read & Tap Next";
-      body = isLast
-        ? "Read through the last slide carefully. When you understand everything, tap the green 'I'm Ready' button to let the teacher know you are good to go."
-        : "Read through the instructions on your screen. When you are done, tap the 'Next' button at the bottom to go to the next slide.";
-      actions = [{ label: isLast ? "I'm Ready ✓" : 'Next →', color: '#a8c4a0', dark: true, onClick: () => { setOpen(false); onSlideReady(); } }];
+      title = isLast ? t('wtd_tap_ready') : t('wtd_read_and_next');
+      body = isLast ? t('wtd_body_tap_ready') : t('wtd_body_read_next');
+      actions = [{ label: isLast ? `${t('game_im_ready')} ✓` : `${t('game_next')} →`, color: '#a8c4a0', dark: true, onClick: () => { setOpen(false); onSlideReady(); } }];
     } else {
       icon = '✅';
-      title = 'Waiting for Others';
-      body = "You're ready! Sit tight while the other players finish reading and tap Ready. The game will move on as soon as everyone is ready.";
+      title = t('wtd_waiting_others');
+      body = t('wtd_body_waiting');
     }
   } else if (gamePhase === 'round_active') {
     if (isModule) {
       if (!isDoneTrading) {
         icon = '🤝';
-        title = 'Go Trade a Card!';
-        body = "Walk up to another player who hasn't traded yet and swap one physical card with them. After trading, come back and tap 'Done Trading'. If you can't find anyone to trade with, you can use your one-time Skip.";
+        title = t('wtd_go_trade');
+        body = t('wtd_body_go_trade');
         actions = [
-          { label: 'Done Trading ✓', color: '#4ade80', dark: true, onClick: () => { setOpen(false); onDoneTrading(); } },
-          ...(!hasSkippedTrade ? [{ label: 'Skip Trade (1×)', color: '#d97559', onClick: () => { setOpen(false); onSkipTrade(); } }] : []),
+          { label: `${t('game_done_trading')} ✓`, color: '#4ade80', dark: true, onClick: () => { setOpen(false); onDoneTrading(); } },
+          ...(!hasSkippedTrade ? [{ label: `${t('game_skip_round')} ${t('game_skip_once')}`, color: '#d97559', onClick: () => { setOpen(false); onSkipTrade(); } }] : []),
         ];
       } else {
         icon = '✅';
-        title = 'Done Trading!';
-        body = "You've marked yourself as done. Just wait here — the round will end once all the other players have finished trading.";
+        title = t('wtd_done_trading_title');
+        body = t('wtd_body_done_trading');
       }
     } else {
       icon = isZombie ? '🧟' : '📷';
-      title = isZombie ? 'Infect Other Players!' : 'Scan a Card';
-      body = isZombie
-        ? "Your goal is to spread the infection. Ask a survivor to let you scan one of their cards using the Scan Card button — if they accept a card from you, they get infected!"
-        : "Use the Scan Card button to scan a card from another player. Be careful — if they are a zombie, you might get infected!";
-      actions = [{ label: 'Open Scanner 📷', color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
+      title = isZombie ? t('wtd_infect_others') : t('wtd_scan_card_title');
+      body = isZombie ? t('wtd_body_zombie') : t('wtd_body_survivor');
+      actions = [{ label: t('wtd_open_scanner'), color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
     }
   } else if (gamePhase === 'module_between_rounds') {
     icon = '📦';
-    title = 'Scan Your Cards';
-    body = "The trading round is over! Scan any cards you received during the round using the Scan button, then tap 'Ready for Next Round' to continue.";
-    actions = [{ label: 'Open Scanner 📷', color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
+    title = t('wtd_scan_cards');
+    body = t('wtd_body_between_rounds');
+    actions = [{ label: t('wtd_open_scanner'), color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
   } else {
     return null;
   }
@@ -634,7 +628,7 @@ function WhatToDoNow({
         style={{ background: 'rgba(42,38,34,0.95)', border: '1px solid rgba(109,113,98,0.5)', color: '#AD9E97', backdropFilter: 'blur(12px)' }}
       >
         <span className="text-base leading-none">{icon}</span>
-        What now?
+        {t('wtd_what_now')}
       </button>
 
       {open && (
@@ -666,7 +660,7 @@ function WhatToDoNow({
                 </div>
               )}
               <button onClick={() => setOpen(false)} className="w-full py-2.5 rounded-xl text-sm font-bold" style={{ background: 'rgba(109,113,98,0.15)', color: '#6D7162' }}>
-                Got it, close
+                {t('wtd_got_it')}
               </button>
             </div>
           </div>
@@ -809,7 +803,7 @@ const GameScreen = ({ mockData } = {}) => {
         setScanFeedback({ status: 'error', message: data.detail || 'Unknown card code' });
         setTimeout(() => setScanFeedback(null), 3000);
       }
-    } catch { setScanFeedback({ status: 'error', message: 'Scan failed. Try again.' }); setTimeout(() => setScanFeedback(null), 3000); }
+    } catch { setScanFeedback({ status: 'error', message: t('game_scan_failed') }); setTimeout(() => setScanFeedback(null), 3000); }
   };
 
   const handleScan = useCallback(async (cardCode) => {
@@ -823,7 +817,7 @@ const GameScreen = ({ mockData } = {}) => {
       });
       const data = await res.json();
       if (!res.ok) {
-        setScanFeedback({ status: 'error', message: data.detail || 'Scan failed. Try again.' });
+        setScanFeedback({ status: 'error', message: data.detail || t('game_scan_failed') });
         setTimeout(() => setScanFeedback(null), 3000);
         return;
       }
@@ -840,7 +834,7 @@ const GameScreen = ({ mockData } = {}) => {
       }
       if (data.round_ended) fetchState();
     } catch {
-      setScanFeedback({ status: 'error', message: 'Scan failed. Try again.' });
+      setScanFeedback({ status: 'error', message: t('game_scan_failed') });
       setTimeout(() => setScanFeedback(null), 3000);
     }
   }, [groupData?.group_id, playerData?.id, playSFX, fetchState]);
@@ -903,7 +897,7 @@ const GameScreen = ({ mockData } = {}) => {
   if (gamePhase === 'module_instructions') {
     const isNormalMode = gameMode === 'normal';
     const MODULE_SLIDES = getModuleSlides(t);
-    const slides = isNormalMode ? getNormalSlides() : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
+    const slides = isNormalMode ? getNormalSlides(t) : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
     const slideIndex = isNormalMode
       ? (mockData ? 0 : localNormalSlideIndex)
       : (mockData ? 0 : (gameState?.instruction_slide ?? 0));
@@ -1035,8 +1029,8 @@ const GameScreen = ({ mockData } = {}) => {
                 meIsReady ? (
                   <div className="text-center py-4">
                     <CheckCircle2 size={28} className="text-cyan-400 mx-auto mb-2" />
-                    <p className="text-cyan-400 font-bold">You're ready!</p>
-                    <p className="text-slate-500 text-xs mt-1 animate-pulse">Waiting for the teacher to start the game…</p>
+                    <p className="text-cyan-400 font-bold">{t('game_youre_ready')}</p>
+                    <p className="text-slate-500 text-xs mt-1 animate-pulse">{t('game_waiting_teacher_start')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1048,7 +1042,7 @@ const GameScreen = ({ mockData } = {}) => {
                         : { background: '#a8c4a0', color: '#0f1a0e' }
                       }
                     >
-                      {isLast ? <><CheckCircle2 size={22} /> I'm Ready</> : <>Next <ChevronRight size={22} /></>}
+                      {isLast ? <><CheckCircle2 size={22} /> {t('game_im_ready')}</> : <>{t('game_next')} <ChevronRight size={22} /></>}
                     </button>
                     {!isLast && (
                       <button
@@ -1056,7 +1050,7 @@ const GameScreen = ({ mockData } = {}) => {
                         className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
                         style={{ background: 'rgba(109,113,98,0.15)', color: '#6D7162' }}
                       >
-                        Skip All Instructions →
+                        {t('game_skip_all')}
                       </button>
                     )}
                   </div>
@@ -1148,11 +1142,11 @@ const GameScreen = ({ mockData } = {}) => {
               </div>
               {selectedItem.contaminated && (
                 <div className="rounded-xl px-4 py-2 mb-4 text-sm font-bold text-rose-400 flex items-center justify-center gap-2" style={{ background: 'rgba(80,30,20,0.5)', border: '1px solid rgba(217,117,89,0.3)' }}>
-                  ☣️ This card is contaminated with malware
+                  {t('game_contaminated')}
                 </div>
               )}
               <button onClick={() => setSelectedItem(null)} className="w-full py-3 rounded-2xl font-bold text-slate-300 transition-all" style={{ background: 'rgba(109,113,98,0.2)' }}>
-                Close
+                {t('game_close')}
               </button>
             </div>
           </div>
@@ -1277,8 +1271,8 @@ const GameScreen = ({ mockData } = {}) => {
         ) : (
           <div className="text-center p-6 mb-3 rounded-2xl" style={{ border: '2px dashed rgba(109,113,98,0.4)', background: 'rgba(56,44,37,0.4)' }}>
             <div className="text-4xl mb-2 animate-bounce">🤝</div>
-            <p className="font-bold text-lg" style={{ color: '#AD9E97' }}>Go Trade Physical Cards!</p>
-            <p className="text-slate-500 text-sm mb-4">Scanner is disabled until the round ends.</p>
+            <p className="font-bold text-lg" style={{ color: '#AD9E97' }}>{t('game_go_trade')}</p>
+            <p className="text-slate-500 text-sm mb-4">{t('game_scanner_disabled')}</p>
             {!isDoneTrading ? (
               <div className="flex gap-2">
                 <button onClick={handleDoneTrading} className="flex-1 py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
@@ -1289,7 +1283,7 @@ const GameScreen = ({ mockData } = {}) => {
                   disabled={hasSkippedTrade}
                   className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
                 >
-                  {t('game_skip_round')} {hasSkippedTrade ? '(used)' : '(1×)'}
+                  {t('game_skip_round')} {hasSkippedTrade ? t('game_skip_used') : t('game_skip_once')}
                 </button>
               </div>
             ) : (
@@ -1297,7 +1291,7 @@ const GameScreen = ({ mockData } = {}) => {
             )}
             {isTimeUp && (
               <button onClick={handleNextRound} className="mt-4 w-full py-3 bg-cyan-600 text-white font-bold rounded-xl animate-pulse">
-                Time's up — Start Next Round
+                {t('game_time_up')}
               </button>
             )}
           </div>
@@ -1306,7 +1300,7 @@ const GameScreen = ({ mockData } = {}) => {
         {isNormal && gamePhase === 'round_active' && (
           <div className="mb-3 rounded-2xl p-4" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
             <p className="text-xs uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
-              🤝 Trading
+              {t('game_trading_label')}
             </p>
             {!isDoneTrading ? (
               <div className="flex gap-2">
@@ -1318,7 +1312,7 @@ const GameScreen = ({ mockData } = {}) => {
                   disabled={hasSkippedTrade}
                   className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
                 >
-                  {t('game_skip_round')} {hasSkippedTrade ? '(used)' : '(1×)'}
+                  {t('game_skip_round')} {hasSkippedTrade ? t('game_skip_used') : t('game_skip_once')}
                 </button>
               </div>
             ) : (
@@ -1330,16 +1324,16 @@ const GameScreen = ({ mockData } = {}) => {
         {gamePhase === 'module_between_rounds' && (
           <div className="mb-3 glass-panel p-4 rounded-2xl text-center">
             <h3 className="font-black text-xl mb-1" style={{ color: '#AD9E97' }}>
-              {gameState?.current_round === 0 ? 'Scan Your Starting Cards' : `Round ${gameState?.current_round} Complete!`}
+              {gameState?.current_round === 0 ? t('game_scan_starting_cards_title') : t('game_round_complete').replace('{n}', gameState?.current_round)}
             </h3>
             <p className="text-slate-400 text-sm mb-4">
-              {gameState?.current_round === 0 ? 'Scan the items you just received.' : 'Scan all items you collected this round.'}
+              {gameState?.current_round === 0 ? t('game_scan_starting_cards_hint') : t('game_scan_round_items_hint')}
             </p>
             <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-2" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
               <Camera size={16} className="inline mr-2" />{t('game_scan_card')}
             </button>
             <button onClick={handleNextRound} className="w-full py-3 rounded-xl font-bold text-slate-900 transition-all" style={{ background: '#a8c4a0' }}>
-              Ready for {gameState?.current_round >= 3 ? 'Game Over' : 'Next Round'} →
+              {gameState?.current_round >= 3 ? t('game_ready_for_game_over') : t('game_ready_for_next_round')}
             </button>
           </div>
         )}
@@ -1365,14 +1359,14 @@ const GameScreen = ({ mockData } = {}) => {
         <div className="glass-panel rounded-2xl p-5">
           <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: '#AD9E97' }}>
             <Package size={18} style={{ color: '#795846' }} />
-            Inventory
+            {t('game_inventory')}
             <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(56,44,37,0.7)', color: '#6D7162' }}>
-              {inventory.length} cards
+              {inventory.length} {t('game_inventory_cards')}
             </span>
           </h3>
           {inventory.length === 0 ? (
             <p className="text-xs text-center py-4 font-mono" style={{ color: '#454D3E' }}>
-              No cards yet.<br />Scan your physical cards to register them.
+              {t('game_no_cards')}<br />{t('game_no_cards_hint')}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-2">

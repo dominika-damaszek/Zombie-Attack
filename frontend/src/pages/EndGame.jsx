@@ -71,7 +71,7 @@ export default function EndGame() {
           {infectedPct > 50 ? t('end_zombies_win') : t('end_survivors_triumph')}
         </h1>
         <p className="text-slate-500 font-mono text-sm uppercase tracking-widest">
-          {recap.game_mode?.toUpperCase()} · {recap.rounds_played} rounds · {recap.total_players} players
+          {recap.game_mode?.toUpperCase()} · {recap.rounds_played} {t('dash_rounds_played')} · {recap.total_players} {t('end_players')}
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export default function EndGame() {
       {podium.length > 0 && (
         <div className="mb-8">
           <h2 className="text-center text-xs uppercase tracking-widest font-mono mb-5 flex items-center justify-center gap-2" style={{ color: '#6D7162' }}>
-            <Trophy size={13} /> Individual Rankings
+            <Trophy size={13} /> {t('end_individual_rankings')}
           </h2>
           <div className="flex items-end justify-center gap-3">
             {[
@@ -107,7 +107,7 @@ export default function EndGame() {
                 <div key={entry.username} className={`flex flex-col items-center gap-2 ${style.order}`} style={{ minWidth: 96 }}>
                   <div className={`${style.size} leading-none`}>{entry.is_infected ? '🧟' : '🛡️'}</div>
                   <p className={`font-black text-sm text-center truncate max-w-[88px] ${style.color}`}>{entry.username}</p>
-                  <p className="text-xl font-black text-white">{entry.score} <span className="text-xs font-normal text-slate-500">pts</span></p>
+                  <p className="text-xl font-black text-white">{entry.score} <span className="text-xs font-normal text-slate-500">{t('end_pts')}</span></p>
                   <div className={`w-full rounded-t-xl border-2 flex items-end justify-center pb-2 ${style.bg} ${style.height}`}>
                     <span className="text-2xl">{style.emoji}</span>
                   </div>
@@ -122,7 +122,7 @@ export default function EndGame() {
       <div className="glass-panel rounded-2xl overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-slate-700/40">
           <h2 className="font-bold flex items-center gap-2 text-sm" style={{ color: '#AD9E97' }}>
-            <Trophy size={15} /> Full Leaderboard
+            <Trophy size={15} /> {t('end_full_leaderboard')}
           </h2>
         </div>
         <div className="divide-y divide-slate-700/30">
@@ -147,14 +147,14 @@ export default function EndGame() {
                 <div className="flex-1 min-w-0">
                   <p className={`font-bold text-sm truncate ${isTop ? 'text-yellow-300' : 'text-slate-200'}`}>
                     {entry.username}
-                    {entry.is_initial_zombie && <span className="ml-1.5 text-xs font-mono text-rose-400">(patient zero)</span>}
+                    {entry.is_initial_zombie && <span className="ml-1.5 text-xs font-mono text-rose-400">{t('end_patient_zero')}</span>}
                   </p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {(entry.trades || 0) > 0 && (
-                      <StatPill icon="🤝" label="trades" value={`+${entry.trades}`} color="#6D9EEB" />
+                      <StatPill icon="🤝" label={t('end_stat_trades')} value={`+${entry.trades}`} color="#6D9EEB" />
                     )}
                     {(entry.infections_caused || 0) > 0 && (
-                      <StatPill icon="☣️" label="infected" value={`+${entry.infections_caused}`} color="#d97559" />
+                      <StatPill icon="☣️" label={t('end_stat_infected_by')} value={`+${entry.infections_caused}`} color="#d97559" />
                     )}
                     {(entry.objectives_met || 0) > 0 && (
                       <StatPill icon="🎯" label={`obj ${entry.objectives_met}/${entry.objectives_total}`} value="✓" color="#a8c4a0" />
@@ -165,7 +165,7 @@ export default function EndGame() {
                 {/* Score */}
                 <div className="text-right shrink-0">
                   <p className={`text-xl font-black ${isTop ? 'text-yellow-400' : 'text-white'}`}>{entry.score}</p>
-                  <p className="text-xs text-slate-600">pts</p>
+                  <p className="text-xs text-slate-600">{t('end_pts')}</p>
                 </div>
               </div>
             );
@@ -175,15 +175,15 @@ export default function EndGame() {
 
       {/* ── Scoring key ── */}
       <div className="glass-panel rounded-2xl p-4 mb-6">
-        <p className="text-xs uppercase tracking-widest font-mono mb-3" style={{ color: '#6D7162' }}>How points were earned</p>
+        <p className="text-xs uppercase tracking-widest font-mono mb-3" style={{ color: '#6D7162' }}>{t('end_scoring_key')}</p>
         <div className="grid grid-cols-2 gap-2 text-xs">
           {[
-            { icon: '🤝', label: 'Trade completed',       pts: '+1' },
-            { icon: '☣️', label: 'Infect a player',        pts: '+3' },
-            { icon: '🛡️', label: 'Survive a round',        pts: '+2' },
-            { icon: '🎯', label: 'Per objective met',       pts: '+1' },
-            { icon: '🏆', label: 'All objectives complete', pts: '+2' },
-            { icon: '🌟', label: 'Final survivor bonus',    pts: '+5' },
+            { icon: '🤝', label: t('end_score_trade'),          pts: '+1' },
+            { icon: '☣️', label: t('end_score_infect'),          pts: '+3' },
+            { icon: '🛡️', label: t('end_score_survive'),         pts: '+2' },
+            { icon: '🎯', label: t('end_score_objective'),       pts: '+1' },
+            { icon: '🏆', label: t('end_score_all_objectives'),  pts: '+2' },
+            { icon: '🌟', label: t('end_score_final_survivor'),  pts: '+5' },
           ].map(({ icon, label, pts }) => (
             <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.15)' }}>
               <span className="flex items-center gap-1.5 text-slate-300">{icon} {label}</span>

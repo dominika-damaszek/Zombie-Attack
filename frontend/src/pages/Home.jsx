@@ -56,11 +56,11 @@ const Home = ({ isAuthenticated }) => {
             <div className="flex items-center gap-3">
               <span className="text-xl animate-pulse">🎮</span>
               <div className="text-left">
-                <p className="text-emerald-400 font-bold text-sm">Game in progress!</p>
-                <p className="text-slate-400 text-xs">Tap to rejoin your current game</p>
+                <p className="text-emerald-400 font-bold text-sm">{t('home_game_in_progress')}</p>
+                <p className="text-slate-400 text-xs">{t('home_rejoin_hint')}</p>
               </div>
             </div>
-            <span className="text-emerald-400 font-bold text-sm">Rejoin →</span>
+            <span className="text-emerald-400 font-bold text-sm">{t('home_rejoin')}</span>
           </div>
         </button>
       )}
@@ -85,7 +85,7 @@ const Home = ({ isAuthenticated }) => {
           className="group flex-1 flex flex-col items-center justify-center gap-3 py-10 px-8 rounded-3xl text-2xl neon-btn transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]">
           <Users size={36} strokeWidth={2.5} />
           {t('home_join')}
-          <span className="text-sm font-medium group-hover:text-black group-hover:font-bold -mt-1">Enter a classroom</span>
+          <span className="text-sm font-medium group-hover:text-black group-hover:font-bold -mt-1">{t('home_join_sub')}</span>
         </button>
 
         <button
@@ -94,7 +94,7 @@ const Home = ({ isAuthenticated }) => {
         >
           <Monitor size={36} strokeWidth={2.5} />
           {t('home_host')}
-          <span className="text-sm font-medium text-[var(--neon-cyan)] group-hover:text-black  group-hover:font-bold -mt-1">Create a class session</span>
+          <span className="text-sm font-medium text-[var(--neon-cyan)] group-hover:text-black  group-hover:font-bold -mt-1">{t('home_host_sub')}</span>
         </button>
       </div>
 
@@ -128,19 +128,19 @@ const Home = ({ isAuthenticated }) => {
         <div className="flex flex-row gap-3 items-center">
           <img src="/nrp1.png" alt="Players" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
           <p className="text-slate-400 text-lg max-w-md mx-auto">
-            6-11 players
+            {t('home_players')}
           </p>
         </div>
         <div className="flex flex-row gap-3 items-center">
           <img src="/time1.png" alt="Duration" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
           <p className="text-slate-400 text-lg max-w-md mx-auto">
-            15-20 minutes
+            {t('home_duration')}
           </p>
         </div>
         <div className="flex flex-row gap-3 items-center">
           <img src="/age1.png" alt="Age" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
           <p className="text-slate-400 text-lg max-w-md mx-auto">
-            14+ years old
+            {t('home_age')}
           </p>
         </div>
       </div>
