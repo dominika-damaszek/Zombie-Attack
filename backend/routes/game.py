@@ -731,6 +731,10 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
         {"icon": "🚫", "concept": "Zero Trust",       "lesson": "Never trust automatically — always verify before accepting items (files/data)."},
     ]
 
+    session_note = None
+    if group.session:
+        session_note = getattr(group.session, 'note', None)
+
     return {
         "total_players":  total,
         "survivors":      len(surv),
@@ -738,6 +742,8 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
         "infection_rate": infection_rate,
         "game_mode":      group.game_mode,
         "rounds_played":  group.current_round,
+        "last_activity":  group.last_activity,
+        "session_note":   session_note,
         "lessons":        lessons,
         "zombie_names":   [p.user.username for p in zombies],
         "survivor_names": [p.user.username for p in surv],

@@ -153,17 +153,21 @@ def get_stats(token: str, db: Session = Depends(database.get_db)):
             models.GroupPlayer.infected_by_id == gp.id
         ).count()
 
+        session_note = getattr(group.session, 'note', None) if group.session else None
+
         finished_games.append({
-            "group_id":         group.id,
-            "game_mode":        group.game_mode or "normal",
-            "role":             gp.role or "survivor",
-            "survived":         not gp.is_infected,
-            "score":            gp.score or 0,
-            "rank":             rank,
-            "total_players":    total_players,
-            "trades":           trades,
+            "group_id":          group.id,
+            "game_mode":         group.game_mode or "normal",
+            "role":              gp.role or "survivor",
+            "survived":          not gp.is_infected,
+            "score":             gp.score or 0,
+            "rank":              rank,
+            "total_players":     total_players,
+            "trades":            trades,
             "infections_caused": infections_caused,
-            "rounds_played":    group.current_round or 0,
+            "rounds_played":     group.current_round or 0,
+            "last_activity":     group.last_activity,
+            "session_note":      session_note,
         })
 
     scores = [g["score"] for g in finished_games]

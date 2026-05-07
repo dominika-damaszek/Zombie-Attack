@@ -29,6 +29,8 @@ class Session(Base):
     game_mode = Column(String, default="normal")
     status = Column(String, default="waiting")
 
+    note = Column(String, nullable=True)
+
     teacher = relationship("User", back_populates="sessions")
     groups = relationship("Group", back_populates="session", cascade="all, delete-orphan")
 

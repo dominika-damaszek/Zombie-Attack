@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Play, Users, Skull, RefreshCw, ChevronRight, X, Maximize2 } from 'lucide-react';
+import { Play, Users, Skull, RefreshCw, ChevronRight, X, Maximize2, BarChart2, Trophy, Shield, Zap, ArrowRightLeft, NotebookPen, Check } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
 import { useLanguage } from '../contexts/LanguageContext';
+
+const RANK_EMOJI = ['🥇', '🥈', '🥉'];
 
 const Dashboard = ({ setHasSession }) => {
   const location = useLocation();
@@ -22,9 +24,15 @@ const Dashboard = ({ setHasSession }) => {
   const [groupStats, setGroupStats] = useState({});
   const [actionLoading, setActionLoading] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [qrFullscreen, setQrFullscreen] = useState(null); // { url, code }
+  const [qrFullscreen, setQrFullscreen] = useState(null);
+  const [statsModal, setStatsModal] = useState(null);   // { groupId, data } | null
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [note, setNote] = useState('');
+  const [noteSaved, setNoteSaved] = useState(false);
+  const [noteLoading, setNoteLoading] = useState(false);
 
   const joinUrlBase = `${window.location.origin}/join/`;
+  const token = localStorage.getItem('token');
 
   const MODULE_LABELS = {
     module_1: { label: `${t('mod1_label')}: ${t('mod1_sublabel')}`, emoji: '📘', color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20' },
@@ -70,7 +78,6 @@ const Dashboard = ({ setHasSession }) => {
   const startMatchmaking = async (groupId) => {
     setActionLoading(groupId);
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${API_URLS.BASE}/session/${session.id}/start?token=${token}`, { method: 'POST' });
       if (!res.ok) throw new Error(await res.text());
       const sessionsRes = await fetch(`${API_URLS.BASE}/session/my?token=${token}`);
@@ -110,7 +117,6 @@ const Dashboard = ({ setHasSession }) => {
   const endSession = async () => {
     if (!window.confirm(t('dash_end_session_confirm'))) return;
     try {
-      const token = localStorage.getItem('token');
       await fetch(`${API_URLS.SESSION}/${session.id}?token=${token}`, { method: 'DELETE' });
     } catch (e) { console.error(e); }
     finally {
@@ -119,6 +125,37 @@ const Dashboard = ({ setHasSession }) => {
       if (setHasSession) setHasSession(false);
       navigate('/host', { replace: true });
     }
+  };
+
+  const openStats = async (groupId) => {
+    setStatsModal({ groupId, data: null });
+    setStatsLoading(true);
+    try {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/recap`);
+      if (!res.ok) throw new Error('Failed to load stats');
+      const data = await res.json();
+      setStatsModal({ groupId, data });
+    } catch (e) {
+      setStatsModal(null);
+      alert('Could not load stats: ' + e.message);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const saveNote = async () => {
+    if (!session?.id) return;
+    setNoteLoading(true);
+    try {
+      await fetch(`${API_URLS.BASE}/session/${session.id}/note?token=${token}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note }),
+      });
+      setNoteSaved(true);
+      setTimeout(() => setNoteSaved(false), 2500);
+    } catch (e) { console.error(e); }
+    finally { setNoteLoading(false); }
   };
 
   if (!session) {
@@ -142,6 +179,8 @@ const Dashboard = ({ setHasSession }) => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+
+      {/* ── QR fullscreen overlay ── */}
       {qrFullscreen && (
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center"
@@ -167,9 +206,103 @@ const Dashboard = ({ setHasSession }) => {
           </div>
         </div>
       )}
+
+      {/* ── Stats modal ── */}
+      {statsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(10,12,18,0.93)', backdropFilter: 'blur(10px)' }}
+          onClick={() => setStatsModal(null)}
+        >
+          <div
+            className="glass-panel rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 glass-panel rounded-t-3xl flex items-center justify-between px-6 py-4 border-b border-slate-700/50 z-10">
+              <div className="flex items-center gap-2">
+                <BarChart2 size={18} className="text-emerald-400" />
+                <span className="font-bold text-white">Group Stats</span>
+                {statsModal.data?.session_note && (
+                  <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-mono truncate max-w-[160px]">
+                    {statsModal.data.session_note}
+                  </span>
+                )}
+              </div>
+              <button onClick={() => setStatsModal(null)} className="p-2 rounded-xl hover:bg-slate-700/50 text-slate-400">
+                <X size={18} />
+              </button>
+            </div>
+
+            {statsLoading || !statsModal.data ? (
+              <div className="flex items-center justify-center py-16 text-slate-500 text-sm animate-pulse">
+                Loading stats…
+              </div>
+            ) : (
+              <div className="px-6 py-5 flex flex-col gap-5">
+                {/* Summary pills */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { icon: '👥', label: 'Players',  value: statsModal.data.total_players },
+                    { icon: '🛡️', label: 'Survived', value: statsModal.data.survivors },
+                    { icon: '🧟', label: 'Infected', value: statsModal.data.zombies },
+                  ].map(({ icon, label, value }) => (
+                    <div key={label} className="bg-slate-800/60 rounded-2xl p-3 text-center">
+                      <p className="text-xl">{icon}</p>
+                      <p className="text-white font-black text-lg">{value}</p>
+                      <p className="text-slate-500 text-xs">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Infection bar */}
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-emerald-400">{statsModal.data.survivors} survived</span>
+                    <span className="text-rose-400">{statsModal.data.infection_rate}% infection rate</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all" style={{ width: `${statsModal.data.infection_rate}%` }} />
+                  </div>
+                  <p className="text-slate-600 text-xs mt-1 text-right font-mono">{statsModal.data.rounds_played} rounds · {(statsModal.data.game_mode || 'normal').replace('_', ' ')}</p>
+                </div>
+
+                {/* Scoreboard */}
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-1">
+                    <Trophy size={12} /> Scoreboard
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {statsModal.data.scoreboard?.map((player, idx) => (
+                      <div key={player.username} className={`flex items-center gap-3 p-3 rounded-2xl ${idx < 3 ? 'bg-slate-800/80' : 'bg-slate-800/30'}`}>
+                        <span className="text-lg w-7 text-center shrink-0">
+                          {player.rank <= 3 ? RANK_EMOJI[player.rank - 1] : `#${player.rank}`}
+                        </span>
+                        <span className="text-lg shrink-0">{player.is_infected ? '🧟' : '🛡️'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-200 font-semibold text-sm truncate">{player.username}</p>
+                          <div className="flex gap-2 mt-0.5">
+                            {player.trades > 0 && <span className="text-xs text-slate-500">🤝 {player.trades}</span>}
+                            {player.infections_caused > 0 && <span className="text-xs text-slate-500">☣️ {player.infections_caused}</span>}
+                            {player.objectives_met > 0 && <span className="text-xs text-slate-500">🎯 {player.objectives_met}/{player.objectives_total}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-white font-black">{player.score}</p>
+                          <p className="text-xs text-slate-600">pts</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <BackButton to="/host" />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
             {t('dash_title')}
@@ -199,6 +332,31 @@ const Dashboard = ({ setHasSession }) => {
             {t('dash_end_session')}
           </button>
         </div>
+      </div>
+
+      {/* ── Session note ── */}
+      <div className="glass-panel rounded-2xl px-5 py-4 mb-6 flex items-center gap-3">
+        <NotebookPen size={16} className="text-purple-400 shrink-0" />
+        <input
+          type="text"
+          value={note}
+          onChange={e => { setNote(e.target.value); setNoteSaved(false); }}
+          onKeyDown={e => e.key === 'Enter' && saveNote()}
+          placeholder="Add a class note (e.g. Class 3B · Thursday)…"
+          className="flex-1 bg-transparent text-slate-300 placeholder-slate-600 text-sm outline-none"
+          maxLength={120}
+        />
+        <button
+          onClick={saveNote}
+          disabled={noteLoading || !note.trim()}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            noteSaved
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+              : 'bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/25 disabled:opacity-40'
+          }`}
+        >
+          {noteSaved ? <><Check size={12} /> Saved</> : 'Save'}
+        </button>
       </div>
 
       {lobbyGroup && (
@@ -301,19 +459,27 @@ const Dashboard = ({ setHasSession }) => {
                     </div>
                   )}
 
-                  <button
-                    onClick={() => isActive ? endGame(group.id) : startGame(group.id)}
-                    disabled={(!canStart && !isActive) || actionLoading === group.id}
-                    className={`w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm ${
-                      isActive ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
-                      : canStart ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                      : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {actionLoading === group.id ? <RefreshCw size={14} className="animate-spin" />
-                      : isActive ? <><Skull size={14} /> {t('dash_end_game')}</>
-                      : <><Play size={14} fill="currentColor" /> {t('dash_start_game')}</>}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openStats(group.id)}
+                      className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all text-sm font-semibold"
+                    >
+                      <BarChart2 size={14} /> Stats
+                    </button>
+                    <button
+                      onClick={() => isActive ? endGame(group.id) : startGame(group.id)}
+                      disabled={(!canStart && !isActive) || actionLoading === group.id}
+                      className={`flex-1 py-2.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm ${
+                        isActive ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
+                        : canStart ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
+                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {actionLoading === group.id ? <RefreshCw size={14} className="animate-spin" />
+                        : isActive ? <><Skull size={14} /> {t('dash_end_game')}</>
+                        : <><Play size={14} fill="currentColor" /> {t('dash_start_game')}</>}
+                    </button>
+                  </div>
                 </div>
               );
             })}

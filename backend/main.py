@@ -79,6 +79,7 @@ def run_migrations():
             ("game.groups",        "instruction_slide",     "INTEGER DEFAULT 0"),
             ("game.groups",        "scan_end_time",         "INTEGER"),
             ("game.groups",        "last_activity",         "INTEGER"),
+            ("game.sessions",      "note",                  "VARCHAR"),
             ("game.items",         "is_contaminated",       "BOOLEAN DEFAULT FALSE"),
         ]
         for table, col, definition in new_cols:
