@@ -17,20 +17,19 @@ async def join_group(join_data: schemas.JoinGroupRequest, token: str, db: Sessio
         
     session = group.session
 
-    # Block joining a session that the teacher already ended
-    if session and getattr(session, 'status', 'active') == 'finished':
-        raise HTTPException(status_code=403, detail="This session has already ended")
-
-    # Block joining a game that is already over
-    if group.game_state in ('end_game', 'game_over'):
-        raise HTTPException(status_code=403, detail="This game has already ended")
-        
     # Check if user is already in this group
     existing_membership = db.query(models.GroupPlayer).filter(
         models.GroupPlayer.group_id == group.id,
         models.GroupPlayer.user_id == user.id
     ).first()
-    
+
+    # Only block NEW players from joining — existing members can always reconnect.
+    if not existing_membership:
+        if session and getattr(session, 'status', 'active') == 'finished':
+            raise HTTPException(status_code=403, detail="This session has already ended")
+        if group.game_state in ('end_game', 'game_over'):
+            raise HTTPException(status_code=403, detail="This game has already ended")
+
     if not existing_membership:
         membership = models.GroupPlayer(group_id=group.id, user_id=user.id)
         db.add(membership)
