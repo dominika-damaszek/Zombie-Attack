@@ -34,6 +34,29 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const [hasSession, setHasSession] = useState(() => !!localStorage.getItem('session_id'));
 
+  // On every page load, silently validate the stored token against the backend.
+  // If the token is invalid (expired, user not found, DB was reset, etc.) we
+  // clear localStorage and mark the user as logged-out so they aren't stuck in
+  // a broken "logged-in but all API calls fail" state.
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`/auth/me?token=${token}`)
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('session_id');
+          localStorage.removeItem('session_data');
+          localStorage.removeItem('player_session');
+          setIsAuthenticated(false);
+          setHasSession(false);
+        }
+      })
+      .catch(() => {
+        // Network error (server still waking up) — don't force-logout
+      });
+  }, []);
+
   useEffect(() => {
     const syncSession = () => {
       setHasSession(!!localStorage.getItem('session_id'));

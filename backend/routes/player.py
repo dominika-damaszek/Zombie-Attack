@@ -16,6 +16,14 @@ async def join_group(join_data: schemas.JoinGroupRequest, token: str, db: Sessio
         raise HTTPException(status_code=404, detail="Group not found or invalid join code")
         
     session = group.session
+
+    # Block joining a session that the teacher already ended
+    if session and getattr(session, 'status', 'active') == 'finished':
+        raise HTTPException(status_code=403, detail="This session has already ended")
+
+    # Block joining a game that is already over
+    if group.game_state in ('end_game', 'game_over'):
+        raise HTTPException(status_code=403, detail="This game has already ended")
         
     # Check if user is already in this group
     existing_membership = db.query(models.GroupPlayer).filter(

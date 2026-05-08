@@ -105,7 +105,10 @@ def seed_cards():
     db = SessionLocal()
     try:
         count = db.query(models.Card).count()
-        if count >= 54 and db.query(models.Card).filter(models.Card.card_type == 'security_patch').count() > 0:
+        # Only skip if ALL known cards already have a non-unknown type.
+        # If any card still has 'unknown' type, re-run the seeder to fix them.
+        unknown_count = db.query(models.Card).filter(models.Card.card_type == 'unknown').count()
+        if count >= 54 and unknown_count == 0:
             return
         
         CARDS_DATA = [

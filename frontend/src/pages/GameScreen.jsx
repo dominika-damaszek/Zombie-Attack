@@ -174,17 +174,25 @@ function InfectionAlert({ onDismiss, t }) {
 
 async function startCameraScanner(scanner, handleResult) {
   const config = { fps: 10, qrbox: { width: 240, height: 240 } };
+  // Try facingMode: 'environment' first — most reliable on mobile and avoids
+  // the black-camera bug that camera-ID enumeration causes on many devices.
   try {
-    const cameras = await Html5Qrcode.getCameras();
-    if (!cameras || cameras.length === 0) throw new Error('no cameras');
-    const back = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
-    await scanner.start(back.id, config, handleResult, () => {});
+    await scanner.start({ facingMode: { exact: 'environment' } }, config, handleResult, () => {});
     return true;
   } catch {
     try {
       await scanner.start({ facingMode: 'environment' }, config, handleResult, () => {});
       return true;
     } catch {
+      // Fall back to explicit camera ID (useful for laptops / desktops)
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          const back = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+          await scanner.start(back.id, config, handleResult, () => {});
+          return true;
+        }
+      } catch { /* ignore */ }
       try {
         await scanner.start({ facingMode: 'user' }, config, handleResult, () => {});
         return true;
