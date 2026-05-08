@@ -66,6 +66,10 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
+    # The lobby group (group_number == 0) is a waiting room, never a game group.
+    if group.group_number == 0:
+        raise HTTPException(status_code=400, detail="Cannot start a game on the lobby group")
+
     players = group.players
     if len(players) == 0:
         raise HTTPException(status_code=400, detail="Not enough players to start")
@@ -669,6 +673,10 @@ async def end_game_manual(group_id: str, db: DBSession = Depends(get_db)):
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
+
+    # Protect the lobby group from being accidentally ended
+    if group.group_number == 0:
+        raise HTTPException(status_code=400, detail="Cannot end the lobby group")
 
     # Award final round points if ending mid-game
     if group.game_state in ("round_active", "module_between_rounds"):

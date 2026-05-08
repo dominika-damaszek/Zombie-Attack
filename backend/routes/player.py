@@ -24,10 +24,12 @@ async def join_group(join_data: schemas.JoinGroupRequest, token: str, db: Sessio
     ).first()
 
     # Only block NEW players from joining — existing members can always reconnect.
+    # The lobby group (group_number == 0) is always open; only block actual game
+    # groups that have already finished so students can't sneak into ended games.
     if not existing_membership:
         if session and getattr(session, 'status', 'active') == 'finished':
             raise HTTPException(status_code=403, detail="This session has already ended")
-        if group.game_state in ('end_game', 'game_over'):
+        if group.group_number != 0 and group.game_state in ('end_game', 'game_over'):
             raise HTTPException(status_code=403, detail="This game has already ended")
 
     if not existing_membership:
