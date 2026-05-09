@@ -37,12 +37,12 @@ ALL_CARD_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", 
 # Number of instruction slides per game mode.
 # Must match the slide arrays defined in frontend/src/pages/GameScreen.jsx.
 # module_1/2/3: 7 slides (indices 0–6)
-# normal (Full Game): 5 slides (indices 0–4)
+# normal (Full Game): 7 slides (indices 0–6), same flow as module_3
 SLIDES_PER_MODE = {
     "module_1": 7,
     "module_2": 7,
     "module_3": 7,
-    "normal":   5,
+    "normal":   7,
 }
 
 def get_total_slides(mode: str) -> int:
@@ -340,12 +340,6 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         # If all players finished initial scan → advance slide or start round
         if all(p.is_ready for p in group.players):
             if group.game_state == "module_instructions":
-                # In normal mode, slides are navigated client-side so
-                # instruction_slide may be behind. Sync it to the scan
-                # slide index so _advance_slide moves forward correctly.
-                if (group.game_mode or "normal") == "normal":
-                    group.instruction_slide = 2  # scan slide index
-                    db.flush()
                 await _advance_slide(group, db, group_id)
             else:
                 # legacy initial_scan_phase
@@ -462,6 +456,26 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
 
+    # ── Orphaned-player check ──────────────────────────────────────────────
+    # If exactly 1 player remains not-ready and everyone else is done,
+    # that player has no trading partner left. Auto-skip them with +1 point.
+    not_ready = [p for p in group.players if not p.is_ready]
+    if len(not_ready) == 1:
+        orphan = not_ready[0]
+        orphan.is_ready = True
+        orphan.round_skip_used = True
+        orphan.score = (orphan.score or 0) + 1
+        db.commit()
+
+        await manager.broadcast_to_group(group_id, {
+            "type": "FORCED_SKIP",
+            "player_id": orphan.id,
+            "username": orphan.user.username,
+        })
+
+        db.expire_all()
+        group = db.query(models.Group).filter_by(id=group_id).first()
+
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
         score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
@@ -475,7 +489,24 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
 
 @router.post("/{group_id}/skip_trade")
 async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_db)):
+    """
+    Skip the trading round.
+
+    Payload fields:
+        player_id         – UUID of the player who is skipping
+        skip_reason       – "no_partner" | "suspect_zombie"
+        accused_player_id – (only when skip_reason == "suspect_zombie") UUID of
+                            the player being accused of being a zombie
+
+    Scoring rules:
+        no_partner (any mode)             → +2  (survived with no trade partner)
+        suspect_zombie correct (m3/normal)→ +3 to accuser, -2 to accused zombie
+        suspect_zombie wrong  (m3/normal) → -2 to accuser
+    """
     player_id = payload.get("player_id")
+    skip_reason = payload.get("skip_reason", "no_partner")
+    accused_player_id = payload.get("accused_player_id")
+
     player = db.query(models.GroupPlayer).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(status_code=404)
@@ -483,21 +514,79 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
     if player.has_skipped_trade:
         raise HTTPException(status_code=400, detail="Skip trade already used.")
 
+    group = player.group
+    mode = group.game_mode or "normal"
+    accusation_allowed = mode in ("module_3", "normal")
+
+    # ── Handle accusation ──────────────────────────────────────────────────
+    accusation_result = None
+    if skip_reason == "suspect_zombie" and accusation_allowed and accused_player_id:
+        accused = db.query(models.GroupPlayer).filter_by(
+            id=accused_player_id, group_id=group_id
+        ).first()
+        if not accused or accused.id == player.id:
+            raise HTTPException(status_code=400, detail="Invalid accused player")
+
+        if accused.is_infected:
+            # CORRECT — accused IS a zombie
+            player.score = (player.score or 0) + 3
+            accused.score = (accused.score or 0) - 2
+            accusation_result = "correct"
+        else:
+            # WRONG — accused is a survivor
+            player.score = (player.score or 0) - 2
+            accusation_result = "wrong"
+    else:
+        # "no_partner" or module_1/2 → +2 survival points
+        player.score = (player.score or 0) + 2
+
     player.has_skipped_trade = True
-    player.round_skip_used = True   # marks this player as auto-ready for between_rounds
+    player.round_skip_used = True
     player.is_ready = True
     db.commit()
 
-    group = player.group
+    # Broadcast the skip result so all clients can update
+    await manager.broadcast_to_group(group_id, {
+        "type": "SKIP_RESULT",
+        "player_id": player.id,
+        "username": player.user.username,
+        "skip_reason": skip_reason,
+        "accusation_result": accusation_result,
+        "accused_player_id": accused_player_id,
+    })
+
+    # Re-fetch after commit to avoid stale ORM cache
+    db.expire_all()
+    group = db.query(models.Group).filter_by(id=group_id).first()
+
+    # ── Orphaned-player check ──────────────────────────────────────────────
+    # If exactly 1 player remains not-ready, auto-skip them with +2 points
+    not_ready = [p for p in group.players if not p.is_ready]
+    if len(not_ready) == 1:
+        orphan = not_ready[0]
+        orphan.is_ready = True
+        orphan.round_skip_used = True
+        orphan.score = (orphan.score or 0) + 2
+        db.commit()
+
+        await manager.broadcast_to_group(group_id, {
+            "type": "FORCED_SKIP",
+            "player_id": orphan.id,
+            "username": orphan.user.username,
+        })
+
+        db.expire_all()
+        group = db.query(models.Group).filter_by(id=group_id).first()
+
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
         score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
         await _enter_between_rounds(group, group_id, db, score_results)
-        return {"message": "success", "scores": score_results}
+        return {"message": "success", "accusation_result": accusation_result, "scores": score_results}
     else:
         await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
 
-    return {"message": "success"}
+    return {"message": "success", "accusation_result": accusation_result}
 
 
 # ── Scan Item (trade / round scan) ─────────────────────────────────────────────

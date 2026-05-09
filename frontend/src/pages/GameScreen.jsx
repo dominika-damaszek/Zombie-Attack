@@ -62,6 +62,25 @@ function getModuleSlides(t) {
       ]},
       { type: 'final', emoji: '🧟', title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
     ],
+    // Normal (Full Game) — same slide structure as module_3 but with different intro text
+    normal: [
+      { type: 'story', emoji: '🌐', title: t('slide_n0_title'), text: t('slide_n0_text') },
+      { type: 'scan',  emoji: '📱', title: t('slide_n1_title'), text: t('slide_n1_text') },
+      { type: 'info',  emoji: '🎯', title: t('slide_n2_title'), text: t('slide_n2_text') },
+      { type: 'info',  emoji: '🔑', title: t('slide_n3_title'), text: t('slide_n3_text') },
+      { type: 'info',  emoji: '🤫', title: t('slide_n4_title'), text: t('slide_n4_text') },
+      { type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
+        { pw: t('slide_m3_5_pw1'), lines: [
+          { ok: true,  text: t('slide_m3_5_h1') },
+          { ok: false, text: t('slide_m3_5_h2') },
+        ]},
+        { pw: t('slide_m3_5_pw2'), lines: [
+          { ok: true,  text: t('slide_m3_5_h3') },
+          { ok: false, text: t('slide_m3_5_h4') },
+        ]},
+      ]},
+      { type: 'final', emoji: '⚡', title: t('slide_n6_title'), text: t('slide_n6_text') },
+    ],
   };
 }
 
@@ -79,16 +98,6 @@ function getInfoSections(t) {
       { emoji: '🎯', label: t('info_objectives'), desc: t('info_objectives_desc') },
       { emoji: '⏭️', label: t('info_skip_round'), desc: t('info_skip_round_desc') },
     ]},
-  ];
-}
-
-function getNormalSlides(t) {
-  return [
-    { type: 'story', emoji: '🌐', title: t('slide_n0_title'), text: t('slide_n0_text') },
-    { type: 'info',  emoji: '🃏', title: t('slide_n1_title'), text: t('slide_n1_text') },
-    { type: 'scan',  emoji: '📱', title: t('slide_n2_title'), text: t('slide_n2_text') },
-    { type: 'info',  emoji: '🎯', title: t('slide_n3_title'), text: t('slide_n3_text') },
-    { type: 'final', emoji: '⚡', title: t('slide_n4_title'), text: t('slide_n4_text') },
   ];
 }
 
@@ -460,7 +469,9 @@ function InfoModal({ onClose, t }) {
 
 function SlideContent({ slide, playerState, inventory, objectives, t, secretWord }) {
   if (!slide) return null;
-  const { type, emoji, title, text, lines } = slide;
+  const { type, emoji, title, text, groups } = slide;
+  // For 'hints' slides: flatten all lines from groups into a single array
+  const lines = groups ? groups.flatMap(g => g.lines) : [];
 
   const cardLabel = (key) => getCardLabel(key);
 
