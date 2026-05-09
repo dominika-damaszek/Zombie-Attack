@@ -1344,9 +1344,18 @@ const GameScreen = ({ mockData } = {}) => {
               {t('game_trading_label')}
             </p>
             {!isDoneTrading ? (
-              <button onClick={handleDoneTrading} className="w-full py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
-                {t('game_done_trading')}
-              </button>
+              <div className="flex gap-2">
+                <button onClick={handleDoneTrading} className="flex-1 py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
+                  {t('game_done_trading')}
+                </button>
+                <button
+                  onClick={handleSkipTrade}
+                  disabled={hasSkippedTrade}
+                  className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
+                >
+                  {t('game_skip_round')} {hasSkippedTrade ? t('game_skip_used') : t('game_skip_once')}
+                </button>
+              </div>
             ) : (
               <p className="text-emerald-400 font-bold text-sm animate-pulse text-center">{t('game_already_done')}</p>
             )}
