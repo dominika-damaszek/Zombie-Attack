@@ -50,11 +50,15 @@ function getModuleSlides(t) {
       { type: 'info',  emoji: '🎭', title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
       { type: 'info',  emoji: '🔑', title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
       { type: 'info',  emoji: '🤫', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
-      { type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), lines: [
-        { ok: true,  text: t('slide_m3_5_h1') },
-        { ok: false, text: t('slide_m3_5_h2') },
-        { ok: true,  text: t('slide_m3_5_h3') },
-        { ok: false, text: t('slide_m3_5_h4') },
+      { type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
+        { pw: t('slide_m3_5_pw1'), lines: [
+          { ok: true,  text: t('slide_m3_5_h1') },
+          { ok: false, text: t('slide_m3_5_h2') },
+        ]},
+        { pw: t('slide_m3_5_pw2'), lines: [
+          { ok: true,  text: t('slide_m3_5_h3') },
+          { ok: false, text: t('slide_m3_5_h4') },
+        ]},
       ]},
       { type: 'final', emoji: '🧟', title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
     ],
@@ -612,14 +616,11 @@ function WhatToDoNow({
         icon = '🤝';
         title = t('wtd_go_trade');
         body = t('wtd_body_go_trade');
-        actions = [
-          { label: `${t('game_done_trading')} ✓`, color: '#4ade80', dark: true, onClick: () => { setOpen(false); onDoneTrading(); } },
-          ...(!hasSkippedTrade ? [{ label: `${t('game_skip_round')} ${t('game_skip_once')}`, color: '#d97559', onClick: () => { setOpen(false); onSkipTrade(); } }] : []),
-        ];
       } else {
         icon = '✅';
         title = t('wtd_done_trading_title');
         body = t('wtd_body_done_trading');
+        actions = [{ label: t('wtd_open_scanner'), color: '#6D7162', onClick: () => { setOpen(false); onOpenScanner(); } }];
       }
     } else {
       icon = isZombie ? '🧟' : '📷';
@@ -640,10 +641,10 @@ function WhatToDoNow({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 left-5 z-40 flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-16 sm:bottom-20 left-3 sm:left-5 z-40 flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{ background: 'rgba(42,38,34,0.95)', border: '1px solid rgba(109,113,98,0.5)', color: '#AD9E97', backdropFilter: 'blur(12px)' }}
       >
-        <span className="text-base leading-none">{icon}</span>
+        <span className="text-sm sm:text-base leading-none">{icon}</span>
         {t('wtd_what_now')}
       </button>
 
@@ -753,10 +754,7 @@ const GameScreen = ({ mockData } = {}) => {
       } else if (!data.secret_word) {
         localStorage.removeItem('active_secret_word');
       }
-      if (data.session_status === 'finished') {
-        localStorage.removeItem('player_session');
-        navigate('/');
-      } else if (data.game_state === 'end_game') {
+      if (data.session_status === 'finished' || data.game_state === 'end_game') {
         localStorage.setItem('endgame_group_id', groupData.group_id);
         localStorage.removeItem('player_session');
         navigate('/endgame', { state: { groupId: groupData.group_id } });
@@ -780,8 +778,14 @@ const GameScreen = ({ mockData } = {}) => {
     }
     if (lastMessage.type === 'PLAYER_READY') { fetchState(); }
     if (lastMessage.type === 'SESSION_TERMINATED') {
-      localStorage.removeItem('player_session');
-      navigate('/');
+      if (groupData?.group_id) {
+        localStorage.setItem('endgame_group_id', groupData.group_id);
+        localStorage.removeItem('player_session');
+        navigate('/endgame', { state: { groupId: groupData.group_id } });
+      } else {
+        localStorage.removeItem('player_session');
+        navigate('/');
+      }
     }
     if (lastMessage.type === 'PHASE_CHANGED') { fetchState(); }
     if (lastMessage.type === 'PLAYER_INFECTED' && lastMessage.player_id === playerData?.id) {
@@ -1159,7 +1163,8 @@ const GameScreen = ({ mockData } = {}) => {
   const isTimeUp = gamePhase === 'round_active' && gameState?.round_end_time && (gameState.round_end_time - Math.floor(Date.now() / 1000)) <= 0;
   const isModule = gameMode?.startsWith('module') || gameMode === 'normal';
   const isNormal = gameMode === 'normal';
-  const showScanButton = !isModule || gamePhase !== 'round_active';
+  // In module/normal mode during round_active: hide scan until player is done trading or time is up
+  const showScanButton = gamePhase !== 'round_active' || !isModule || isDoneTrading || isTimeUp;
 
   return (
     <>
@@ -1223,37 +1228,37 @@ const GameScreen = ({ mockData } = {}) => {
 
       <button
         onClick={() => setShowInfoModal(true)}
-        className="fixed bottom-4 right-4 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+        className="fixed bottom-4 right-4 z-30 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
         style={{ background: 'rgba(121,88,70,0.8)', border: '1px solid rgba(173,158,151,0.4)' }}
       >
-        <HelpCircle size={22} style={{ color: '#AD9E97' }} />
+        <HelpCircle size={20} style={{ color: '#AD9E97' }} />
       </button>
 
-      <div className="max-w-lg mx-auto py-3 px-3 animate-zw-fade pb-24">
+      <div className="max-w-lg mx-auto py-2 px-2 sm:px-3 animate-zw-fade pb-24">
 
-        <div className="rounded-2xl p-5 mb-3 flex items-center justify-between"
+        <div className="rounded-2xl p-3 sm:p-5 mb-2 flex items-center justify-between"
              style={{ background: `rgba(${isZombie ? '80,30,20' : '30,50,35'},0.6)`, border: `2px solid ${statusColor}33` }}>
-          <div className="flex items-center gap-4">
-            <span className="text-3xl sm:text-5xl">{statusEmoji}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl sm:text-4xl">{statusEmoji}</span>
             <div>
-              <p className="text-xs uppercase tracking-widest font-mono mb-0.5" style={{ color: '#6D7162' }}>{t('game_your_role')}</p>
-              <p className="text-xl sm:text-3xl font-black uppercase" style={{ color: statusColor }}>{statusLabel}</p>
-              {gameMode === 'module_1' && <p className="text-xs text-slate-500 mt-0.5">{t('game_module1_survivors_only')}</p>}
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-0.5" style={{ color: '#6D7162' }}>{t('game_your_role')}</p>
+              <p className="text-lg sm:text-2xl font-black uppercase" style={{ color: statusColor }}>{statusLabel}</p>
+              {gameMode === 'module_1' && <p className="text-[10px] text-slate-500 mt-0.5">{t('game_module1_survivors_only')}</p>}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs font-mono mb-1" style={{ color: '#6D7162' }}>{t('game_round')}</p>
-            <p className="text-2xl sm:text-3xl font-black text-white">{gameState?.current_round || '-'}</p>
-            <p className="text-xs font-mono" style={{ color: '#6D7162' }}>{t('game_of_3')}</p>
+            <p className="text-[10px] sm:text-xs font-mono mb-0.5" style={{ color: '#6D7162' }}>{t('game_round')}</p>
+            <p className="text-xl sm:text-3xl font-black text-white">{gameState?.current_round || '-'}</p>
+            <p className="text-[10px] sm:text-xs font-mono" style={{ color: '#6D7162' }}>{t('game_of_3')}</p>
           </div>
         </div>
 
         {!isZombie && gameState?.secret_word && (
-          <div className="rounded-2xl p-4 mb-3 flex items-center gap-3" style={{ background: 'rgba(40,55,40,0.4)', border: '1px solid rgba(168,196,160,0.25)' }}>
-            <Shield size={20} style={{ color: '#a8c4a0' }} />
+          <div className="rounded-2xl p-3 sm:p-4 mb-2 flex items-center gap-3" style={{ background: 'rgba(40,55,40,0.4)', border: '1px solid rgba(168,196,160,0.25)' }}>
+            <Shield size={18} style={{ color: '#a8c4a0' }} />
             <div>
-              <p className="text-xs uppercase tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{t('game_secret_password')}</p>
-              <p className="text-lg sm:text-2xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{gameState.secret_word}</p>
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{t('game_secret_password')}</p>
+              <p className="text-base sm:text-2xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{gameState.secret_word}</p>
             </div>
           </div>
         )}
@@ -1263,21 +1268,21 @@ const GameScreen = ({ mockData } = {}) => {
         )}
 
         {objectives.length > 0 && (
-          <div className="rounded-2xl p-4 mb-3" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
-            <p className="text-xs uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
+          <div className="rounded-2xl p-3 sm:p-4 mb-2" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
+            <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-2 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
               <Target size={12} /> {t('game_your_objectives')}
             </p>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {objectives.map((type, idx) => {
                 const ct = CARD_TYPES[type] || CARD_TYPES.unknown;
                 const owned = inventory.some(c => c.type === type);
                 return (
-                  <div key={idx} className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${owned ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'}`}>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xl">{ct.emoji}</span>
-                      <span className={`font-bold text-sm ${owned ? 'text-emerald-300' : 'text-slate-300'}`}>{getCardLabel(type)}</span>
+                  <div key={idx} className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-all ${owned ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{ct.emoji}</span>
+                      <span className={`font-bold text-xs sm:text-sm ${owned ? 'text-emerald-300' : 'text-slate-300'}`}>{getCardLabel(type)}</span>
                     </div>
-                    {owned ? <CheckCircle2 size={18} className="text-emerald-400" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-600" />}
+                    {owned ? <CheckCircle2 size={16} className="text-emerald-400" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-600" />}
                   </div>
                 );
               })}
@@ -1286,17 +1291,17 @@ const GameScreen = ({ mockData } = {}) => {
         )}
 
         {isZombie && (
-          <div className="rounded-2xl p-4 mb-3" style={{ background: 'rgba(80,30,20,0.4)', border: '1px solid rgba(121,88,70,0.3)' }}>
-            <p className="text-xs uppercase tracking-widest font-mono mb-2 flex items-center gap-1" style={{ color: '#795846' }}>
+          <div className="rounded-2xl p-3 sm:p-4 mb-2" style={{ background: 'rgba(80,30,20,0.4)', border: '1px solid rgba(121,88,70,0.3)' }}>
+            <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-1.5 flex items-center gap-1" style={{ color: '#795846' }}>
               <Skull size={12} /> {t('game_zombie_network')}
             </p>
-            <p className="text-slate-400 text-xs mb-3">{t('game_zombie_network_desc')}</p>
+            <p className="text-slate-400 text-[10px] sm:text-xs mb-2">{t('game_zombie_network_desc')}</p>
             {otherZombies.length === 0 ? (
               <p className="text-slate-600 text-xs italic">{t('game_only_zombie')}</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {otherZombies.map(z => (
-                  <div key={z.id} className="flex items-center gap-2 text-sm" style={{ color: '#d97559' }}>
+                  <div key={z.id} className="flex items-center gap-2 text-xs sm:text-sm" style={{ color: '#d97559' }}>
                     <span>🧟</span><span className="font-semibold">{z.username}</span>
                   </div>
                 ))}
@@ -1306,75 +1311,60 @@ const GameScreen = ({ mockData } = {}) => {
         )}
 
         {isZombie && (
-          <div className="rounded-2xl p-4 mb-3 text-sm text-slate-400" style={{ background: 'rgba(80,30,20,0.25)', border: '1px solid rgba(121,88,70,0.2)' }}>
+          <div className="rounded-2xl p-3 sm:p-4 mb-2 text-xs sm:text-sm text-slate-400" style={{ background: 'rgba(80,30,20,0.25)', border: '1px solid rgba(121,88,70,0.2)' }}>
             <p className="font-bold mb-1" style={{ color: '#d97559' }}>{t('game_zombie_objective')}</p>
             {t('game_zombie_objective_desc')}
           </div>
         )}
 
-        {showScanButton ? (
+        {/* ── Trading phase (module & normal during round_active) ── */}
+        {isModule && gamePhase === 'round_active' && !isDoneTrading && (
+          <div className="rounded-2xl p-3 sm:p-4 mb-2" style={{ border: '2px dashed rgba(109,113,98,0.4)', background: 'rgba(56,44,37,0.4)' }}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xl sm:text-2xl">🤝</span>
+              <p className="font-bold text-sm sm:text-base" style={{ color: '#AD9E97' }}>{t('game_go_trade')}</p>
+            </div>
+            <p className="text-slate-500 text-[10px] sm:text-xs mb-2.5">{t('game_scanner_disabled')}</p>
+            <div className="flex gap-2">
+              <button onClick={handleDoneTrading} className="flex-1 py-2.5 sm:py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-xs sm:text-sm">
+                {t('game_done_trading')} ✓
+              </button>
+              {!hasSkippedTrade && (
+                <button
+                  onClick={handleSkipTrade}
+                  className="flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm bg-amber-600/80 text-white active:scale-95"
+                >
+                  {t('game_skip_round')} {t('game_skip_once')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isModule && gamePhase === 'round_active' && isDoneTrading && !isTimeUp && (
+          <div className="rounded-2xl px-3 py-2.5 mb-2 text-center" style={{ background: 'rgba(40,80,40,0.3)', border: '1px solid rgba(100,200,100,0.2)' }}>
+            <p className="text-emerald-400 font-bold text-xs sm:text-sm animate-pulse">{t('game_already_done')}</p>
+          </div>
+        )}
+
+        {isTimeUp && gamePhase === 'round_active' && (
+          <div className="flex items-center justify-center gap-2 py-2 mb-2 rounded-xl" style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <p className="text-[10px] sm:text-xs font-mono text-cyan-500">{t('game_time_up')}…</p>
+          </div>
+        )}
+
+        {showScanButton && gamePhase !== 'module_between_rounds' && (
           <button
             onClick={() => setShowScanner(true)}
-            className="w-full py-5 rounded-2xl font-black text-white text-xl flex items-center justify-center gap-3 mb-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-3.5 sm:py-4 rounded-2xl font-black text-white text-base sm:text-lg flex items-center justify-center gap-2 mb-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{
               background: isZombie ? 'linear-gradient(135deg, #795846, #d97559)' : 'linear-gradient(135deg, #454D3E, #6D7162)',
               boxShadow: `0 0 30px ${isZombie ? 'rgba(217,117,89,0.2)' : 'rgba(109,113,98,0.2)'}`,
             }}
           >
-            <Camera size={28} /> {t('game_scan_card').toUpperCase()}
+            <Camera size={22} /> {t('game_scan_card').toUpperCase()}
           </button>
-        ) : (
-          <div className="text-center p-6 mb-3 rounded-2xl" style={{ border: '2px dashed rgba(109,113,98,0.4)', background: 'rgba(56,44,37,0.4)' }}>
-            <div className="text-4xl mb-2 animate-bounce">🤝</div>
-            <p className="font-bold text-lg" style={{ color: '#AD9E97' }}>{t('game_go_trade')}</p>
-            <p className="text-slate-500 text-sm mb-4">{t('game_scanner_disabled')}</p>
-            {!isDoneTrading ? (
-              <div className="flex gap-2">
-                <button onClick={handleDoneTrading} className="flex-1 py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
-                  {t('game_done_trading')}
-                </button>
-                <button
-                  onClick={handleSkipTrade}
-                  disabled={hasSkippedTrade}
-                  className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
-                >
-                  {t('game_skip_round')} {hasSkippedTrade ? t('game_skip_used') : t('game_skip_once')}
-                </button>
-              </div>
-            ) : (
-              <p className="text-emerald-400 font-bold animate-pulse">{t('game_already_done')}</p>
-            )}
-            {isTimeUp && (
-              <div className="mt-3 flex items-center justify-center gap-2 py-2 rounded-xl" style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
-                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                <p className="text-xs font-mono text-cyan-500">{t('game_time_up')}…</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {isNormal && gamePhase === 'round_active' && (
-          <div className="mb-3 rounded-2xl p-4" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
-            <p className="text-xs uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
-              {t('game_trading_label')}
-            </p>
-            {!isDoneTrading ? (
-              <div className="flex gap-2">
-                <button onClick={handleDoneTrading} className="flex-1 py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
-                  {t('game_done_trading')}
-                </button>
-                <button
-                  onClick={handleSkipTrade}
-                  disabled={hasSkippedTrade}
-                  className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
-                >
-                  {t('game_skip_round')} {hasSkippedTrade ? t('game_skip_used') : t('game_skip_once')}
-                </button>
-              </div>
-            ) : (
-              <p className="text-emerald-400 font-bold text-sm animate-pulse text-center">{t('game_already_done')}</p>
-            )}
-          </div>
         )}
 
         {gamePhase === 'module_between_rounds' && (() => {
@@ -1383,13 +1373,13 @@ const GameScreen = ({ mockData } = {}) => {
           const waitingFor   = gameState?.not_ready      || [];
           const allReady     = readyCount >= totalPlayers && totalPlayers > 0;
           return (
-            <div className="mb-3 glass-panel p-4 rounded-2xl">
-              <h3 className="font-black text-xl mb-1 text-center" style={{ color: '#AD9E97' }}>
+            <div className="mb-2 glass-panel p-3 sm:p-4 rounded-2xl">
+              <h3 className="font-black text-base sm:text-xl mb-1 text-center" style={{ color: '#AD9E97' }}>
                 {gameState?.current_round === 0
                   ? t('game_scan_starting_cards_title')
                   : t('game_round_complete').replace('{n}', gameState?.current_round)}
               </h3>
-              <p className="text-slate-400 text-sm mb-4 text-center">
+              <p className="text-slate-400 text-xs sm:text-sm mb-3 text-center">
                 {gameState?.current_round === 0
                   ? t('game_scan_starting_cards_hint')
                   : t('game_scan_round_items_hint')}
@@ -1449,33 +1439,33 @@ const GameScreen = ({ mockData } = {}) => {
           </div>
         )}
 
-        <div className="glass-panel rounded-2xl p-5">
-          <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: '#AD9E97' }}>
-            <Package size={18} style={{ color: '#795846' }} />
+        <div className="glass-panel rounded-2xl p-3 sm:p-5">
+          <h3 className="font-bold mb-3 flex items-center gap-2 text-sm sm:text-base" style={{ color: '#AD9E97' }}>
+            <Package size={16} style={{ color: '#795846' }} />
             {t('game_inventory')}
-            <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(56,44,37,0.7)', color: '#6D7162' }}>
+            <span className="ml-auto text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(56,44,37,0.7)', color: '#6D7162' }}>
               {inventory.length} {t('game_inventory_cards')}
             </span>
           </h3>
           {inventory.length === 0 ? (
-            <p className="text-xs text-center py-4 font-mono" style={{ color: '#454D3E' }}>
+            <p className="text-xs text-center py-3 font-mono" style={{ color: '#454D3E' }}>
               {t('game_no_cards')}<br />{t('game_no_cards_hint')}
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {inventory.map((card, idx) => {
                 const ct = CARD_TYPES[card.type] || CARD_TYPES.unknown;
                 return (
                   <button
                     key={idx}
                     onClick={() => setSelectedItem(card)}
-                    className={`flex items-center gap-2 p-3 rounded-xl border text-left w-full transition-all hover:scale-[1.02] active:scale-[0.98] ${card.contaminated ? 'bg-rose-500/10 border-rose-500/30' : ct.bg}`}
+                    className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl border text-left w-full transition-all active:scale-[0.97] ${card.contaminated ? 'bg-rose-500/10 border-rose-500/30' : ct.bg}`}
                   >
-                    <span className="text-2xl">{ct.emoji}</span>
+                    <span className="text-xl sm:text-2xl flex-shrink-0">{ct.emoji}</span>
                     <div className="min-w-0">
-                      <p className={`font-bold text-sm truncate ${ct.color}`}>{getCardLabel(card.type)}</p>
-                      {card.contaminated && <p className="text-xs text-rose-400 font-mono">☣️ infected</p>}
-                      <p className="text-xs font-mono truncate" style={{ color: '#454D3E' }}>{card.code}</p>
+                      <p className={`font-bold text-xs sm:text-sm truncate ${ct.color}`}>{getCardLabel(card.type)}</p>
+                      {card.contaminated && <p className="text-[10px] text-rose-400 font-mono">☣️ infected</p>}
+                      <p className="text-[10px] font-mono truncate" style={{ color: '#454D3E' }}>{card.code}</p>
                     </div>
                   </button>
                 );
