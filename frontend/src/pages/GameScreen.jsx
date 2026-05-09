@@ -739,6 +739,11 @@ const GameScreen = ({ mockData } = {}) => {
         setInitialScanCount(me.initial_cards_scanned || 0);
         setHasSkippedTrade(me.has_skipped_trade || false);
       }
+      if (data.secret_word && me?.role !== 'zombie') {
+        localStorage.setItem('active_secret_word', data.secret_word);
+      } else if (!data.secret_word) {
+        localStorage.removeItem('active_secret_word');
+      }
       if (data.game_state === 'end_game') {
         localStorage.setItem('endgame_group_id', groupData.group_id);
         localStorage.removeItem('player_session');

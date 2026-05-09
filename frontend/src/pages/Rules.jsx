@@ -36,6 +36,10 @@ export default function Rules() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
+  const secretWord = (() => {
+    try { return localStorage.getItem('active_secret_word') || null; } catch { return null; }
+  })();
+
   const modules = [
     {
       id: 'module_1', emoji: '📘', label: t('mod1_label'), sublabel: t('mod1_sublabel'),
@@ -181,6 +185,15 @@ export default function Rules() {
           title={t('rules_password_title')}
           color="bg-amber-500/15"
         >
+          {secretWord && (
+            <div className="mb-4 rounded-2xl p-4 text-center border-2 border-amber-400/60" style={{ background: 'rgba(245,158,11,0.12)' }}>
+              <p className="text-amber-400 text-xs uppercase tracking-widest font-mono font-bold mb-1">
+                🔑 {t('game_secret_password')}
+              </p>
+              <p className="text-4xl font-black tracking-widest font-mono text-amber-300">{secretWord}</p>
+              <p className="text-amber-500/70 text-xs mt-2">{t('rules_password_your_hint')}</p>
+            </div>
+          )}
           <p className="text-slate-300 text-sm leading-relaxed mb-3">{t('rules_password_desc')}</p>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
             <p className="text-amber-300 font-bold text-sm mb-2">⚠️ {t('rules_password_warning_title')}</p>
