@@ -108,39 +108,41 @@ def seed_cards():
         # Only skip if ALL known cards already have a non-unknown type.
         # If any card still has 'unknown' type, re-run the seeder to fix them.
         unknown_count = db.query(models.Card).filter(models.Card.card_type == 'unknown').count()
-        if count >= 54 and unknown_count == 0:
+        # Also re-seed if any card still has the old 'hacking-tool' type (hyphen variant)
+        hyphen_count = db.query(models.Card).filter(models.Card.card_type == 'hacking-tool').count()
+        if count >= 54 and unknown_count == 0 and hyphen_count == 0:
             return
-        
-        CARDS_DATA = [
-            # Security Patch (11 cards)
-            ("QRC-8F2K9L1M", "security_patch"), ("QRC-4X7P3N8V", "security_patch"), ("QRC-9B6T2R5Y", "security_patch"),
-            ("QRC-1M8Z4K7Q", "security_patch"), ("QRC-7D3L9W2X", "security_patch"), ("QRC-5H1V8N4P", "security_patch"),
-            ("QRC-2R7Y6F9K", "security_patch"), ("QRC-8J4Q1T3M", "security_patch"), ("QRC-6N9X2L5B", "security_patch"),
-            ("QRC-3P7K8V1D", "security_patch"), ("QRC-9W2M4R6H", "security_patch"),
 
-            # System Boost (11 cards)
-            ("QRC-1X5T7N8J", "system_boost"), ("QRC-4L9B2Q6Y", "system_boost"), ("QRC-7V3K1M8F", "system_boost"),
-            ("QRC-2H6P9X4T", "system_boost"), ("QRC-8R1D5N7W", "system_boost"), ("QRC-5Q7L3V9K", "system_boost"),
-            ("QRC-3T8M2Y6P", "system_boost"), ("QRC-9N4F1X7J", "system_boost"), ("QRC-6K2W8R5L", "system_boost"),
-            ("QRC-1P9V4T3H", "system_boost"), ("QRC-7X5M2Q8D", "system_boost"),
+        CARDS_DATA = [
+            # Firewall (11 cards)
+            ("QRC-1Q7W9L3F", "firewall"), ("QRC-2J3K9W7P", "firewall"), ("QRC-2X8V3L7H", "firewall"),
+            ("QRC-3N8P4R6K", "firewall"), ("QRC-4M9K1T5D", "firewall"), ("QRC-4R8N6L1Y", "firewall"),
+            ("QRC-5Y2L7Q9X", "firewall"), ("QRC-6V4X2K8J", "firewall"), ("QRC-7P2N6Y8R", "firewall"),
+            ("QRC-8B6T1V4M", "firewall"), ("QRC-9D1M5T7H", "firewall"),
 
             # Hacking Tool (11 cards)
-            ("QRC-4R8N6L1Y", "hacking_tool"), ("QRC-2J3K9W7P", "hacking_tool"), ("QRC-8B6T1V4M", "hacking_tool"),
-            ("QRC-5Y2L7Q9X", "hacking_tool"), ("QRC-3N8P4R6K", "hacking_tool"), ("QRC-9D1M5T7H", "hacking_tool"),
-            ("QRC-6V4X2K8J", "hacking_tool"), ("QRC-1Q7W9L3F", "hacking_tool"), ("QRC-7P2N6Y8R", "hacking_tool"),
-            ("QRC-4M9K1T5D", "hacking_tool"), ("QRC-2X8V3L7H", "hacking_tool"),
-
-            # Firewall (11 cards)
-            ("QRC-8T5Q4N1J", "firewall"), ("QRC-5R7B9M2W", "firewall"), ("QRC-3L1Y6K8P", "firewall"),
-            ("QRC-9H4X7T2V", "firewall"), ("QRC-6N8Q5P1D", "firewall"), ("QRC-1V3M9R7K", "firewall"),
-            ("QRC-7K2T8L4Y", "firewall"), ("QRC-4P6X1N9J", "firewall"), ("QRC-2W7M5Q3H", "firewall"),
-            ("QRC-8D4R9V6L", "firewall"), ("QRC-5J1T7K2P", "firewall"),
+            ("QRC-1R7V4K9H", "hacking_tool"), ("QRC-2K5W9R7D", "hacking_tool"), ("QRC-3X9N4B8F", "hacking_tool"),
+            ("QRC-4T8M1L3P", "hacking_tool"), ("QRC-5J1T7K2P", "hacking_tool"), ("QRC-5M7Q2T8H", "hacking_tool"),
+            ("QRC-5Q3T4K7D", "hacking_tool"), ("QRC-6Y3P8T1D", "hacking_tool"), ("QRC-7N2X6Q5J", "hacking_tool"),
+            ("QRC-8V1P4Y6N", "hacking_tool"), ("QRC-9Q6L2M5W", "hacking_tool"),
 
             # Security Layer (10 cards)
-            ("QRC-3X9N4B8F", "security_layer"), ("QRC-9Q6L2M5W", "security_layer"), ("QRC-6Y3P8T1D", "security_layer"),
-            ("QRC-1R7V4K9H", "security_layer"), ("QRC-7N2X6Q5J", "security_layer"), ("QRC-4T8M1L3P", "security_layer"),
-            ("QRC-2K5W9R7D", "security_layer"), ("QRC-8V1P4Y6N", "security_layer"), ("QRC-5M7Q2T8H", "security_layer"),
-            ("QRC-5Q3T4K7D", "security_layer")
+            ("QRC-1V3M9R7K", "security_layer"), ("QRC-2W7M5Q3H", "security_layer"), ("QRC-3L1Y6K8P", "security_layer"),
+            ("QRC-4P6X1N9J", "security_layer"), ("QRC-5R7B9M2W", "security_layer"), ("QRC-6N8Q5P1D", "security_layer"),
+            ("QRC-7K2T8L4Y", "security_layer"), ("QRC-8D4R9V6L", "security_layer"), ("QRC-8T5Q4N1J", "security_layer"),
+            ("QRC-9H4X7T2V", "security_layer"),
+
+            # Security Patch (11 cards)
+            ("QRC-1M8Z4K7Q", "security_patch"), ("QRC-2R7Y6F9K", "security_patch"), ("QRC-3P7K8V1D", "security_patch"),
+            ("QRC-4X7P3N8V", "security_patch"), ("QRC-5H1V8N4P", "security_patch"), ("QRC-6N9X2L5B", "security_patch"),
+            ("QRC-7D3L9W2X", "security_patch"), ("QRC-8F2K9L1M", "security_patch"), ("QRC-8J4Q1T3M", "security_patch"),
+            ("QRC-9B6T2R5Y", "security_patch"), ("QRC-9W2M4R6H", "security_patch"),
+
+            # System Boost (11 cards)
+            ("QRC-1P9V4T3H", "system_boost"), ("QRC-1X5T7N8J", "system_boost"), ("QRC-2H6P9X4T", "system_boost"),
+            ("QRC-3T8M2Y6P", "system_boost"), ("QRC-4L9B2Q6Y", "system_boost"), ("QRC-5Q7L3V9K", "system_boost"),
+            ("QRC-6K2W8R5L", "system_boost"), ("QRC-7V3K1M8F", "system_boost"), ("QRC-7X5M2Q8D", "system_boost"),
+            ("QRC-8R1D5N7W", "system_boost"), ("QRC-9N4F1X7J", "system_boost"),
         ]
 
         for code, card_type in CARDS_DATA:

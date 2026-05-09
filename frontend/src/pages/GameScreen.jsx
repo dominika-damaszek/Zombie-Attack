@@ -772,7 +772,16 @@ const GameScreen = ({ mockData } = {}) => {
       if (mode === 'module_3' || mode === 'normal') setShowRoleReveal(true);
       fetchState();
     }
-    if (lastMessage.type === 'ROUND_ENDED' || lastMessage.type === 'GAME_ENDED') {
+    if (lastMessage.type === 'ROUND_ENDED') {
+      fetchState();
+      // Auto-advance to next round after 5 s — no manual button needed
+      setTimeout(async () => {
+        try {
+          await fetch(`${API_URLS.BASE}/api/game/${groupData?.group_id}/next_round`, { method: 'POST' });
+        } catch (e) { console.error(e); }
+      }, 5000);
+    }
+    if (lastMessage.type === 'GAME_ENDED') {
       fetchState();
     }
   }, [lastMessage, playerData?.id, fetchState, playSFX]);
@@ -1303,9 +1312,10 @@ const GameScreen = ({ mockData } = {}) => {
               <p className="text-emerald-400 font-bold animate-pulse">{t('game_already_done')}</p>
             )}
             {isTimeUp && (
-              <button onClick={handleNextRound} className="mt-4 w-full py-3 bg-cyan-600 text-white font-bold rounded-xl animate-pulse">
-                {t('game_time_up')}
-              </button>
+              <div className="mt-3 flex items-center justify-center gap-2 py-2 rounded-xl" style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <p className="text-xs font-mono text-cyan-500">{t('game_time_up')}…</p>
+              </div>
             )}
           </div>
         )}
@@ -1342,12 +1352,15 @@ const GameScreen = ({ mockData } = {}) => {
             <p className="text-slate-400 text-sm mb-4">
               {gameState?.current_round === 0 ? t('game_scan_starting_cards_hint') : t('game_scan_round_items_hint')}
             </p>
-            <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-2" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
+            <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-3" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
               <Camera size={16} className="inline mr-2" />{t('game_scan_card')}
             </button>
-            <button onClick={handleNextRound} className="w-full py-3 rounded-xl font-bold text-slate-900 transition-all" style={{ background: '#a8c4a0' }}>
-              {gameState?.current_round >= 3 ? t('game_ready_for_game_over') : t('game_ready_for_next_round')}
-            </button>
+            <div className="flex items-center justify-center gap-2 py-2 rounded-xl" style={{ background: 'rgba(109,113,98,0.1)', border: '1px solid rgba(109,113,98,0.2)' }}>
+              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <p className="text-xs font-mono" style={{ color: '#6D7162' }}>
+                {gameState?.current_round >= 3 ? t('game_ready_for_game_over') : t('game_ready_for_next_round')}…
+              </p>
+            </div>
           </div>
         )}
 

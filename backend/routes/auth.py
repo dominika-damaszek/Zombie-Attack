@@ -99,6 +99,17 @@ def get_history(token: str, db: Session = Depends(database.get_db)):
             "status": s.status,
             "num_groups": len(non_lobby_groups),
             "total_players": total_players,
+            "note": getattr(s, 'note', None),
+            "groups": [
+                {
+                    "group_id": g.id,
+                    "group_number": g.group_number,
+                    "game_state": g.game_state,
+                    "player_count": len(g.players),
+                    "current_round": g.current_round or 0,
+                }
+                for g in non_lobby_groups
+            ],
         })
 
     as_student = []

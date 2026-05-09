@@ -28,6 +28,7 @@ export default function History() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('student');
   const [detailModal, setDetailModal] = useState(null);
+  const [teacherModal, setTeacherModal] = useState(null);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -43,6 +44,23 @@ export default function History() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [token]);
+
+  const openTeacherDetail = async (session) => {
+    const finishedGroups = session.groups?.filter(g => g.game_state === 'end_game') || [];
+    setTeacherModal({ session, groups: [], loading: true });
+    try {
+      const recaps = await Promise.all(
+        finishedGroups.map(g =>
+          fetch(`${API_URLS.BASE}/api/game/${g.group_id}/recap`)
+            .then(r => r.ok ? r.json() : null)
+            .then(recap => recap ? { ...g, recap } : null)
+        )
+      );
+      setTeacherModal({ session, groups: recaps.filter(Boolean), loading: false });
+    } catch {
+      setTeacherModal({ session, groups: [], loading: false, error: true });
+    }
+  };
 
   const openDetail = async (game) => {
     if (!isWithinOneMonth(game.last_activity)) return;
@@ -198,6 +216,108 @@ export default function History() {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Teacher Session Recap Modal ── */}
+      {teacherModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(10,12,18,0.93)', backdropFilter: 'blur(10px)' }}
+          onClick={() => setTeacherModal(null)}
+        >
+          <div
+            className="glass-panel rounded-3xl w-full max-w-lg max-h-[88vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 glass-panel rounded-t-3xl px-6 py-4 border-b border-slate-700/50 flex items-center justify-between z-10">
+              <div>
+                <p className="font-bold text-white flex items-center gap-2">
+                  <BarChart2 size={16} className="text-cyan-400" />
+                  {MODE_LABELS[teacherModal.session.game_mode] || teacherModal.session.game_mode}
+                  {teacherModal.session.note && (
+                    <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-mono">
+                      {teacherModal.session.note}
+                    </span>
+                  )}
+                </p>
+                <p className="text-slate-500 text-xs mt-0.5">
+                  {teacherModal.session.num_groups} {teacherModal.session.num_groups === 1 ? t('dash_group').toLowerCase() : `${t('dash_group').toLowerCase()}s`} · {teacherModal.session.total_players} {t('dash_students_label')}
+                </p>
+              </div>
+              <button onClick={() => setTeacherModal(null)} className="p-2 rounded-xl hover:bg-slate-700/50 text-slate-400">
+                <X size={18} />
+              </button>
+            </div>
+
+            {teacherModal.loading ? (
+              <div className="flex items-center justify-center py-14 text-slate-500 text-sm animate-pulse">
+                {t('auth_please_wait')}
+              </div>
+            ) : teacherModal.error || teacherModal.groups.length === 0 ? (
+              <div className="py-10 text-center text-slate-500 text-sm">{t('profile_stats_error')}</div>
+            ) : (
+              <div className="px-6 py-5 flex flex-col gap-6">
+                {teacherModal.groups.map((group) => (
+                  <div key={group.group_id} className="flex flex-col gap-4">
+                    {teacherModal.groups.length > 1 && (
+                      <p className="text-xs uppercase tracking-widest text-slate-500 font-mono flex items-center gap-1">
+                        <Users size={11} /> {t('dash_group')} {group.group_number}
+                      </p>
+                    )}
+
+                    {/* Summary stats */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { icon: '👥', label: t('end_players'),        value: group.recap.total_players },
+                        { icon: '🛡️', label: t('end_survived'),       value: group.recap.survivors },
+                        { icon: '☣️', label: t('end_infection_rate'), value: `${group.recap.infection_rate}%` },
+                      ].map(({ icon, label, value }) => (
+                        <div key={label} className="bg-slate-800/40 rounded-xl p-3 text-center">
+                          <p className="text-lg">{icon}</p>
+                          <p className="text-white font-bold">{value}</p>
+                          <p className="text-slate-500 text-xs">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Scoreboard */}
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-1">
+                        <Trophy size={12} /> {t('end_scoreboard')}
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {group.recap.scoreboard?.map((player) => (
+                          <div
+                            key={player.username}
+                            className="flex items-center gap-3 p-3 rounded-2xl bg-slate-800/30"
+                          >
+                            <span className="text-base w-7 text-center shrink-0">
+                              {player.rank <= 3 ? RANK_EMOJI[player.rank - 1] : `#${player.rank}`}
+                            </span>
+                            <span className="text-base shrink-0">{player.is_infected ? '🧟' : '🛡️'}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate text-slate-200">{player.username}</p>
+                              <div className="flex gap-2 mt-0.5">
+                                {player.trades > 0 && <span className="text-xs text-slate-500">🤝 {player.trades}</span>}
+                                {player.infections_caused > 0 && <span className="text-xs text-slate-500">☣️ {player.infections_caused}</span>}
+                                {player.objectives_met > 0 && <span className="text-xs text-slate-500">🎯 {player.objectives_met}/{player.objectives_total}</span>}
+                              </div>
+                            </div>
+                            <p className="text-white font-black text-sm shrink-0">{player.score} <span className="text-slate-600 font-normal text-xs">{t('end_pts')}</span></p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {teacherModal.groups.length > 1 && (
+                      <div className="border-t border-slate-700/40" />
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -363,27 +483,42 @@ export default function History() {
           ) : (
             teacherGames.map((session, i) => {
               const mode = getModeLabel(session.game_mode);
+              const hasGroups = session.groups && session.groups.length > 0;
+              const finishedGroups = session.groups?.filter(g => g.game_state === 'end_game') || [];
+              const canViewRecap = finishedGroups.length > 0;
               return (
-                <div key={i} className="glass-panel rounded-2xl p-5 border border-slate-700/50">
+                <button
+                  key={i}
+                  onClick={() => canViewRecap && openTeacherDetail(session)}
+                  className={`w-full glass-panel rounded-2xl p-5 border border-slate-700/50 text-left transition-all ${canViewRecap ? 'hover:bg-slate-700/20 cursor-pointer' : 'cursor-default'}`}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{mode.emoji}</span>
                       <div>
-                        <p className="font-bold text-white">{mode.label}</p>
+                        <p className="font-bold text-white flex items-center gap-2">
+                          {mode.label}
+                          {session.note && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-mono">{session.note}</span>
+                          )}
+                        </p>
                         <p className="text-slate-500 text-xs mt-0.5">
                           {session.num_groups} {session.num_groups === 1 ? t('dash_group').toLowerCase() : `${t('dash_group').toLowerCase()}s`} · {session.total_players} {t('dash_students_label')}
                         </p>
                       </div>
                     </div>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
-                      session.status === 'finished'
-                        ? 'bg-slate-700 text-slate-400'
-                        : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
-                    }`}>
-                      {session.status === 'finished' ? t('history_finished') : t('history_active')}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                        session.status === 'finished'
+                          ? 'bg-slate-700 text-slate-400'
+                          : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                      }`}>
+                        {session.status === 'finished' ? t('history_finished') : t('history_active')}
+                      </span>
+                      {canViewRecap && <span className="text-slate-500 text-sm">→</span>}
+                    </div>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
