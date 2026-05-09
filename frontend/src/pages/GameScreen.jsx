@@ -454,7 +454,7 @@ function InfoModal({ onClose, t }) {
   );
 }
 
-function SlideContent({ slide, playerState, inventory, objectives, t }) {
+function SlideContent({ slide, playerState, inventory, objectives, t, secretWord }) {
   if (!slide) return null;
   const { type, emoji, title, text, lines } = slide;
 
@@ -523,10 +523,18 @@ function SlideContent({ slide, playerState, inventory, objectives, t }) {
   }
 
   if (type === 'hints') {
+    const isZombie = playerState?.role === 'zombie';
     return (
       <div className="text-center">
         <div className="text-5xl sm:text-7xl mb-4 animate-zw-float">{emoji}</div>
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-5">{title}</h2>
+        {secretWord && !isZombie && (
+          <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
+            <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
+            <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
+            <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
+          </div>
+        )}
         <div className="space-y-3 text-left">
           {lines.map((line, i) => (
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}>
@@ -770,6 +778,9 @@ const GameScreen = ({ mockData } = {}) => {
       setIsDoneTrading(false);
       const mode = gameModeRef.current;
       if (mode === 'module_3' || mode === 'normal') setShowRoleReveal(true);
+      if (lastMessage.secret_word && playerState?.role !== 'zombie') {
+        localStorage.setItem('active_secret_word', lastMessage.secret_word);
+      }
       fetchState();
     }
     if (lastMessage.type === 'ROUND_ENDED') {
@@ -782,7 +793,13 @@ const GameScreen = ({ mockData } = {}) => {
       }, 5000);
     }
     if (lastMessage.type === 'GAME_ENDED') {
-      fetchState();
+      if (groupData?.group_id) {
+        localStorage.setItem('endgame_group_id', groupData.group_id);
+        localStorage.removeItem('player_session');
+        navigate('/endgame', { state: { groupId: groupData.group_id } });
+      } else {
+        fetchState();
+      }
     }
   }, [lastMessage, playerData?.id, fetchState, playSFX]);
 
@@ -991,6 +1008,7 @@ const GameScreen = ({ mockData } = {}) => {
             inventory={inventory}
             objectives={objectives}
             t={t}
+            secretWord={playerState?.role !== 'zombie' ? localStorage.getItem('active_secret_word') : null}
           />
 
           {isScanSlide && (
@@ -1326,18 +1344,9 @@ const GameScreen = ({ mockData } = {}) => {
               {t('game_trading_label')}
             </p>
             {!isDoneTrading ? (
-              <div className="flex gap-2">
-                <button onClick={handleDoneTrading} className="flex-1 py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
-                  {t('game_done_trading')}
-                </button>
-                <button
-                  onClick={handleSkipTrade}
-                  disabled={hasSkippedTrade}
-                  className={`flex-1 py-3 font-bold rounded-xl transition-all text-sm ${hasSkippedTrade ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-600/80 text-white active:scale-95'}`}
-                >
-                  {t('game_skip_round')} {hasSkippedTrade ? t('game_skip_used') : t('game_skip_once')}
-                </button>
-              </div>
+              <button onClick={handleDoneTrading} className="w-full py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-sm">
+                {t('game_done_trading')}
+              </button>
             ) : (
               <p className="text-emerald-400 font-bold text-sm animate-pulse text-center">{t('game_already_done')}</p>
             )}

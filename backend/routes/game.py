@@ -277,7 +277,7 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
 
         # Tag the card as contaminated if this player is already infected
         if player.is_infected:
-            new_item = db.query(models.Item).filter_by(id=card_code).first()
+            new_item = db.query(models.Item).filter_by(code=card_code, group_id=group_id).first()
             if new_item:
                 new_item.is_contaminated = True
 
@@ -290,36 +290,39 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
 
     objectives = json.loads(player.objectives or '[]')
 
-    if player.initial_cards_scanned >= 4 and not objectives:
-        # ── Distribute Objectives ─────────────────────────────────────────────
-        # Rule: 3 objectives. Preferably 0 from cards the player already has, max 1.
-        # Prefer types that are currently in play in the room.
+    if player.initial_cards_scanned >= 4 and not player.is_ready:
+        # Zombies never receive objectives — their only goal is spreading infection
+        if not player.is_infected:
+            # ── Distribute Objectives (survivors only) ────────────────────────
+            # Rule: 3 objectives. Preferably 0 from cards the player already has, max 1.
+            # Prefer types that are currently in play in the room.
 
-        player_types = list(set(i.type for i in inventory_items))
-        room_cards = db_queries.get_room_cards_by_type(db, group_id)
-        room_types = list(room_cards.keys())
+            player_types = list(set(i.type for i in inventory_items))
+            room_cards = db_queries.get_room_cards_by_type(db, group_id)
+            room_types = list(room_cards.keys())
 
-        # Types player does NOT have
-        not_owned_in_room = [t for t in room_types if t not in player_types]
-        all_not_owned = [t for t in ALL_CARD_TYPES if t not in player_types]
+            # Types player does NOT have
+            not_owned_in_room = [t for t in room_types if t not in player_types]
+            all_not_owned = [t for t in ALL_CARD_TYPES if t not in player_types]
 
-        pool_not_owned = not_owned_in_room.copy()
-        for t in all_not_owned:
-            if t not in pool_not_owned:
-                pool_not_owned.append(t)
+            pool_not_owned = not_owned_in_room.copy()
+            for t in all_not_owned:
+                if t not in pool_not_owned:
+                    pool_not_owned.append(t)
 
-        random.shuffle(pool_not_owned)
-        random.shuffle(player_types)
+            random.shuffle(pool_not_owned)
+            random.shuffle(player_types)
 
-        # Take as many as possible from not_owned (up to 3)
-        objectives = pool_not_owned[:3]
-        
-        # If we couldn't get 3 (e.g. player holds 3 or 4 types), we must take from player_types
-        needed = 3 - len(objectives)
-        if needed > 0:
-            objectives.extend(player_types[:needed])
+            # Take as many as possible from not_owned (up to 3)
+            objectives = pool_not_owned[:3]
 
-        player.objectives = json.dumps(objectives)
+            # If we couldn't get 3 (e.g. player holds 3 or 4 types), we must take from player_types
+            needed = 3 - len(objectives)
+            if needed > 0:
+                objectives.extend(player_types[:needed])
+
+            player.objectives = json.dumps(objectives)
+
         player.is_ready = True
         db.commit()
 
@@ -400,12 +403,20 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
         group.game_state = "end_game"
         db.commit()
         await manager.broadcast_to_group(group_id, {"type": "GAME_ENDED"})
+        _check_session_complete(group_id, db)
     else:
+        # Rotate secret word each round for modes that use it (always different)
+        if group.game_mode in ("module_3", "normal") and group.secret_word:
+            others = [w for w in WORDS if w != group.secret_word]
+            group.secret_word = random.choice(others)
         group.game_state = "round_active"
         group.round_end_time = int(time.time()) + 180
         _touch(group)
         db.commit()
-        await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
+        await manager.broadcast_to_group(group_id, {
+            "type": "ROUND_STARTED",
+            "secret_word": group.secret_word,
+        })
 
     return {"message": "success"}
 
@@ -711,6 +722,20 @@ async def toggle_ready(group_id: str, payload: dict, db: DBSession = Depends(get
     return {"message": "Player ready"}
 
 
+def _check_session_complete(group_id: str, db: DBSession):
+    """If all non-lobby groups in this session are end_game, mark the session finished."""
+    group = db.query(models.Group).filter_by(id=group_id).first()
+    if not group:
+        return
+    session = db.query(models.Session).filter_by(id=group.session_id).first()
+    if not session or session.status == "finished":
+        return
+    non_lobby = [g for g in session.groups if g.group_number != 0]
+    if non_lobby and all(g.game_state == "end_game" for g in non_lobby):
+        session.status = "finished"
+        db.commit()
+
+
 @router.post("/{group_id}/end")
 async def end_game_manual(group_id: str, db: DBSession = Depends(get_db)):
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
@@ -729,6 +754,7 @@ async def end_game_manual(group_id: str, db: DBSession = Depends(get_db)):
     db.commit()
 
     await manager.broadcast_to_group(group_id, {"type": "GAME_ENDED"})
+    _check_session_complete(group_id, db)
     return {"message": "Game ended manually"}
 
 
