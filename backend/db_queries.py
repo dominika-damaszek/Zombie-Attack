@@ -338,6 +338,7 @@ def assign_card_to_player(
             group_id=group_id,
             current_owner_id=player.id,
             previous_owner_id=None,
+            is_contaminated=player.is_infected,
             scanned_at=now,
             last_transferred_at=now,
         )

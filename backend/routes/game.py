@@ -278,12 +278,6 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-        # Tag the card as contaminated if this player is already infected
-        if player.is_infected:
-            new_item = db.query(models.Item).filter_by(code=card_code, group_id=group_id).first()
-            if new_item:
-                new_item.is_contaminated = True
-
         player.initial_cards_scanned = (player.initial_cards_scanned or 0) + 1
         db.commit()
 
