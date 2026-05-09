@@ -961,7 +961,8 @@ const GameScreen = ({ mockData } = {}) => {
     };
 
     const handleNormalSkipAll = () => {
-      setLocalNormalSlideIndex(slides.length - 1);
+      const scanIdx = slides.findIndex(s => s.type === 'scan');
+      setLocalNormalSlideIndex(scanIdx >= 0 ? scanIdx : slides.length - 1);
     };
 
     return (
