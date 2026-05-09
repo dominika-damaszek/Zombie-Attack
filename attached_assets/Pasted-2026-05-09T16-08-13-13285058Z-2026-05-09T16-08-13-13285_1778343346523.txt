@@ -1,0 +1,50 @@
+2026-05-09T16:08:13.13285058Z     )
+2026-05-09T16:08:13.13285248Z     ^
+2026-05-09T16:08:13.13285451Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1530, in _execute_ddl
+2026-05-09T16:08:13.13285641Z     ret = self._execute_context(
+2026-05-09T16:08:13.13285835Z         dialect,
+2026-05-09T16:08:13.13286031Z     ...<4 lines>...
+2026-05-09T16:08:13.132862221Z         compiled,
+2026-05-09T16:08:13.132864121Z     )
+2026-05-09T16:08:13.132866131Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+2026-05-09T16:08:13.132868231Z     return self._exec_single_context(
+2026-05-09T16:08:13.132870171Z            ~~~~~~~~~~~~~~~~~~~~~~~~~^
+2026-05-09T16:08:13.132872081Z         dialect, context, statement, parameters
+2026-05-09T16:08:13.132873971Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-05-09T16:08:13.132875891Z     )
+2026-05-09T16:08:13.132877782Z     ^
+2026-05-09T16:08:13.132879782Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+2026-05-09T16:08:13.132881682Z     self._handle_dbapi_exception(
+2026-05-09T16:08:13.132883552Z     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+2026-05-09T16:08:13.132885472Z         e, str_statement, effective_parameters, cursor, context
+2026-05-09T16:08:13.132887352Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-05-09T16:08:13.132889263Z     )
+2026-05-09T16:08:13.132891153Z     ^
+2026-05-09T16:08:13.132893093Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+2026-05-09T16:08:13.132895403Z     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-05-09T16:08:13.132897373Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2026-05-09T16:08:13.132899313Z     self.dialect.do_execute(
+2026-05-09T16:08:13.132901264Z     ~~~~~~~~~~~~~~~~~~~~~~~^
+2026-05-09T16:08:13.132903184Z         cursor, str_statement, effective_parameters, context
+2026-05-09T16:08:13.132905084Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-05-09T16:08:13.132906964Z     )
+2026-05-09T16:08:13.132908844Z     ^
+2026-05-09T16:08:13.132910734Z   File "/opt/render/project/src/.venv/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+2026-05-09T16:08:13.132912645Z     cursor.execute(statement, parameters)
+2026-05-09T16:08:13.132914555Z     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+2026-05-09T16:08:13.132917475Z sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unknown database game
+2026-05-09T16:08:13.132922165Z [SQL: 
+2026-05-09T16:08:13.132924135Z CREATE TABLE game.users (
+2026-05-09T16:08:13.132928166Z 	id VARCHAR NOT NULL, 
+2026-05-09T16:08:13.132930126Z 	username VARCHAR NOT NULL, 
+2026-05-09T16:08:13.132932056Z 	pin_hash VARCHAR NOT NULL, 
+2026-05-09T16:08:13.132933946Z 	PRIMARY KEY (id)
+2026-05-09T16:08:13.132935816Z )
+2026-05-09T16:08:13.132937707Z 
+2026-05-09T16:08:13.132940477Z ]
+2026-05-09T16:08:13.132943457Z (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-05-09T16:08:13.132946547Z 
+2026-05-09T16:08:13.132960329Z ERROR:    Application startup failed. Exiting.
+2026-05-09T16:08:19.390325341Z ==> Exited with status 3
+2026-05-09T16:08:19.392280349Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2026-05-09T16:08:24.38114969Z ==> Running 'uvicorn main:app --host 0.0.0.0 --port $PORT'
