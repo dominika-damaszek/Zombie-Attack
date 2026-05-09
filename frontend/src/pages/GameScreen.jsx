@@ -710,6 +710,7 @@ const GameScreen = ({ mockData } = {}) => {
   const [loading, setLoading] = useState(!mockData);
   const [isDoneTrading, setIsDoneTrading] = useState(false);
   const [hasSkippedTrade, setHasSkippedTrade] = useState(false);
+  const [betweenRoundsDone, setBetweenRoundsDone] = useState(false);
   const [localSlideReady, setLocalSlideReady] = useState(false);
   const [initialScanCount, setInitialScanCount] = useState(0);
   const [inventory, setInventory] = useState([]);
@@ -776,6 +777,7 @@ const GameScreen = ({ mockData } = {}) => {
     }
     if (lastMessage.type === 'ROUND_STARTED') {
       setIsDoneTrading(false);
+      setBetweenRoundsDone(false);
       const mode = gameModeRef.current;
       if (mode === 'module_3' || mode === 'normal') setShowRoleReveal(true);
       if (lastMessage.secret_word && playerState?.role !== 'zombie') {
@@ -868,11 +870,13 @@ const GameScreen = ({ mockData } = {}) => {
         setTimeout(() => setScanFeedback(null), 3000);
       }
       if (data.round_ended) fetchState();
+      // Mark between-rounds scan as done so UI updates immediately
+      if (gameState?.game_state === 'module_between_rounds') setBetweenRoundsDone(true);
     } catch {
       setScanFeedback({ status: 'error', message: t('game_scan_failed') });
       setTimeout(() => setScanFeedback(null), 3000);
     }
-  }, [groupData?.group_id, playerData?.id, playSFX, fetchState]);
+  }, [groupData?.group_id, playerData?.id, playSFX, fetchState, gameState?.game_state]);
 
   const handleDoneTrading = async () => {
     try {
@@ -1358,25 +1362,59 @@ const GameScreen = ({ mockData } = {}) => {
           </div>
         )}
 
-        {gamePhase === 'module_between_rounds' && (
-          <div className="mb-3 glass-panel p-4 rounded-2xl text-center">
-            <h3 className="font-black text-xl mb-1" style={{ color: '#AD9E97' }}>
-              {gameState?.current_round === 0 ? t('game_scan_starting_cards_title') : t('game_round_complete').replace('{n}', gameState?.current_round)}
-            </h3>
-            <p className="text-slate-400 text-sm mb-4">
-              {gameState?.current_round === 0 ? t('game_scan_starting_cards_hint') : t('game_scan_round_items_hint')}
-            </p>
-            <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-3" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
-              <Camera size={16} className="inline mr-2" />{t('game_scan_card')}
-            </button>
-            <div className="flex items-center justify-center gap-2 py-2 rounded-xl" style={{ background: 'rgba(109,113,98,0.1)', border: '1px solid rgba(109,113,98,0.2)' }}>
-              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <p className="text-xs font-mono" style={{ color: '#6D7162' }}>
-                {gameState?.current_round >= 3 ? t('game_ready_for_game_over') : t('game_ready_for_next_round')}…
+        {gamePhase === 'module_between_rounds' && (() => {
+          const totalPlayers = gameState?.players?.length || 0;
+          const readyCount   = gameState?.ready_count   || 0;
+          const waitingFor   = gameState?.not_ready      || [];
+          const allReady     = readyCount >= totalPlayers && totalPlayers > 0;
+          return (
+            <div className="mb-3 glass-panel p-4 rounded-2xl">
+              <h3 className="font-black text-xl mb-1 text-center" style={{ color: '#AD9E97' }}>
+                {gameState?.current_round === 0
+                  ? t('game_scan_starting_cards_title')
+                  : t('game_round_complete').replace('{n}', gameState?.current_round)}
+              </h3>
+              <p className="text-slate-400 text-sm mb-4 text-center">
+                {gameState?.current_round === 0
+                  ? t('game_scan_starting_cards_hint')
+                  : t('game_scan_round_items_hint')}
               </p>
+
+              {!betweenRoundsDone ? (
+                <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-3" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
+                  <Camera size={16} className="inline mr-2" />{t('game_scan_card')}
+                </button>
+              ) : (
+                <div className="w-full py-3 rounded-xl font-bold text-center text-sm mb-3" style={{ background: 'rgba(40,80,40,0.4)', border: '1px solid rgba(100,200,100,0.25)', color: '#a8c4a0' }}>
+                  ✓ {t('game_scan_card_done')}
+                </div>
+              )}
+
+              <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(109,113,98,0.08)', border: '1px solid rgba(109,113,98,0.2)' }}>
+                <div className="flex items-center justify-between px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${allReady ? 'bg-emerald-400' : 'bg-cyan-400 animate-pulse'}`} />
+                    <p className="text-xs font-mono font-bold" style={{ color: allReady ? '#a8c4a0' : '#6D7162' }}>
+                      {allReady
+                        ? (gameState?.current_round >= 3 ? t('game_ready_for_game_over') : t('game_ready_for_next_round'))
+                        : `${readyCount} / ${totalPlayers} ${t('game_players_scanned')}`}
+                    </p>
+                  </div>
+                </div>
+
+                {!allReady && waitingFor.length > 0 && (
+                  <div className="px-3 pb-2 flex flex-wrap gap-1">
+                    {waitingFor.map((name, i) => (
+                      <span key={i} className="text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(80,60,50,0.5)', color: '#AD9E97' }}>
+                        ⏳ {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {scanFeedback && (
           <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 animate-zw-slide"

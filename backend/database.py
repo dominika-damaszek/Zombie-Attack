@@ -5,12 +5,18 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
 
+# ── Database: Neon PostgreSQL only ────────────────────────────────────────────
+# This project exclusively uses Neon as the database.
+# Replit's built-in PostgreSQL (DATABASE_URL / PGHOST / etc.) is NOT used.
+# Set NEON_DATABASE_URL to your Neon connection string in the environment secrets.
+# ─────────────────────────────────────────────────────────────────────────────
 SQLALCHEMY_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
 
 if not SQLALCHEMY_DATABASE_URL:
     raise RuntimeError(
         "NEON_DATABASE_URL environment variable is not set. "
-        "Set it to your Neon PostgreSQL connection string."
+        "This project only runs with Neon PostgreSQL. "
+        "Add your Neon connection string as NEON_DATABASE_URL in the environment secrets."
     )
 
 engine = create_engine(
