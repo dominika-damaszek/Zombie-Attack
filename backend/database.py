@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = (
-    os.getenv("NEON_DATABASE_URL")
+    os.getenv("DATABASE_URL")
+    or os.getenv("NEON_DATABASE_URL")
     or "sqlite:///./zombieware.db"
 )
 
