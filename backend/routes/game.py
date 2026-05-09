@@ -108,6 +108,9 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
         group.secret_word = random.choice(WORDS)
         zombie_count = 1
 
+    for p in players:
+        p.round_skip_used = False
+
     if zombie_count > 0:
         zombie_players = random.sample(
             [p for p in players if p.role == "survivor"], min(zombie_count, len(players))
@@ -363,41 +366,14 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
 
 
 # ── Module between-rounds ──────────────────────────────────────────────────────
-@router.post("/{group_id}/finish_round")
-async def finish_round(group_id: str, db: DBSession = Depends(get_db)):
-    group = db.query(models.Group).filter(models.Group.id == group_id).first()
-    if not group:
-        raise HTTPException(status_code=404)
+# ── Round-progression helpers ──────────────────────────────────────────────────
 
-    is_final = (group.current_round or 0) >= 3
-    score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
-
-    group.game_state = "module_between_rounds"
-    _touch(group)
+async def _advance_to_next_round(group, group_id: str, db: DBSession):
+    """Move from module_between_rounds → next round or end_game."""
+    group.current_round = (group.current_round or 0) + 1
     for p in group.players:
         p.is_ready = False
-    db.commit()
-    await manager.broadcast_to_group(group_id, {
-        "type": "ROUND_ENDED",
-        "scores": score_results,
-    })
-    return {"message": "success", "scores": score_results}
-
-
-@router.post("/{group_id}/next_round")
-async def next_round(group_id: str, db: DBSession = Depends(get_db)):
-    group = db.query(models.Group).filter(models.Group.id == group_id).first()
-    if not group:
-        raise HTTPException(status_code=404)
-
-    # Idempotent: only advance if we are actually between rounds.
-    # Multiple bots/players may call this simultaneously; only the first call acts.
-    if group.game_state != "module_between_rounds":
-        return {"message": "already_advanced"}
-
-    group.current_round += 1
-    for p in group.players:
-        p.is_ready = False
+        p.round_skip_used = False   # reset per-round skip flag
 
     if group.current_round > 3:
         group.game_state = "end_game"
@@ -405,8 +381,8 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
         await manager.broadcast_to_group(group_id, {"type": "GAME_ENDED"})
         _check_session_complete(group_id, db)
     else:
-        # Rotate secret word each round for modes that use it (always different)
-        if group.game_mode in ("module_3", "normal") and group.secret_word:
+        mode = group.game_mode or "normal"
+        if mode in ("module_3", "normal") and group.secret_word:
             others = [w for w in WORDS if w != group.secret_word]
             group.secret_word = random.choice(others)
         group.game_state = "round_active"
@@ -418,6 +394,57 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
             "secret_word": group.secret_word,
         })
 
+
+async def _enter_between_rounds(group, group_id: str, db: DBSession, score_results=None):
+    """Transition from round_active → module_between_rounds, then auto-advance if everyone is already ready."""
+    mode = group.game_mode or "normal"
+    group.game_state = "module_between_rounds"
+    _touch(group)
+    for p in group.players:
+        # Skippers (round_skip_used) have no card to scan → auto-ready
+        # Normal-mode players already scanned during round_active → auto-ready
+        p.is_ready = bool(p.round_skip_used) or (mode == "normal")
+    db.commit()
+    await manager.broadcast_to_group(group_id, {
+        "type": "ROUND_ENDED",
+        "scores": score_results or [],
+    })
+    # If all are already ready (everyone skipped, or normal mode) → advance immediately
+    db.expire_all()
+    group = db.query(models.Group).filter_by(id=group_id).first()
+    if group and all(p.is_ready for p in group.players):
+        await _advance_to_next_round(group, group_id, db)
+
+
+@router.post("/{group_id}/finish_round")
+async def finish_round(group_id: str, db: DBSession = Depends(get_db)):
+    """Called when the round timer expires — force-end the round."""
+    group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404)
+    if group.game_state != "round_active":
+        return {"message": "not_in_active_round"}
+    # Mark everyone as ready (time's up)
+    for p in group.players:
+        p.is_ready = True
+    is_final = (group.current_round or 0) >= 3
+    score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
+    await _enter_between_rounds(group, group_id, db, score_results)
+    return {"message": "success", "scores": score_results}
+
+
+@router.post("/{group_id}/next_round")
+async def next_round(group_id: str, db: DBSession = Depends(get_db)):
+    """Advance from between_rounds to the next round.
+    Server-driven: only fires once all players have scanned (is_ready) in between_rounds."""
+    group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404)
+    if group.game_state != "module_between_rounds":
+        return {"message": "already_advanced"}
+    if not all(p.is_ready for p in group.players):
+        return {"message": "waiting_for_scans"}
+    await _advance_to_next_round(group, group_id, db)
     return {"message": "success"}
 
 
@@ -439,14 +466,7 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
         score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
-        group.game_state = "module_between_rounds"
-        for p in group.players:
-            p.is_ready = False
-        db.commit()
-        await manager.broadcast_to_group(group_id, {
-            "type": "ROUND_ENDED",
-            "scores": score_results,
-        })
+        await _enter_between_rounds(group, group_id, db, score_results)
         return {"message": "success", "scores": score_results}
     else:
         await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
@@ -465,6 +485,7 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
         raise HTTPException(status_code=400, detail="Skip trade already used.")
 
     player.has_skipped_trade = True
+    player.round_skip_used = True   # marks this player as auto-ready for between_rounds
     player.is_ready = True
     db.commit()
 
@@ -472,14 +493,7 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
         score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
-        group.game_state = "module_between_rounds"
-        for p in group.players:
-            p.is_ready = False
-        db.commit()
-        await manager.broadcast_to_group(group_id, {
-            "type": "ROUND_ENDED",
-            "scores": score_results,
-        })
+        await _enter_between_rounds(group, group_id, db, score_results)
         return {"message": "success", "scores": score_results}
     else:
         await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
@@ -606,27 +620,30 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
     _touch(group)
     db.commit()
 
-    # ── Check if this auto-ready triggers the end of the round ────────────────
+    # ── Check if this scan triggers a round/phase transition ─────────────────
     round_ended = False
     scores = None
-    if all(p.is_ready for p in group.players):
-        is_final = (group.current_round or 0) >= 3
-        scores = db_queries.award_round_points(db, group_id, is_final_round=is_final)
-        group.game_state = "module_between_rounds"
-        for p in group.players:
-            p.is_ready = False
-        db.commit()
-        
-        # We need to broadcast asynchronously, but we are inside an async function
-        await manager.broadcast_to_group(group_id, {
-            "type": "ROUND_ENDED",
-            "scores": scores,
-        })
-        round_ended = True
-    elif player.is_ready:
-        await manager.broadcast_to_group(group_id, {
-            "type": "PLAYER_READY",
-        })
+
+    if player.is_ready:
+        db.expire_all()
+        group = db.query(models.Group).filter_by(id=group_id).first()
+
+        if group.game_state == "round_active":
+            if all(p.is_ready for p in group.players):
+                is_final = (group.current_round or 0) >= 3
+                scores = db_queries.award_round_points(db, group_id, is_final_round=is_final)
+                await _enter_between_rounds(group, group_id, db, scores)
+                round_ended = True
+            else:
+                await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
+
+        elif group.game_state == "module_between_rounds":
+            # Player scanned their received card → check if all between-rounds scans done
+            if all(p.is_ready for p in group.players):
+                await _advance_to_next_round(group, group_id, db)
+                round_ended = True
+            else:
+                await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
 
     # ── 5. Build inventory from DB (no JSON blob) ─────────────────────────────
     inventory = [

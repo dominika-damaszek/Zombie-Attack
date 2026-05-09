@@ -785,12 +785,8 @@ const GameScreen = ({ mockData } = {}) => {
     }
     if (lastMessage.type === 'ROUND_ENDED') {
       fetchState();
-      // Auto-advance to next round after 5 s — no manual button needed
-      setTimeout(async () => {
-        try {
-          await fetch(`${API_URLS.BASE}/api/game/${groupData?.group_id}/next_round`, { method: 'POST' });
-        } catch (e) { console.error(e); }
-      }, 5000);
+      // Round advancement is now server-driven: the next round starts automatically
+      // once every player scans their received card (or skipped) in module_between_rounds.
     }
     if (lastMessage.type === 'GAME_ENDED') {
       if (groupData?.group_id) {

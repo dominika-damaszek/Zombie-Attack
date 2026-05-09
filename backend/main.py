@@ -84,6 +84,7 @@ def run_migrations():
             ("game.group_players", "objectives",            "TEXT DEFAULT '[]'"),
             ("game.group_players", "initial_cards_scanned", "INTEGER DEFAULT 0"),
             ("game.group_players", "has_skipped_trade",     "BOOLEAN DEFAULT FALSE"),
+            ("game.group_players", "round_skip_used",       "BOOLEAN DEFAULT FALSE"),
             ("game.group_players", "is_initial_zombie",     "BOOLEAN DEFAULT FALSE"),
             ("game.group_players", "score",                 "INTEGER DEFAULT 0 NOT NULL"),
             ("game.group_players", "infected_by_id",        "VARCHAR"),

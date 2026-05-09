@@ -73,6 +73,9 @@ class GroupPlayer(Base):
     is_initial_zombie = Column(Boolean, default=False)
     is_ready = Column(Boolean, default=False)
     has_skipped_trade = Column(Boolean, default=False)
+    # True for the round in which the player used their skip (reset every round).
+    # Used to auto-mark the skipper as ready in module_between_rounds (they have no card to scan).
+    round_skip_used = Column(Boolean, default=False)
 
     # Infection tracking: who infected this player and in which round.
     # Used to award one-time infection points to the infector.
