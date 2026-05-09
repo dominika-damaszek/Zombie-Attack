@@ -291,32 +291,32 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         # Zombies never receive objectives — their only goal is spreading infection
         if not player.is_infected:
             # ── Distribute Objectives (survivors only) ────────────────────────
-            # Rule: 3 objectives. Preferably 0 from cards the player already has, max 1.
-            # Prefer types that are currently in play in the room.
+            # Goal: minimise how many objectives the player already satisfies
+            # at the start.  Priority order for picking the 3 objectives:
+            #   1. Types the player does NOT own that ARE in the room (tradeable)
+            #   2. Types the player does NOT own that are NOT in the room yet
+            #   3. (last resort) Types the player already owns — pick those
+            #      with the fewest copies so they're easiest to lose via trade.
 
-            player_types = list(set(i.type for i in inventory_items))
+            player_type_counts = {}
+            for i in inventory_items:
+                player_type_counts[i.type] = player_type_counts.get(i.type, 0) + 1
+            player_types_set = set(player_type_counts.keys())
+
             room_cards = db_queries.get_room_cards_by_type(db, group_id)
-            room_types = list(room_cards.keys())
 
-            # Types player does NOT have
-            not_owned_in_room = [t for t in room_types if t not in player_types]
-            all_not_owned = [t for t in ALL_CARD_TYPES if t not in player_types]
+            # Tier 1: not owned + in room (best — player must trade to get them)
+            tier1 = [t for t in ALL_CARD_TYPES if t not in player_types_set and room_cards.get(t, 0) > 0]
+            # Tier 2: not owned + not in room (still forces trading once cards appear)
+            tier2 = [t for t in ALL_CARD_TYPES if t not in player_types_set and room_cards.get(t, 0) == 0]
+            # Tier 3: already owned — sorted fewest-copies-first (easiest to lose)
+            tier3 = sorted(player_types_set, key=lambda t: player_type_counts[t])
 
-            pool_not_owned = not_owned_in_room.copy()
-            for t in all_not_owned:
-                if t not in pool_not_owned:
-                    pool_not_owned.append(t)
+            random.shuffle(tier1)
+            random.shuffle(tier2)
 
-            random.shuffle(pool_not_owned)
-            random.shuffle(player_types)
-
-            # Take as many as possible from not_owned (up to 3)
-            objectives = pool_not_owned[:3]
-
-            # If we couldn't get 3 (e.g. player holds 3 or 4 types), we must take from player_types
-            needed = 3 - len(objectives)
-            if needed > 0:
-                objectives.extend(player_types[:needed])
+            pool = tier1 + tier2 + tier3
+            objectives = pool[:3]
 
             player.objectives = json.dumps(objectives)
 
@@ -402,14 +402,13 @@ async def _enter_between_rounds(group, group_id: str, db: DBSession, score_resul
     _touch(group)
     for p in group.players:
         # Skippers (round_skip_used) have no card to scan → auto-ready
-        # Normal-mode players already scanned during round_active → auto-ready
-        p.is_ready = bool(p.round_skip_used) or (mode == "normal")
+        p.is_ready = bool(p.round_skip_used)
     db.commit()
     await manager.broadcast_to_group(group_id, {
         "type": "ROUND_ENDED",
         "scores": score_results or [],
     })
-    # If all are already ready (everyone skipped, or normal mode) → advance immediately
+    # If all are already ready (everyone skipped) → advance immediately
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
     if group and all(p.is_ready for p in group.players):

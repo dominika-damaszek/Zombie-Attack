@@ -1157,7 +1157,7 @@ const GameScreen = ({ mockData } = {}) => {
   }
 
   const isTimeUp = gamePhase === 'round_active' && gameState?.round_end_time && (gameState.round_end_time - Math.floor(Date.now() / 1000)) <= 0;
-  const isModule = gameMode?.startsWith('module');
+  const isModule = gameMode?.startsWith('module') || gameMode === 'normal';
   const isNormal = gameMode === 'normal';
   const showScanButton = !isModule || gamePhase !== 'round_active';
 
