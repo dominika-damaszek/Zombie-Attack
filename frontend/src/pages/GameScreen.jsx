@@ -753,7 +753,10 @@ const GameScreen = ({ mockData } = {}) => {
       } else if (!data.secret_word) {
         localStorage.removeItem('active_secret_word');
       }
-      if (data.game_state === 'end_game') {
+      if (data.session_status === 'finished') {
+        localStorage.removeItem('player_session');
+        navigate('/');
+      } else if (data.game_state === 'end_game') {
         localStorage.setItem('endgame_group_id', groupData.group_id);
         localStorage.removeItem('player_session');
         navigate('/endgame', { state: { groupId: groupData.group_id } });
@@ -767,8 +770,19 @@ const GameScreen = ({ mockData } = {}) => {
   useEffect(() => {
     if (!lastMessage) return;
     if (lastMessage.type === 'GAME_STARTED') { fetchState(); }
-    if (lastMessage.type === 'SLIDE_ADVANCED') { setLocalSlideReady(false); fetchState(); }
+    if (lastMessage.type === 'SLIDE_ADVANCED') {
+      setLocalSlideReady(false);
+      // For normal mode, also advance the local slide index so players see next instruction
+      if (gameModeRef.current === 'normal' && lastMessage.slide !== undefined) {
+        setLocalNormalSlideIndex(lastMessage.slide);
+      }
+      fetchState();
+    }
     if (lastMessage.type === 'PLAYER_READY') { fetchState(); }
+    if (lastMessage.type === 'SESSION_TERMINATED') {
+      localStorage.removeItem('player_session');
+      navigate('/');
+    }
     if (lastMessage.type === 'PHASE_CHANGED') { fetchState(); }
     if (lastMessage.type === 'PLAYER_INFECTED' && lastMessage.player_id === playerData?.id) {
       setShowInfectionAlert(true);

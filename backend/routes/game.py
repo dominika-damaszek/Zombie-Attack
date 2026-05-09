@@ -687,6 +687,10 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
     ready_count = sum(1 for p in group.players if p.is_ready)
     not_ready = [p.user.username for p in group.players if not p.is_ready]
 
+    # Check if session is finished
+    session = db.query(models.Session).filter_by(id=group.session_id).first()
+    session_status = session.status if session else "unknown"
+
     return {
         "game_state":       group.game_state,
         "current_round":    group.current_round,
@@ -698,6 +702,7 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
         "ready_count":      ready_count,
         "not_ready":        not_ready,
         "players":          players_data,
+        "session_status":   session_status,
     }
 
 
