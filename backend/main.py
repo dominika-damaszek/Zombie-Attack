@@ -173,7 +173,12 @@ async def auto_close_inactive_games():
             )
             for group in groups:
                 activity = group.last_activity
-                if activity is None or activity < threshold:
+                # Skip groups where last_activity is None — they were just created
+                # and haven't had any player action yet.  Closing them immediately
+                # would kill brand-new games before players even get a chance to start.
+                if activity is None:
+                    continue
+                if activity < threshold:
                     print(f"[auto_close] Closing inactive game {group.id} (last_activity={activity})")
                     group.game_state = "end_game"
                     db.commit()

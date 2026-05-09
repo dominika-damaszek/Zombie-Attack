@@ -140,6 +140,7 @@ async def _advance_slide(group, db, group_id: str):
     nxt = (group.instruction_slide or 0) + 1
     for p in group.players:
         p.is_ready = False
+    _touch(group)
     if nxt >= total_slides:
         group.game_state = "round_active"
         group.current_round = 1
@@ -150,6 +151,32 @@ async def _advance_slide(group, db, group_id: str):
         group.instruction_slide = nxt
         db.commit()
         await manager.broadcast_to_group(group_id, {"type": "SLIDE_ADVANCED", "slide": nxt})
+
+
+# ── Teacher: skip all slides immediately ─────────────────────────────────────
+@router.post("/{group_id}/skip_slides")
+async def skip_slides(group_id: str, db: DBSession = Depends(get_db)):
+    """Teacher shortcut — jump straight from module_instructions to round_active.
+    Useful in classrooms when the teacher wants to skip ahead.
+    """
+    group = db.query(models.Group).filter_by(id=group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    if group.group_number == 0:
+        raise HTTPException(status_code=400, detail="Cannot skip slides on lobby group")
+    if group.game_state != "module_instructions":
+        raise HTTPException(status_code=400, detail=f"Not in instruction phase (current: {group.game_state})")
+
+    for p in group.players:
+        p.is_ready = False
+    group.game_state = "round_active"
+    group.current_round = 1
+    group.round_end_time = int(time.time()) + 180
+    _touch(group)
+    db.commit()
+
+    await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
+    return {"message": "Slides skipped", "game_state": "round_active"}
 
 
 # ── Synchronized slide ready ───────────────────────────────────────────────────
@@ -172,9 +199,14 @@ async def slide_ready(group_id: str, payload: dict = {}, db: DBSession = Depends
     _touch(group)
     db.commit()
 
-    ready = sum(1 for p in group.players if p.is_ready)
-    total = len(group.players)
-    not_ready = [p.user.username for p in group.players if not p.is_ready]
+    # Fresh query after commit to avoid stale ORM session cache (race-condition fix)
+    db.expire_all()
+    group = db.query(models.Group).filter_by(id=group_id).first()
+    all_players = group.players
+
+    ready = sum(1 for p in all_players if p.is_ready)
+    total = len(all_players)
+    not_ready = [p.user.username for p in all_players if not p.is_ready]
 
     await manager.broadcast_to_group(group_id, {
         "type": "PLAYER_READY",
@@ -183,10 +215,11 @@ async def slide_ready(group_id: str, payload: dict = {}, db: DBSession = Depends
         "not_ready": not_ready,
     })
 
-    if all(p.is_ready for p in group.players):
+    if all(p.is_ready for p in all_players):
         await _advance_slide(group, db, group_id)
 
-    return {"ready": ready, "total": total, "slide": group.instruction_slide or 0}
+    slide = group.instruction_slide or 0
+    return {"ready": ready, "total": total, "slide": slide}
 
 
 # ── Legacy: finish_instructions (kept for compatibility) ──────────────────────
@@ -290,6 +323,10 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         player.is_ready = True
         db.commit()
 
+        # Fresh query after commit — avoids stale ORM cache race condition
+        db.expire_all()
+        group = db.query(models.Group).filter_by(id=group_id).first()
+
         ready = sum(1 for p in group.players if p.is_ready)
         total = len(group.players)
         not_ready = [p.user.username for p in group.players if not p.is_ready]
@@ -384,7 +421,10 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
     _touch(player.group)
     db.commit()
 
-    group = player.group
+    # Fresh query after commit — avoids stale ORM cache (race-condition fix)
+    db.expire_all()
+    group = db.query(models.Group).filter_by(id=group_id).first()
+
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
         score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
@@ -653,6 +693,7 @@ async def toggle_ready(group_id: str, payload: dict, db: DBSession = Depends(get
         raise HTTPException(status_code=404, detail="Player not found")
 
     player.is_ready = True
+    _touch(player.group)
     db.commit()
 
     await manager.broadcast_to_group(group_id, {
@@ -660,7 +701,9 @@ async def toggle_ready(group_id: str, payload: dict, db: DBSession = Depends(get
         "player_id": player_id
     })
 
-    group = player.group
+    # Fresh query after commit — avoids stale ORM cache (race-condition fix)
+    db.expire_all()
+    group = db.query(models.Group).filter_by(id=group_id).first()
     if len(group.players) > 0 and all(p.is_ready for p in group.players):
         if group.game_state == "lobby":
             await start_game(group_id, {}, db)

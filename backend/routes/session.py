@@ -5,6 +5,7 @@ from routes.auth import get_current_user
 import random
 import string
 import math
+import time
 from datetime import datetime
 from websocket_manager import manager
 
@@ -83,7 +84,8 @@ async def start_matchmaking(session_id: str, payload: dict = {}, token: str = No
             game_state="lobby",
             current_round=0,
             secret_word="START",
-            game_mode=session.game_mode
+            game_mode=session.game_mode,
+            last_activity=int(time.time()),
         )
         db.add(group)
         new_groups.append(group)
