@@ -340,6 +340,12 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
         # If all players finished initial scan → advance slide or start round
         if all(p.is_ready for p in group.players):
             if group.game_state == "module_instructions":
+                # In normal mode, slides are navigated client-side so
+                # instruction_slide may be behind. Sync it to the scan
+                # slide index so _advance_slide moves forward correctly.
+                if (group.game_mode or "normal") == "normal":
+                    group.instruction_slide = 2  # scan slide index
+                    db.flush()
                 await _advance_slide(group, db, group_id)
             else:
                 # legacy initial_scan_phase
