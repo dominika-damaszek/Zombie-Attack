@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session as DBSession
 from database import get_db
@@ -52,10 +53,26 @@ def get_total_slides(mode: str) -> int:
 @router.websocket("/ws/{group_id}/{player_id}")
 async def websocket_endpoint(websocket: WebSocket, group_id: str, player_id: str):
     await manager.connect(websocket, group_id)
+
+    async def keepalive():
+        """Send periodic pings to prevent Render/proxy idle-timeout disconnects."""
+        try:
+            while True:
+                await asyncio.sleep(30)
+                await websocket.send_json({"type": "PING"})
+        except Exception:
+            pass
+
+    ping_task = asyncio.create_task(keepalive())
     try:
         while True:
-            await websocket.receive_text()
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_json({"type": "PONG"})
     except WebSocketDisconnect:
+        pass
+    finally:
+        ping_task.cancel()
         manager.disconnect(websocket, group_id)
 
 
@@ -911,11 +928,16 @@ async def toggle_ready(group_id: str, payload: dict, db: DBSession = Depends(get
     # Fresh query after commit — avoids stale ORM cache (race-condition fix)
     db.expire_all()
     group = db.query(models.Group).filter_by(id=effective_group_id).first()
+    game_started = False
     if len(group.players) > 0 and all(p.is_ready for p in group.players):
         if group.game_state == "lobby":
-            await start_game(effective_group_id, {}, db)
+            try:
+                await start_game(effective_group_id, {}, db)
+                game_started = True
+            except Exception as e:
+                print(f"[toggle_ready] auto start_game failed: {e}")
 
-    return {"message": "Player ready"}
+    return {"message": "Player ready", "game_started": game_started}
 
 
 def _check_session_complete(group_id: str, db: DBSession):

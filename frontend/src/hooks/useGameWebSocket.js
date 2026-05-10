@@ -15,20 +15,34 @@ export function useGameWebSocket(groupId, playerId) {
     let socket;
     let reconnectTimer;
 
+    let pingInterval;
+
     const connect = () => {
       socket = new WebSocket(`${WS_BASE}/${groupId}/${playerId}`);
       ws.current = socket;
 
-      socket.onopen = () => setConnected(true);
+      socket.onopen = () => {
+        setConnected(true);
+        // Keep-alive: send ping every 25s to prevent idle-timeout disconnects on Render
+        if (pingInterval) clearInterval(pingInterval);
+        pingInterval = setInterval(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send('ping');
+          }
+        }, 25000);
+      };
       socket.onclose = () => {
         setConnected(false);
-        // Attempt to auto-reconnect after 3 seconds
-        reconnectTimer = setTimeout(connect, 3000);
+        if (pingInterval) clearInterval(pingInterval);
+        // Attempt to auto-reconnect after 2 seconds
+        reconnectTimer = setTimeout(connect, 2000);
       };
       socket.onerror = (e) => console.error('WS Error', e);
       socket.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          // Ignore keep-alive messages
+          if (msg.type === 'PING' || msg.type === 'PONG') return;
           setLastMessage(msg);
         } catch (e) {
           console.error('WS parse error', e);
@@ -40,6 +54,7 @@ export function useGameWebSocket(groupId, playerId) {
 
     return () => {
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (pingInterval) clearInterval(pingInterval);
       if (socket) {
         socket.onclose = null; // Prevent reconnect loop on intentional unmount
         socket.close();

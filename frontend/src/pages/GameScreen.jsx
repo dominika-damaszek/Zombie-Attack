@@ -987,10 +987,30 @@ const GameScreen = () => {
     playerData?.id
   );
 
+  // Resolve the player's actual group_id from the backend so we never
+  // use a stale lobby group_id that may have been passed via navigation state.
+  const resolvedGroupId = useRef(groupData?.group_id);
+
   const fetchState = useCallback(async () => {
-    if (!groupData?.group_id) return;
+    if (!playerData?.id && !resolvedGroupId.current) return;
     try {
-      const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/state`);
+      // On first call (or when group_id looks like a lobby), ask the backend
+      // which group this player actually belongs to right now.
+      if (playerData?.id) {
+        try {
+          const gRes = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+          if (gRes.ok) {
+            const g = await gRes.json();
+            if (g.group_id && g.group_number !== 0) {
+              resolvedGroupId.current = g.group_id;
+            }
+          }
+        } catch { /* ignore — fall back to original groupData */ }
+      }
+      const gid = resolvedGroupId.current || groupData?.group_id;
+      if (!gid) return;
+
+      const res = await fetch(`${API_URLS.BASE}/api/game/${gid}/state`);
       const data = await res.json();
       setGameState(data);
       gameModeRef.current = data.game_mode || 'module_1';
@@ -1008,15 +1028,27 @@ const GameScreen = () => {
         localStorage.removeItem('active_secret_word');
       }
       if (data.session_status === 'finished' || data.game_state === 'end_game') {
-        localStorage.setItem('endgame_group_id', groupData.group_id);
+        localStorage.setItem('endgame_group_id', gid);
         localStorage.removeItem('player_session');
-        navigate('/endgame', { state: { groupId: groupData.group_id } });
+        navigate('/endgame', { state: { groupId: gid } });
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [groupData?.group_id, playerData?.id, navigate]);
 
-  useEffect(() => { fetchState(); const id = setInterval(fetchState, 10000); return () => clearInterval(id); }, [fetchState]);
+  // Fast poll (2 s) for the first 30 seconds after mount, then slow (10 s).
+  useEffect(() => {
+    fetchState();
+    const fast = setInterval(fetchState, 2000);
+    const slowTimer = setTimeout(() => {
+      clearInterval(fast);
+      const slow = setInterval(fetchState, 10000);
+      // store for cleanup
+      timerRef.current = slow;
+    }, 30000);
+    const timerRef = { current: null };
+    return () => { clearInterval(fast); clearTimeout(slowTimer); if (timerRef.current) clearInterval(timerRef.current); };
+  }, [fetchState]);
 
   useEffect(() => {
     if (!lastMessage) return;
@@ -1032,9 +1064,9 @@ const GameScreen = () => {
     if (lastMessage.type === 'PLAYER_READY') { fetchState(); }
     if (lastMessage.type === 'SESSION_TERMINATED') {
       if (groupData?.group_id) {
-        localStorage.setItem('endgame_group_id', groupData.group_id);
+        localStorage.setItem('endgame_group_id', (resolvedGroupId.current || groupData.group_id));
         localStorage.removeItem('player_session');
-        navigate('/endgame', { state: { groupId: groupData.group_id } });
+        navigate('/endgame', { state: { groupId: (resolvedGroupId.current || groupData.group_id) } });
       } else {
         localStorage.removeItem('player_session');
         navigate('/');
@@ -1081,9 +1113,9 @@ const GameScreen = () => {
     }
     if (lastMessage.type === 'GAME_ENDED') {
       if (groupData?.group_id) {
-        localStorage.setItem('endgame_group_id', groupData.group_id);
+        localStorage.setItem('endgame_group_id', (resolvedGroupId.current || groupData.group_id));
         localStorage.removeItem('player_session');
-        navigate('/endgame', { state: { groupId: groupData.group_id } });
+        navigate('/endgame', { state: { groupId: (resolvedGroupId.current || groupData.group_id) } });
       } else {
         fetchState();
       }
@@ -1094,7 +1126,7 @@ const GameScreen = () => {
     if (localSlideReady) { setLocalSlideReady(true); return; }
     setLocalSlideReady(true);
     try {
-      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/slide_ready`, {
+      await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/slide_ready`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id }),
@@ -1107,7 +1139,7 @@ const GameScreen = () => {
     setShowInitialScanner(false);
     setScanFeedback({ status: 'scanning' });
     try {
-      const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/initial_scan`, {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/initial_scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id, card_code: cardCode }),
@@ -1136,7 +1168,7 @@ const GameScreen = () => {
     setShowScanner(false);
     setScanFeedback({ status: 'scanning' });
     try {
-      const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/scan`, {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id, card_code: cardCode }),
@@ -1180,7 +1212,7 @@ const GameScreen = () => {
       const body = action
         ? { player_id: playerData.id, partner_id: selectedTradePartner, action }
         : { player_id: playerData.id };
-      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/trade_done`, {
+      await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/trade_done`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
@@ -1192,7 +1224,7 @@ const GameScreen = () => {
     if (hasSkippedTrade) return;
     if (!window.confirm(t('game_skip_confirm'))) return;
     try {
-      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/skip_trade`, {
+      await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/skip_trade`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id }),
       });
@@ -1203,7 +1235,7 @@ const GameScreen = () => {
 
   const handleNextRound = async () => {
     try {
-      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/next_round`, {
+      await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/next_round`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id }),
@@ -1246,6 +1278,29 @@ const otherZombies =
     p => p.is_infected && p.id !== playerData?.id
   ) || [];
 
+// If the game hasn't started yet (still in lobby), show a waiting screen
+// instead of the empty game UI.  The 2-second polling will pick up the
+// state change as soon as start_game commits.
+if (gamePhase === 'lobby') {
+  return (
+    <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="text-center max-w-sm px-6">
+        <div className="flex justify-center mb-4 animate-zw-float text-slate-500">
+          <Skull size={64} />
+        </div>
+        <p className="text-lg font-bold text-slate-300 mb-2">{t('game_connecting') || 'Starting game…'}</p>
+        <p className="text-sm text-slate-500 animate-pulse mb-6">{t('game_waiting_teacher_start') || 'Waiting for the game to begin'}</p>
+        <button
+          onClick={() => navigate('/waiting', { state: { groupData, playerData } })}
+          className="text-xs text-slate-600 underline"
+        >
+          {t('game_join_game') || 'Back to waiting room'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 if (gamePhase === 'module_instructions') {
   const isNormalMode = gameMode === 'normal';
   const MODULE_SLIDES = getModuleSlides(t);
@@ -1254,9 +1309,7 @@ if (gamePhase === 'module_instructions') {
     ? MODULE_SLIDES.normal
     : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
 
-  const slideIndex = mockData
-    ? 0
-    : isNormalMode
+  const slideIndex = isNormalMode
       ? localNormalSlideIndex
       : (gameState?.instruction_slide ?? 0);
 

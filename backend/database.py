@@ -7,14 +7,14 @@ load_dotenv()
 
 # ── Database: Neon PostgreSQL only ────────────────────────────────────────────
 # This project exclusively uses Neon as the database.
-# Replit's built-in PostgreSQL (DATABASE_URL / PGHOST / etc.) is NOT used.
-# Set NEON_DATABASE_URL to your Neon connection string in the environment secrets.
+# Accepts NEON_DATABASE_URL (preferred) or DATABASE_URL as fallback.
+# On Render, set NEON_DATABASE_URL to your Neon connection string.
 # ─────────────────────────────────────────────────────────────────────────────
-SQLALCHEMY_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
+SQLALCHEMY_DATABASE_URL = os.getenv("NEON_DATABASE_URL") or os.getenv("DATABASE_URL")
 
 if not SQLALCHEMY_DATABASE_URL:
     raise RuntimeError(
-        "NEON_DATABASE_URL environment variable is not set. "
+        "Neither NEON_DATABASE_URL nor DATABASE_URL is set. "
         "This project only runs with Neon PostgreSQL. "
         "Add your Neon connection string as NEON_DATABASE_URL in the environment secrets."
     )
