@@ -414,9 +414,9 @@ def _normalize_objectives(raw):
 def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict]]:
     """
     Generate objectives for every survivor in a group AT ONCE.
-    Each survivor receives exactly 3 DISTINCT card-type objectives (qty=1 each),
-    ensuring they always need to trade for at least 1 card per objective type.
-    Zombies receive no objectives.
+    Each player receives exactly 3 objective cards in total.
+    The cards are drawn from the room's scanned supply.
+    We optimize the assignment so players don't already have the cards they need.
     """
     group = (
         db.query(models.Group)
@@ -431,62 +431,62 @@ def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict
         return {}
 
     room_supply = get_room_cards_by_type(db, group_id)
-    available_types = [t for t in ALL_CARD_TYPES if room_supply.get(t, 0) > 0]
-    if not available_types:
-        return {}
+    all_cards = []
+    for t, count in room_supply.items():
+        all_cards.extend([t] * count)
+        
+    required_total = 3 * len(survivors)
+    if len(all_cards) < required_total:
+        # Fallback if somehow not enough cards
+        if ALL_CARD_TYPES:
+            all_cards.extend(_random.choices(ALL_CARD_TYPES, k=required_total - len(all_cards)))
+        else:
+            all_cards.extend(["unknown"] * (required_total - len(all_cards)))
 
     p_owned = {p.id: get_player_cards_by_type(db, p.id) for p in survivors}
-    remaining = dict(room_supply)
+    
+    drawn = _random.sample(all_cards, required_total)
+    
+    assignments = {}
+    for i, p in enumerate(survivors):
+        assignments[p.id] = drawn[i*3 : i*3 + 3]
+        
+    def score_assignment(assigns):
+        total_needed = 0
+        for p_id, cards in assigns.items():
+            counts = {}
+            for c in cards: counts[c] = counts.get(c, 0) + 1
+            owned = p_owned[p_id]
+            total_needed += sum(max(0, q - owned.get(t, 0)) for t, q in counts.items())
+        return total_needed
 
-    order = list(survivors)
-    _random.shuffle(order)
+    if len(survivors) > 1:
+        current_score = score_assignment(assignments)
+        survivor_ids = [p.id for p in survivors]
+        
+        for _ in range(500):
+            if current_score == required_total:
+                break
+                
+            p1, p2 = _random.sample(survivor_ids, 2)
+            c1, c2 = _random.randrange(3), _random.randrange(3)
+            
+            assignments[p1][c1], assignments[p2][c2] = assignments[p2][c2], assignments[p1][c1]
+            
+            new_score = score_assignment(assignments)
+            if new_score >= current_score:
+                current_score = new_score
+            else:
+                assignments[p1][c1], assignments[p2][c2] = assignments[p2][c2], assignments[p1][c1]
 
     result = {}
-
-    for player in order:
-        owned_counts = p_owned[player.id]
-        chosen_types = []
-
-        # Priority 1: types the player has ZERO of, with supply remaining
-        zero_types = [
-            t for t in available_types
-            if owned_counts.get(t, 0) == 0 and remaining.get(t, 0) > 0
-        ]
-        _random.shuffle(zero_types)
-        for t in zero_types:
-            if len(chosen_types) >= OBJECTIVE_SLOTS_PER_PLAYER:
-                break
-            chosen_types.append(t)
-            remaining[t] -= 1
-
-        # Priority 2: any remaining distinct type with supply
-        if len(chosen_types) < OBJECTIVE_SLOTS_PER_PLAYER:
-            fallback = [
-                t for t in available_types
-                if t not in chosen_types and remaining.get(t, 0) > 0
-            ]
-            _random.shuffle(fallback)
-            for t in fallback:
-                if len(chosen_types) >= OBJECTIVE_SLOTS_PER_PLAYER:
-                    break
-                chosen_types.append(t)
-                remaining[t] -= 1
-
-        # Priority 3: supply exhausted — allow repeats of any available type
-        while len(chosen_types) < OBJECTIVE_SLOTS_PER_PLAYER:
-            extras = [t for t in available_types if t not in chosen_types]
-            if extras:
-                chosen_types.append(_random.choice(extras))
-            else:
-                chosen_types.append(_random.choice(available_types))
-
-        # Each objective is qty=1 (or owned+1 if player already has some)
-        final_objs = []
-        for t in chosen_types:
-            cur = owned_counts.get(t, 0)
-            required_qty = min(cur + 1, room_supply.get(t, 1)) if cur > 0 else 1
-            final_objs.append({"type": t, "qty": required_qty})
-
+    for player in survivors:
+        cards = assignments[player.id]
+        counts = {}
+        for c in cards:
+            counts[c] = counts.get(c, 0) + 1
+            
+        final_objs = [{"type": t, "qty": q} for t, q in counts.items()]
         player.objectives = _json.dumps(final_objs)
         result[player.id] = final_objs
 
