@@ -32,6 +32,10 @@ const Auth = ({ setIsAuthenticated }) => {
         throw new Error(errorData.detail || 'Authentication failed.');
       }
       const data = await response.json();
+      // Clear any stale game session data from a previous user on this device.
+      localStorage.removeItem('player_session');
+      localStorage.removeItem('endgame_group_id');
+      localStorage.removeItem('active_secret_word');
       localStorage.setItem('token', data.access_token);
       setIsAuthenticated(true);
       navigate(redirectTo);

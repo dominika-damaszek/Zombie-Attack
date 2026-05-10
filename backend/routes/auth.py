@@ -1,6 +1,7 @@
 import asyncio
 import os
 import base64
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import models, schemas, database
@@ -16,11 +17,13 @@ _fernet_key = base64.urlsafe_b64encode(SECRET_KEY.ljust(32, '0')[:32].encode('ut
 cipher_suite = Fernet(_fernet_key)
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+ACCESS_TOKEN_EXPIRE_DAYS = 7
 
 
 def create_access_token(data: dict):
     to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

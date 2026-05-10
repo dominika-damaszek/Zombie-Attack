@@ -65,9 +65,9 @@ function getModuleSlides(t) {
   return {
     module_1: [
       { type: 'story', icon: Globe, title: t('slide_m1_0_title'), text: t('slide_m1_0_text') },
-      { type: 'info', icon: Package, title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
-      { type: 'info', icon: Layers, title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
-      { type: 'items', icon: Layers, title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
+      { type: 'info', icon: Package, image: '/gamebox.png', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
+      { type: 'info', icon: Layers, image: '/cards4.png', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
+      { type: 'items', icon: Layers, cardImages: ['/card1.png', '/card2.png', '/card3.png', '/card4.png', '/card5.png'], title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
       { type: 'scan', icon: Smartphone, title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', icon: Target, title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
       { type: 'final', icon: Timer, title: t('slide_m1_6_title'), text: t('slide_m1_6_text') },
@@ -673,7 +673,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
     const objs = normalizeObjectives(objectives);
     return (
       <div className="text-center">
-        <IconDisplay />
+        <HeroVisual />
         <TitleHeader>{title}</TitleHeader>
         {text.split('\n').map((line, i) => <p key={i} className="text-slate-400 mb-1">{line}</p>)}
         <div className="mt-5 space-y-3 text-left">
@@ -692,9 +692,13 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
                   ) : (
                     <Layers size={20} className={ct.color} />
                   )}
-                  <span className={`font-bold ${met ? 'text-[var(--neon-green-glow)]' : 'text-slate-200'}`}>{getCardLabel(type)}</span>
+                  <span className={`font-bold ${met ? 'text-[var(--neon-green-glow)]' : 'text-slate-200'}`}>
+                    {ct.label} {need > 1 ? `(×${need})` : ''}
+                  </span>
                 </div>
-                {owned ? <CheckCircle2 size={20} className="text-[var(--neon-green-glow)]" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-600" />}
+                {met ? <CheckCircle2 size={20} className="text-[var(--neon-green-glow)]" /> : (
+                  <span className="text-xs text-slate-400 font-mono">{have}/{need}</span>
+                )}
               </div>
             );
           })}
@@ -704,13 +708,13 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
   }
 
   if (type === 'role') {
-    const isZombie = playerState?.role === 'zombie';
-    const cfg = isZombie
+    const isZombieRole = playerState?.role === 'zombie';
+    const cfg = isZombieRole
       ? { label: t('game_zombie'), color: '#d97559', bg: 'rgba(80,30,20,0.6)', border: 'rgba(217,117,89,0.4)' }
       : { label: t('game_survivor'), color: '#a8c4a0', bg: 'rgba(30,50,35,0.6)', border: 'rgba(168,196,160,0.4)' };
     return (
       <div className="text-center">
-        <IconDisplay />
+        <HeroVisual />
         <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>{t('game_your_role_is')}</p>
         <h2 className="text-4xl sm:text-5xl mb-4 sm:mb-5 uppercase" style={{ color: cfg.color }}>{cfg.label}</h2>
         <div className="rounded-2xl p-4 mb-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
@@ -725,29 +729,41 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
     // followed by the good/bad hints for that example. We deliberately do NOT
     // display the player's real password here — it's already shown in the
     // header section of the in-game UI for survivors.
-    const groupList = groups || [{ lines: [] }];
+    const groupList = groups || [{ pw: '', lines: [] }];
+    const isZombieHints = playerState?.role === 'zombie';
     return (
       <div className="text-center">
-        <IconDisplay />
+        <HeroVisual />
         <TitleHeader>{title}</TitleHeader>
-        {secretWord && !isZombie && (
+        {secretWord && !isZombieHints && (
           <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
             <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
             <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
             <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
           </div>
         )}
-        <div className="space-y-3 text-left">
-          {lines.map((line, i) => (
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-[var(--neon-green)]/10 border border-[var(--neon-green)]/20' : 'bg-[var(--neon-pink)]/10 border border-[var(--neon-pink)]/20'}`}>
-              <span className="flex-shrink-0 mt-0.5">
-                {line.ok ? (
-                  <CheckCircle2 size={18} className="text-[var(--neon-green)]" />
-                ) : (
-                  <X size={18} className="text-[var(--neon-pink)]" />
-                )}
-              </span>
-              <p className={`text-sm leading-relaxed ${line.ok ? 'text-[var(--neon-green)]' : 'text-[var(--neon-pink)]'}`}>{line.text}</p>
+        <div className="space-y-6 text-left">
+          {groupList.map((group, gi) => (
+            <div key={gi}>
+              {group.pw && (
+                <p className="text-xs uppercase tracking-widest font-mono mb-2 text-center" style={{ color: '#6D7162' }}>
+                  {group.pw}
+                </p>
+              )}
+              <div className="space-y-2">
+                {(group.lines || []).map((line, i) => (
+                  <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-[var(--neon-green)]/10 border border-[var(--neon-green)]/20' : 'bg-[var(--neon-pink)]/10 border border-[var(--neon-pink)]/20'}`}>
+                    <span className="flex-shrink-0 mt-0.5">
+                      {line.ok ? (
+                        <CheckCircle2 size={18} className="text-[var(--neon-green)]" />
+                      ) : (
+                        <X size={18} className="text-[var(--neon-pink)]" />
+                      )}
+                    </span>
+                    <p className={`text-sm leading-relaxed ${line.ok ? 'text-[var(--neon-green)]' : 'text-[var(--neon-pink)]'}`}>{line.text}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
