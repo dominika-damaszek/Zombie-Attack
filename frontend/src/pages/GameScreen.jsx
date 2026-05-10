@@ -913,7 +913,7 @@ function WhatToDoNow({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(20, 1, 26, 0.53)' }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 overflow-y-auto" style={{ background: 'rgba(20, 1, 26, 0.53)' }}>
           <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ background: 'rgba(59, 27, 49, 0.74)', border: '1px solid var(--neon-pink)', backdropFilter: 'blur(24px)', boxShadow: '0 0 30px rgba(216, 123, 196, 0.8)' }}>
             <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: 'var(--neon-pink-glow)' }}>
               <div className="flex items-center gap-2.5 text-[var(--neon-pink)] drop-shadow-[0_0_10px_var(--neon-pink)]">
