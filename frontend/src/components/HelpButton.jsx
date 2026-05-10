@@ -89,7 +89,7 @@ export default function HelpButton() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center sm:items-center justify-center p-4 shadow-[0_0_20px_var(--neon-cyan-glow)]" style={{ background: 'rgba(5, 21, 29, 0.75)' }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 overflow-y-auto shadow-[0_0_20px_var(--neon-cyan-glow)]" style={{ background: 'rgba(5, 21, 29, 0.75)' }}>
           <div
             className="w-full max-w-md rounded-3xl overflow-hidden bg-[var(--neon-cyan-glow)]/30 shadow-[0_0_50px_var(--neon-cyan-glow)]/80"
             style={{ border: '1px solid var(--neon-cyan-glow)', backdropFilter: 'blur(24px)' }}
