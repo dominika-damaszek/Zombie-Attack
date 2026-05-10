@@ -183,7 +183,7 @@ const Dashboard = ({ setHasSession }) => {
       {/* ── QR fullscreen overlay ── */}
       {qrFullscreen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+          className="fixed inset-0 z-50 flex flex-col items-start justify-center p-4 pt-24 overflow-y-auto"
           style={{ background: 'rgba(10,12,18,0.96)', backdropFilter: 'blur(12px)' }}
           onClick={() => setQrFullscreen(null)}
         >
@@ -210,7 +210,7 @@ const Dashboard = ({ setHasSession }) => {
       {/* ── Stats modal ── */}
       {statsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 overflow-y-auto"
           style={{ background: 'rgba(10,12,18,0.93)', backdropFilter: 'blur(10px)' }}
           onClick={() => setStatsModal(null)}
         >
