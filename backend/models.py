@@ -55,6 +55,14 @@ class Group(Base):
     instruction_slide = Column(Integer, default=0)
     last_activity = Column(Integer, nullable=True)
 
+    # ── Between-rounds scan / ready gate ─────────────────────────────────────
+    # True once every player has scanned their 1 new card during the
+    # `module_between_rounds` phase. While True, the UI shows a
+    # "Round N starting" popup and waits for every player to click Ready
+    # (which sets is_ready=False → True via the next_round_ready endpoint)
+    # before the next round actually begins.
+    scan_phase_complete = Column(Boolean, default=False, nullable=False)
+
 class GroupPlayer(Base):
     __tablename__ = "group_players"
     __table_args__ = {'schema': 'game'}
@@ -89,6 +97,13 @@ class GroupPlayer(Base):
     initial_cards_scanned = Column(Integer, default=0)
     # Cumulative points accumulated across all rounds.
     score = Column(Integer, default=0, nullable=False)
+
+    # ── Early completion tracking ────────────────────────────────────────────
+    # Set to True the first time the player has met every objective in full
+    # (count-based: owned[type] >= qty for each entry) at end-of-round.
+    # Used to (a) award the +3-per-remaining-round bonus exactly once and
+    # (b) trigger a "Congratulations" popup on the client only once.
+    early_completion_awarded = Column(Boolean, default=False, nullable=False)
 
 class Item(Base):
     __tablename__ = "items"

@@ -381,20 +381,156 @@ def assign_card_to_player(
 
 
 # =============================================================================
-# SCORING
+# OBJECTIVES — group-aware, count-based, provably solvable
 # =============================================================================
 
 import json as _json
+import random as _random
+
+OBJECTIVE_SLOTS_PER_PLAYER = 3
+ALL_CARD_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", "security_layer"]
+
+
+def _normalize_objectives(raw):
+    """Accept either the legacy list-of-strings format
+    `["security_patch", "system_boost", ...]` or the new count-based format
+    `[{"type": "...", "qty": N}, ...]` and always return the count-based one.
+    Each unique type appears exactly once in the returned list."""
+    if not raw:
+        return []
+    counts = {}
+    for entry in raw:
+        if isinstance(entry, dict):
+            t = entry.get("type")
+            q = int(entry.get("qty") or 0)
+            if t and q > 0:
+                counts[t] = counts.get(t, 0) + q
+        else:
+            # legacy string entry — counts as 1 of that type
+            counts[entry] = counts.get(entry, 0) + 1
+    return [{"type": t, "qty": q} for t, q in counts.items()]
+
+
+def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict]]:
+    """
+    Generate count-based objectives for every survivor in a group AT ONCE,
+    after all players have finished their initial scan.
+
+    Guarantees:
+      • Every survivor gets exactly OBJECTIVE_SLOTS_PER_PLAYER objective slots
+        (default 3 cards total, possibly aggregated as e.g. 2× X + 1× Y).
+      • Total demand per type across the group never exceeds supply (count
+        of that card type currently in the room) → the assignments are
+        provably solvable through trading.
+      • Each player's objectives prefer types they don't already own (so
+        progress requires real trading), only falling back to types they
+        own when supply forces it.
+      • Zombies receive no objectives — their goal is infection.
+
+    Side-effects:
+      • Updates every survivor's `objectives` JSON column.
+      • Calls db.commit().
+
+    Returns a mapping `{player_id: [{"type": ..., "qty": ...}, ...]}`.
+    """
+    group = (
+        db.query(models.Group)
+          .filter(models.Group.id == group_id)
+          .first()
+    )
+    if not group:
+        return {}
+
+    survivors = [p for p in group.players if not p.is_infected]
+    if not survivors:
+        return {}
+
+    # Snapshot total room supply per type (e.g. {"firewall": 4, ...}).
+    budget = dict(get_room_cards_by_type(db, group_id))
+
+    # Snapshot each survivor's currently-owned cards by type.
+    owned = {p.id: dict(get_player_cards_by_type(db, p.id)) for p in survivors}
+
+    # Result: per-player {type: qty} accumulator.
+    plan = {p.id: {} for p in survivors}
+
+    # Pick player order randomly for fairness (no first-mover advantage on
+    # rare types).
+    order = list(survivors)
+    _random.shuffle(order)
+
+    # Allocate slot-by-slot, round-robin across players.
+    for _slot in range(OBJECTIVE_SLOTS_PER_PLAYER):
+        for player in order:
+            # Build candidate types where supply remains.
+            available = [t for t in ALL_CARD_TYPES if budget.get(t, 0) > 0]
+            if not available:
+                # Pathological case: total supply < total demand. Fall back
+                # to types that exist anywhere in the room at all (we
+                # ignore the strict supply cap rather than fail).
+                available = [t for t in ALL_CARD_TYPES
+                             if owned[player.id].get(t, 0) > 0]
+                if not available:
+                    continue
+
+            # Score each candidate. Higher tuple = better choice.
+            #   1) Prefer types player does NOT currently own.
+            #   2) Prefer types player has not already been assigned.
+            #   3) Prefer higher remaining supply (spreads picks across types).
+            #   4) Random tiebreaker.
+            def score(t, p_id=player.id):
+                not_owned    = 1 if owned[p_id].get(t, 0) == 0 else 0
+                not_assigned = 1 if plan[p_id].get(t, 0) == 0 else 0
+                supply_left  = budget.get(t, 0)
+                return (not_owned, not_assigned, supply_left, _random.random())
+
+            chosen = max(available, key=score)
+            plan[player.id][chosen] = plan[player.id].get(chosen, 0) + 1
+            if budget.get(chosen, 0) > 0:
+                budget[chosen] -= 1
+
+    # Persist as count-based JSON list per player.
+    result = {}
+    for player in survivors:
+        objs = [{"type": t, "qty": q} for t, q in plan[player.id].items()]
+        player.objectives = _json.dumps(objs)
+        result[player.id] = objs
+
+    db.commit()
+    return result
+
+
+# =============================================================================
+# SCORING
+# =============================================================================
+
+def _objectives_progress(objectives, owned_counts):
+    """Return (cards_met, cards_needed) for count-based objectives.
+    cards_met counts each card-of-type up to its required qty."""
+    objectives = _normalize_objectives(objectives)
+    cards_needed = sum(o["qty"] for o in objectives)
+    cards_met = sum(min(owned_counts.get(o["type"], 0), o["qty"]) for o in objectives)
+    return cards_met, cards_needed
+
 
 def award_round_points(db: DBSession, group_id: str, is_final_round: bool = False) -> list[dict]:
     """
     Award end-of-round points to all players.
 
-    Scoring rules (trade and infection points are awarded immediately in scan_item):
-      🛡️  Survivor who survived the round:            +2
-      🎯  Per objective met at round end:              +1 each (max +3)
-      🏆  All 3 objectives met (bonus):                +2
-      🌟  Final-round survivor bonus:                  +5
+    Scoring rules (trade and infection points are awarded in scan_item /
+    trade_done immediately when they happen):
+
+      🛡️  Survivor who survived the round:               +2
+      🎯  Per "card slot" of objectives met (cap 3):      +1 each
+      🏆  All objective slots fully met (bonus):          +2
+      🌟  Final-round survivor bonus:                    +5
+      ⭐  Early completion (first round all met,
+           survivor only, awarded once):                 +3 × rounds_remaining
+
+    "Rounds remaining" = how many full rounds will follow this one.
+    Completing in round 1 → 2 remaining → +6.
+    Completing in round 2 → 1 remaining → +3.
+    Completing in round 3 (final) → 0 remaining → +0.
     """
     group = (
         db.query(models.Group)
@@ -408,35 +544,51 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
           .all()
     )
 
+    current_round = (group.current_round or 0) if group else 0
+    # Total rounds in the game (currently fixed at 3, see _advance_to_next_round).
+    TOTAL_ROUNDS = 3
+
     results = []
 
     for player in players:
         delta = 0
         breakdown = []
+        early_completion = False
 
         if not player.is_infected:
             # ── Survived this round ────────────────────────────────────────────
             delta += 2
             breakdown.append({"reason": "Survived round", "pts": 2})
 
-            # ── Objectives met ─────────────────────────────────────────────────
-            owned_types = {
-                i.type
-                for i in db.query(models.Item)
-                             .filter_by(current_owner_id=player.id)
-                             .all()
-            }
-            objectives = _json.loads(player.objectives or '[]')
-            objectives_met = [obj for obj in objectives if obj in owned_types]
-            obj_pts = len(objectives_met)
-            if obj_pts > 0:
-                delta += obj_pts
-                breakdown.append({"reason": f"Objectives met ({obj_pts}/3)", "pts": obj_pts})
+            # ── Count-based objectives progress ────────────────────────────────
+            owned_counts = get_player_cards_by_type(db, player.id)
+            objectives = _normalize_objectives(_json.loads(player.objectives or '[]'))
+            cards_met, cards_needed = _objectives_progress(objectives, owned_counts)
 
-            # ── All 3 objectives bonus ─────────────────────────────────────────
-            if objectives and len(objectives_met) >= len(objectives):
+            if cards_met > 0:
+                delta += cards_met
+                breakdown.append({
+                    "reason": f"Objectives met ({cards_met}/{cards_needed})",
+                    "pts": cards_met,
+                })
+
+            all_met = cards_needed > 0 and cards_met >= cards_needed
+            if all_met:
                 delta += 2
                 breakdown.append({"reason": "All objectives complete!", "pts": 2})
+
+                # ── Early-completion bonus (first time only) ───────────────────
+                if not player.early_completion_awarded:
+                    rounds_remaining = max(0, TOTAL_ROUNDS - current_round)
+                    bonus = 3 * rounds_remaining
+                    if bonus > 0:
+                        delta += bonus
+                        breakdown.append({
+                            "reason": f"Early completion bonus (+3 × {rounds_remaining} rounds left)",
+                            "pts": bonus,
+                        })
+                    player.early_completion_awarded = True
+                    early_completion = True   # signal frontend to show popup
 
             # ── Final-round survivor bonus ─────────────────────────────────────
             if is_final_round:
@@ -445,12 +597,13 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
 
         player.score = (player.score or 0) + delta
         results.append({
-            "player_id":  player.id,
-            "username":   player.user.username if player.user else player.id,
-            "delta":      delta,
-            "score":      player.score,
-            "is_zombie":  player.is_infected,
-            "breakdown":  breakdown,
+            "player_id":         player.id,
+            "username":          player.user.username if player.user else player.id,
+            "delta":             delta,
+            "score":             player.score,
+            "is_zombie":         player.is_infected,
+            "breakdown":         breakdown,
+            "early_completion":  early_completion,
         })
 
     db.commit()

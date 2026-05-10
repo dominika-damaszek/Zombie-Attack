@@ -28,13 +28,41 @@ function getCardLabel(key) {
   return CARD_TYPES[key]?.label || 'Unknown';
 }
 
+// ── Objective helpers ────────────────────────────────────────────────────────
+// The backend may return objectives in two shapes:
+//   • Legacy:    ["security_patch", "system_boost", "firewall"]
+//                (each entry is one card; max 3 entries)
+//   • New:       [{ type: "security_layer", qty: 2 }, { type: "security_patch", qty: 1 }]
+//                (count-based; each entry is one *type* with how many copies needed)
+// `normalizeObjectives` always returns the new shape, deduped by type.
+function normalizeObjectives(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  const counts = {};
+  for (const entry of raw) {
+    if (entry && typeof entry === 'object') {
+      const t = entry.type;
+      const q = Number(entry.qty) || 0;
+      if (t && q > 0) counts[t] = (counts[t] || 0) + q;
+    } else if (typeof entry === 'string') {
+      counts[entry] = (counts[entry] || 0) + 1;
+    }
+  }
+  return Object.entries(counts).map(([type, qty]) => ({ type, qty }));
+}
+
+// Count how many of a type the player owns in their inventory.
+function ownedCount(inventory, type) {
+  return (inventory || []).filter(c => c.type === type).length;
+}
+
 function getModuleSlides(t) {
   return {
     module_1: [
       { type: 'story', emoji: '🌍', title: t('slide_m1_0_title'), text: t('slide_m1_0_text') },
-      { type: 'info', emoji: '📦', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
-      { type: 'info', emoji: '🃏', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
-      { type: 'items', emoji: '🎴', title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
+      { type: 'info', emoji: '📦', image: '/gamebox.png', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
+      { type: 'info', emoji: '🃏', image: '/cards4.png', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
+      { type: 'items', emoji: '🎴', title: t('slide_m1_3_title'), text: t('slide_m1_3_text'),
+        cardImages: ['/card1.png', '/card2.png', '/card3.png', '/card4.png', '/card5.png'] },
       { type: 'scan', emoji: '📱', title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', emoji: '🎯', title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
       { type: 'final', emoji: '⏱️', title: t('slide_m1_6_title'), text: t('slide_m1_6_text') },
@@ -177,6 +205,50 @@ function CardTakenPopup({ playerName, onClose }) {
         >
           {t('game_card_taken_ok')}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function EarlyCompletionPopup({ onDismiss, t }) {
+  // Auto-dismiss after 7 s but the player can also tap to close.
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 7000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade"
+      style={{ background: 'rgba(8,30,40,0.85)' }}
+    >
+      <div className="relative text-center max-w-xs w-full px-6">
+        <div
+          className="relative glass-panel p-8 rounded-3xl"
+          style={{
+            border: '2px solid #06b6d4',
+            boxShadow: '0 0 40px rgba(6,182,212,0.45)',
+          }}
+        >
+          <div className="text-7xl mb-3 animate-bounce">🏆</div>
+          <h2 className="text-3xl font-black mb-2" style={{ color: '#06b6d4' }}>
+            {t('game_early_complete_title') || 'Objectives Complete!'}
+          </h2>
+          <p className="text-slate-300 mb-1">
+            {t('game_early_complete_desc') ||
+              "You've collected all your objective cards!"}
+          </p>
+          <p className="text-emerald-300 text-sm font-bold mb-4">
+            {t('game_early_complete_bonus') ||
+              'Bonus points awarded! Keep helping others trade.'}
+          </p>
+          <button
+            onClick={onDismiss}
+            className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
+            style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)' }}
+          >
+            {t('game_close') || 'Continue'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -488,47 +560,91 @@ function InfoModal({ onClose, t }) {
 
 function SlideContent({ slide, playerState, inventory, objectives, t, secretWord }) {
   if (!slide) return null;
-  const { type, emoji, title, text, groups } = slide;
+  const { type, emoji, image, cardImages, title, text, groups } = slide;
 
   const cardLabel = (key) => getCardLabel(key);
+
+  // Render the slide's "hero" element: a full image (when `image` is set)
+  // or the floating emoji fallback. Used by every non-special slide type.
+  const HeroVisual = () => (
+    image ? (
+      <img
+        src={image}
+        alt=""
+        className="mx-auto mb-4 sm:mb-6 max-h-40 sm:max-h-56 object-contain animate-zw-float drop-shadow-[0_0_20px_rgba(168,196,160,0.25)]"
+      />
+    ) : (
+      <div className="text-5xl sm:text-7xl mb-4 sm:mb-6 animate-zw-float">{emoji}</div>
+    )
+  );
 
   if (type === 'items') {
     return (
       <div className="text-center">
-        <div className="text-5xl sm:text-7xl mb-4 sm:mb-6 animate-zw-float">{emoji}</div>
+        <HeroVisual />
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 sm:mb-3">{title}</h2>
         <p className="text-slate-400 mb-6">{text}</p>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([key, ct]) => (
-            <div key={key} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${ct.bg}`}>
-              <span className="text-3xl">{ct.emoji}</span>
-              <span className={`text-xs font-bold ${ct.color}`}>{ct.label}</span>
-            </div>
-          ))}
-        </div>
+        {cardImages && cardImages.length > 0 ? (
+          // Custom layout for the Module 1 "5 cards" slide.
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+            {cardImages.map((src, i) => (
+              <div
+                key={i}
+                className="rounded-2xl p-1.5 sm:p-2 transition-all hover:scale-105"
+                style={{
+                  background: 'rgba(56,44,37,0.45)',
+                  border: '1px solid rgba(168,196,160,0.25)',
+                  boxShadow: '0 0 14px rgba(168,196,160,0.18)',
+                }}
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="w-full h-auto object-contain rounded-xl"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([key, ct]) => (
+              <div key={key} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${ct.bg}`}>
+                <span className="text-3xl">{ct.emoji}</span>
+                <span className={`text-xs font-bold ${ct.color}`}>{ct.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   if (type === 'objectives') {
+    const objs = normalizeObjectives(objectives);
     return (
       <div className="text-center">
         <div className="text-5xl sm:text-7xl mb-4 sm:mb-6 animate-zw-float">{emoji}</div>
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 sm:mb-3">{title}</h2>
         {text.split('\n').map((line, i) => <p key={i} className="text-slate-400 mb-1">{line}</p>)}
         <div className="mt-5 space-y-3 text-left">
-          {objectives.length === 0 ? (
+          {objs.length === 0 ? (
             <p className="text-slate-600 text-sm text-center italic">Objectives will appear here after you scan your cards.</p>
-          ) : objectives.map((type, i) => {
-            const ct = CARD_TYPES[type] || CARD_TYPES.unknown;
-            const owned = inventory.some(c => c.type === type);
+          ) : objs.map((obj, i) => {
+            const ct = CARD_TYPES[obj.type] || CARD_TYPES.unknown;
+            const have = ownedCount(inventory, obj.type);
+            const need = obj.qty;
+            const met = have >= need;
             return (
-              <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${owned ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-slate-800/60 border-slate-700/50'}`}>
+              <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${met ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-slate-800/60 border-slate-700/50'}`}>
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{ct.emoji}</span>
-                  <span className={`font-bold ${owned ? 'text-emerald-300' : 'text-slate-200'}`}>{getCardLabel(type)}</span>
+                  <span className={`font-bold ${met ? 'text-emerald-300' : 'text-slate-200'}`}>
+                    {need}× {getCardLabel(obj.type)}
+                  </span>
                 </div>
-                {owned ? <CheckCircle2 size={20} className="text-emerald-400" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-600" />}
+                <span className={`font-mono text-sm ${met ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  {Math.min(have, need)}/{need}
+                </span>
               </div>
             );
           })}
@@ -590,7 +706,11 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
   if (type === 'story') {
     return (
       <div className="text-center">
-        <div className="text-6xl sm:text-8xl mb-5 sm:mb-8 animate-zw-float">{emoji}</div>
+        {image ? (
+          <img src={image} alt="" className="mx-auto mb-5 sm:mb-8 max-h-44 sm:max-h-60 object-contain animate-zw-float drop-shadow-[0_0_20px_rgba(168,196,160,0.25)]" />
+        ) : (
+          <div className="text-6xl sm:text-8xl mb-5 sm:mb-8 animate-zw-float">{emoji}</div>
+        )}
         <h2 className="text-2xl sm:text-3xl font-black mb-4 sm:mb-6" style={{ color: '#AD9E97' }}>{title}</h2>
         <div className="rounded-2xl p-6" style={{ background: 'rgba(56,44,37,0.4)', border: '1px solid rgba(109,113,98,0.2)' }}>
           {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-base sm:text-lg leading-relaxed">{line}</p>)}
@@ -599,9 +719,15 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
     );
   }
 
+  // Generic info-style slide (covers `info`, `final` and any custom type that
+  // doesn't render its own special layout above).
   return (
     <div className="text-center">
-      <div className="text-6xl sm:text-8xl mb-5 sm:mb-8 animate-zw-float">{emoji}</div>
+      {image ? (
+        <img src={image} alt="" className="mx-auto mb-5 sm:mb-8 max-h-44 sm:max-h-60 object-contain animate-zw-float drop-shadow-[0_0_20px_rgba(168,196,160,0.25)]" />
+      ) : (
+        <div className="text-6xl sm:text-8xl mb-5 sm:mb-8 animate-zw-float">{emoji}</div>
+      )}
       <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-5">{title}</h2>
       <div className="space-y-1">
         {text.split('\n').map((line, i) => <p key={i} className="text-slate-300 text-base sm:text-lg leading-relaxed">{line}</p>)}
@@ -759,6 +885,9 @@ const GameScreen = ({ mockData } = {}) => {
   const [inventory, setInventory] = useState([]);
   const [objectives, setObjectives] = useState([]);
   const [selectedTradePartner, setSelectedTradePartner] = useState("");
+  // True briefly when the player's "all objectives complete" bonus triggers
+  // for the first time. Drives the EarlyCompletionPopup.
+  const [showEarlyCompletion, setShowEarlyCompletion] = useState(false);
 
   // Persist session to localStorage so page reload can rejoin the game
   useEffect(() => {
@@ -848,9 +977,26 @@ const GameScreen = ({ mockData } = {}) => {
       fetchState();
     }
     if (lastMessage.type === 'ROUND_ENDED') {
+      // Reset per-round local state so the between-rounds scan flow starts fresh.
+      setBetweenRoundsDone(false);
+      // If THIS player just completed all their objectives for the first
+      // time, show the celebration popup once.
+      const myScore = (lastMessage.scores || []).find(s => s.player_id === playerData?.id);
+      if (myScore?.early_completion) {
+        setShowEarlyCompletion(true);
+        playSFX('role_reveal');
+      }
       fetchState();
-      // Round advancement is now server-driven: the next round starts automatically
-      // once every player scans their received card (or skipped) in module_between_rounds.
+    }
+    if (lastMessage.type === 'SCAN_PHASE_COMPLETE') {
+      // Every player has scanned their 1 card → the ready-gate popup
+      // becomes the active UI. Refresh so we can render it.
+      setBetweenRoundsDone(false);
+      fetchState();
+    }
+    if (lastMessage.type === 'OBJECTIVES_ASSIGNED') {
+      // Group-aware objectives were just generated server-side.
+      fetchState();
     }
     if (lastMessage.type === 'GAME_ENDED') {
       if (groupData?.group_id) {
@@ -971,7 +1117,12 @@ const GameScreen = ({ mockData } = {}) => {
 
   const handleNextRound = async () => {
     try {
-      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/next_round`, { method: 'POST' });
+      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/next_round`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: playerData.id }),
+      });
+      fetchState();
     } catch (e) { console.error(e); }
   };
 
@@ -1212,8 +1363,11 @@ const GameScreen = ({ mockData } = {}) => {
   const isTimeUp = gamePhase === 'round_active' && gameState?.round_end_time && (gameState.round_end_time - Math.floor(Date.now() / 1000)) <= 0;
   const isModule = gameMode?.startsWith('module') || gameMode === 'normal';
   const isNormal = gameMode === 'normal';
-  // In module/normal mode during round_active: hide scan until player is done trading or time is up
-  const showScanButton = gamePhase !== 'round_active' || !isModule || isDoneTrading || isTimeUp;
+  const scanPhaseComplete = !!gameState?.scan_phase_complete;
+  // Scanning is *only* allowed during module_between_rounds, before all
+  // players have scanned (i.e. before scan_phase_complete). During
+  // round_active players trade physically — no QR scanning.
+  const showScanButton = gamePhase === 'module_between_rounds' && !scanPhaseComplete && !betweenRoundsDone;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 relative overflow-hidden max-w-lg mx-auto px-4 py-8">
@@ -1227,6 +1381,7 @@ const GameScreen = ({ mockData } = {}) => {
         />
       )}
       {showInfectionAlert && <InfectionAlert onDismiss={() => setShowInfectionAlert(false)} t={t} />}
+      {showEarlyCompletion && <EarlyCompletionPopup onDismiss={() => setShowEarlyCompletion(false)} t={t} />}
       {showScanner && (
         <QRScannerModal
           onScan={handleScan}
@@ -1315,28 +1470,37 @@ const GameScreen = ({ mockData } = {}) => {
           <TimerBar endTime={gameState.round_end_time} label={t('game_round_timer')} />
         )}
 
-        {objectives.length > 0 && (
-          <div className="rounded-2xl p-3 sm:p-4 mb-2" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
-            <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-2 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
-              <Target size={12} /> {t('game_your_objectives')}
-            </p>
-            <div className="space-y-1.5">
-              {objectives.map((type, idx) => {
-                const ct = CARD_TYPES[type] || CARD_TYPES.unknown;
-                const owned = inventory.some(c => c.type === type);
-                return (
-                  <div key={idx} className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-all ${owned ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'}`}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{ct.emoji}</span>
-                      <span className={`font-bold text-xs sm:text-sm ${owned ? 'text-emerald-300' : 'text-slate-300'}`}>{getCardLabel(type)}</span>
+        {objectives.length > 0 && (() => {
+          const objs = normalizeObjectives(objectives);
+          return (
+            <div className="rounded-2xl p-3 sm:p-4 mb-2" style={{ background: 'rgba(42,38,34,0.6)', border: '1px solid rgba(109,113,98,0.3)' }}>
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-2 flex items-center gap-1.5" style={{ color: '#6D7162' }}>
+                <Target size={12} /> {t('game_your_objectives')}
+              </p>
+              <div className="space-y-1.5">
+                {objs.map((obj, idx) => {
+                  const ct = CARD_TYPES[obj.type] || CARD_TYPES.unknown;
+                  const have = ownedCount(inventory, obj.type);
+                  const need = obj.qty;
+                  const met = have >= need;
+                  return (
+                    <div key={idx} className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-all ${met ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-800/40'}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{ct.emoji}</span>
+                        <span className={`font-bold text-xs sm:text-sm ${met ? 'text-emerald-300' : 'text-slate-300'}`}>
+                          {need}× {getCardLabel(obj.type)}
+                        </span>
+                      </div>
+                      <span className={`font-mono text-[10px] sm:text-xs ${met ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {Math.min(have, need)}/{need}
+                      </span>
                     </div>
-                    {owned ? <CheckCircle2 size={16} className="text-emerald-400" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-600" />}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {isZombie && (
           <div className="rounded-2xl p-3 sm:p-4 mb-2" style={{ background: 'rgba(80,30,20,0.4)', border: '1px solid rgba(121,88,70,0.3)' }}>
@@ -1461,52 +1625,100 @@ const GameScreen = ({ mockData } = {}) => {
           const totalPlayers = gameState?.players?.length || 0;
           const readyCount = gameState?.ready_count || 0;
           const waitingFor = gameState?.not_ready || [];
-          const allReady = readyCount >= totalPlayers && totalPlayers > 0;
-          return (
-            <div className="mb-2 glass-panel p-3 sm:p-4 rounded-2xl">
-              <h3 className="font-black text-base sm:text-xl mb-1 text-center" style={{ color: '#AD9E97' }}>
-                {gameState?.current_round === 0
-                  ? t('game_scan_starting_cards_title')
-                  : t('game_round_complete').replace('{n}', gameState?.current_round)}
-              </h3>
-              <p className="text-slate-400 text-xs sm:text-sm mb-3 text-center">
-                {gameState?.current_round === 0
-                  ? t('game_scan_starting_cards_hint')
-                  : t('game_scan_round_items_hint')}
-              </p>
+          const me = gameState?.players?.find(p => p.id === playerData?.id);
+          const meScanned = !!me?.is_ready || betweenRoundsDone;
+          const meReadyForNext = scanPhaseComplete && !!me?.is_ready;
+          const nextRoundN = (gameState?.current_round || 0) + 1;
+          const isLastTransition = (gameState?.current_round || 0) >= 3;
 
-              {!betweenRoundsDone ? (
-                <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-3" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
-                  <Camera size={16} className="inline mr-2" />{t('game_scan_card')}
-                </button>
-              ) : (
-                <div className="w-full py-3 rounded-xl font-bold text-center text-sm mb-3" style={{ background: 'rgba(40,80,40,0.4)', border: '1px solid rgba(100,200,100,0.25)', color: '#a8c4a0' }}>
-                  ✓ {t('game_scan_card_done')}
-                </div>
-              )}
+          // ── Phase A: SCAN — every player scans 1 new card ────────────────
+          if (!scanPhaseComplete) {
+            return (
+              <div className="mb-2 glass-panel p-3 sm:p-4 rounded-2xl">
+                <h3 className="font-black text-base sm:text-xl mb-1 text-center" style={{ color: '#AD9E97' }}>
+                  {t('game_round_complete').replace('{n}', gameState?.current_round)}
+                </h3>
+                <p className="text-slate-400 text-xs sm:text-sm mb-3 text-center">
+                  {t('game_scan_round_items_hint')}
+                </p>
 
-              <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(109,113,98,0.08)', border: '1px solid rgba(109,113,98,0.2)' }}>
-                <div className="flex items-center justify-between px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${allReady ? 'bg-emerald-400' : 'bg-cyan-400 animate-pulse'}`} />
-                    <p className="text-xs font-mono font-bold" style={{ color: allReady ? '#a8c4a0' : '#6D7162' }}>
-                      {allReady
-                        ? (gameState?.current_round >= 3 ? t('game_ready_for_game_over') : t('game_ready_for_next_round'))
-                        : `${readyCount} / ${totalPlayers} ${t('game_players_scanned')}`}
-                    </p>
-                  </div>
-                </div>
-
-                {!allReady && waitingFor.length > 0 && (
-                  <div className="px-3 pb-2 flex flex-wrap gap-1">
-                    {waitingFor.map((name, i) => (
-                      <span key={i} className="text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(80,60,50,0.5)', color: '#AD9E97' }}>
-                        ⏳ {name}
-                      </span>
-                    ))}
+                {!meScanned ? (
+                  <button onClick={() => setShowScanner(true)} className="w-full py-3 rounded-xl font-bold text-white mb-3" style={{ background: 'linear-gradient(135deg, #454D3E, #6D7162)' }}>
+                    <Camera size={16} className="inline mr-2" />{t('game_scan_card')}
+                  </button>
+                ) : (
+                  <div className="w-full py-3 rounded-xl font-bold text-center text-sm mb-3" style={{ background: 'rgba(40,80,40,0.4)', border: '1px solid rgba(100,200,100,0.25)', color: '#a8c4a0' }}>
+                    ✓ {t('game_scan_card_done')}
                   </div>
                 )}
+
+                <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(109,113,98,0.08)', border: '1px solid rgba(109,113,98,0.2)' }}>
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      <p className="text-xs font-mono font-bold" style={{ color: '#6D7162' }}>
+                        {readyCount} / {totalPlayers} {t('game_players_scanned')}
+                      </p>
+                    </div>
+                  </div>
+                  {waitingFor.length > 0 && (
+                    <div className="px-3 pb-2 flex flex-wrap gap-1">
+                      {waitingFor.map((name, i) => (
+                        <span key={i} className="text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(80,60,50,0.5)', color: '#AD9E97' }}>
+                          ⏳ {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+            );
+          }
+
+          // ── Phase B: READY GATE — popup-style "Round N starting" panel ──
+          return (
+            <div
+              className="mb-2 rounded-3xl p-4 sm:p-6 text-center animate-zw-fade"
+              style={{
+                background: 'linear-gradient(135deg, rgba(8,145,178,0.18), rgba(56,44,37,0.7))',
+                border: '2px solid rgba(6,182,212,0.45)',
+                boxShadow: '0 0 30px rgba(6,182,212,0.18)',
+              }}
+            >
+              <div className="text-4xl sm:text-5xl mb-2 animate-zw-float">
+                {isLastTransition ? '🏁' : '🚀'}
+              </div>
+              <h3 className="font-black text-xl sm:text-2xl mb-1" style={{ color: '#06b6d4' }}>
+                {isLastTransition
+                  ? t('game_ready_for_game_over')
+                  : t('game_round_starting').replace('{n}', nextRoundN)}
+              </h3>
+              <p className="text-slate-400 text-xs sm:text-sm mb-4">
+                {t('game_round_starting_hint')}
+              </p>
+
+              {meReadyForNext ? (
+                <div className="rounded-xl py-3 px-3" style={{ background: 'rgba(40,80,40,0.4)', border: '1px solid rgba(100,200,100,0.3)' }}>
+                  <p className="text-emerald-300 font-bold text-sm mb-1">
+                    ✓ {t('game_youre_ready')}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {readyCount}/{totalPlayers} {t('game_players_ready')}
+                    {waitingFor.length > 0 && ` — ${t('game_waiting_for')} ${waitingFor.join(', ')}`}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleNextRound}
+                  className="w-full py-3.5 sm:py-4 rounded-2xl font-black text-white text-base sm:text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'linear-gradient(135deg, #0891b2, #06b6d4)',
+                    boxShadow: '0 0 24px rgba(6,182,212,0.35)',
+                  }}
+                >
+                  <CheckCircle2 size={22} /> {t('game_im_ready')}
+                </button>
+              )}
             </div>
           );
         })()}
