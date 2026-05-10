@@ -419,12 +419,14 @@ def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict
     Guarantees:
       • Every survivor gets exactly OBJECTIVE_SLOTS_PER_PLAYER objective slots
         (default 3 cards total, possibly aggregated as e.g. 2× X + 1× Y).
-      • Total demand per type across the group never exceeds supply (count
-        of that card type currently in the room) → the assignments are
+      • Objectives are drawn only from card types actually present in the room.
+      • Players start with NONE (or at most one) of their objective cards
+        already in their inventory, ensuring every objective requires trading.
+      • When a player must receive an objective for a type they already own,
+        the required qty is set to (currently_owned + 1) so they must still
+        acquire at least one more through trading.
+      • Total demand per type across the group never exceeds room supply →
         provably solvable through trading.
-      • Each player's objectives prefer types they don't already own (so
-        progress requires real trading), only falling back to types they
-        own when supply forces it.
       • Zombies receive no objectives — their goal is infection.
 
     Side-effects:
@@ -445,56 +447,87 @@ def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict
     if not survivors:
         return {}
 
-    # Snapshot total room supply per type (e.g. {"firewall": 4, ...}).
-    budget = dict(get_room_cards_by_type(db, group_id))
+    # Total room supply per type — only types with cards in play are valid
+    # objective targets (guarantees achievability via trading).
+    room_supply = get_room_cards_by_type(db, group_id)
+    available_types = [t for t in ALL_CARD_TYPES if room_supply.get(t, 0) > 0]
+    if not available_types:
+        return {}
 
-    # Snapshot each survivor's currently-owned cards by type.
-    owned = {p.id: dict(get_player_cards_by_type(db, p.id)) for p in survivors}
+    # Each survivor's currently-owned card counts by type.
+    p_owned = {p.id: get_player_cards_by_type(db, p.id) for p in survivors}
 
-    # Result: per-player {type: qty} accumulator.
-    plan = {p.id: {} for p in survivors}
+    # Remaining allocatable supply — decremented as we commit objective slots.
+    # This ensures total demand ≤ total supply (solvability constraint).
+    remaining = dict(room_supply)
 
-    # Pick player order randomly for fairness (no first-mover advantage on
-    # rare types).
     order = list(survivors)
-    _random.shuffle(order)
+    _random.shuffle(order)  # random order for fairness
 
-    # Allocate slot-by-slot, round-robin across players.
-    for _slot in range(OBJECTIVE_SLOTS_PER_PLAYER):
-        for player in order:
-            # Build candidate types where supply remains.
-            available = [t for t in ALL_CARD_TYPES if budget.get(t, 0) > 0]
-            if not available:
-                # Pathological case: total supply < total demand. Fall back
-                # to types that exist anywhere in the room at all (we
-                # ignore the strict supply cap rather than fail).
-                available = [t for t in ALL_CARD_TYPES
-                             if owned[player.id].get(t, 0) > 0]
-                if not available:
-                    continue
-
-            # Score each candidate. Higher tuple = better choice.
-            #   1) Prefer types player does NOT currently own.
-            #   2) Prefer types player has not already been assigned.
-            #   3) Prefer higher remaining supply (spreads picks across types).
-            #   4) Random tiebreaker.
-            def score(t, p_id=player.id):
-                not_owned    = 1 if owned[p_id].get(t, 0) == 0 else 0
-                not_assigned = 1 if plan[p_id].get(t, 0) == 0 else 0
-                supply_left  = budget.get(t, 0)
-                return (not_owned, not_assigned, supply_left, _random.random())
-
-            chosen = max(available, key=score)
-            plan[player.id][chosen] = plan[player.id].get(chosen, 0) + 1
-            if budget.get(chosen, 0) > 0:
-                budget[chosen] -= 1
-
-    # Persist as count-based JSON list per player.
     result = {}
-    for player in survivors:
-        objs = [{"type": t, "qty": q} for t, q in plan[player.id].items()]
-        player.objectives = _json.dumps(objs)
-        result[player.id] = objs
+
+    for player in order:
+        owned_counts = p_owned[player.id]
+        slot_picks = []          # one entry per slot (card type chosen)
+        slots_left = OBJECTIVE_SLOTS_PER_PLAYER
+
+        # ── Priority 1: types the player has ZERO of, with supply remaining ──
+        # Shuffle so we don't always pick the same types first.
+        zero_types = [
+            t for t in available_types
+            if owned_counts.get(t, 0) == 0 and remaining.get(t, 0) > 0
+        ]
+        _random.shuffle(zero_types)
+        for t in zero_types:
+            if slots_left <= 0:
+                break
+            slot_picks.append(t)
+            remaining[t] -= 1
+            slots_left -= 1
+
+        # ── Priority 2: any remaining type with supply, fewest owned first ──
+        # Fallback for when the player owns all available types (or P1 consumed
+        # all unowned supply).
+        if slots_left > 0:
+            fallback = sorted(
+                [t for t in available_types if remaining.get(t, 0) > 0],
+                key=lambda t: (owned_counts.get(t, 0), _random.random())
+            )
+            for t in fallback:
+                if slots_left <= 0:
+                    break
+                slot_picks.append(t)
+                remaining[t] -= 1
+                slots_left -= 1
+
+        # ── Priority 3: supply fully exhausted edge case — reuse any type ──
+        if slots_left > 0:
+            extras = _random.choices(available_types, k=slots_left)
+            slot_picks.extend(extras)
+
+        # Collapse slot_picks into {type: base_qty}
+        type_base_qty: dict[str, int] = {}
+        for t in slot_picks:
+            type_base_qty[t] = type_base_qty.get(t, 0) + 1
+
+        # ── Ensure objective qty > player's current count for each type ──
+        # If a player already owns N of type T, they must acquire at least
+        # one more → required qty = max(base_qty, currently_owned + 1).
+        # Cap at room total so the objective remains physically achievable.
+        final_objs = []
+        for t, base_qty in type_base_qty.items():
+            cur = owned_counts.get(t, 0)
+            if cur > 0:
+                # Player has some already → bump qty so they still need to trade
+                required_qty = max(base_qty, cur + 1)
+                # Never require more than the total room supply for this type
+                required_qty = min(required_qty, room_supply.get(t, 1))
+            else:
+                required_qty = base_qty
+            final_objs.append({"type": t, "qty": required_qty})
+
+        player.objectives = _json.dumps(final_objs)
+        result[player.id] = final_objs
 
     db.commit()
     return result

@@ -668,8 +668,6 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
       </div>
     );
   }
-}
-
 
   if (type === 'objectives') {
     const objs = normalizeObjectives(objectives);

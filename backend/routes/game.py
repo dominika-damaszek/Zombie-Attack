@@ -978,10 +978,20 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
             models.GroupPlayer.infected_by_id == p.id
         ).count()
 
-        # Count objectives met
-        owned_types = {i.type for i in db.query(models.Item).filter_by(current_owner_id=p.id).all()}
+        # Count objectives met (handles both legacy string format and count-based dict format)
+        owned_items = db.query(models.Item).filter_by(current_owner_id=p.id).all()
+        owned_counts = {}
+        for it in owned_items:
+            owned_counts[it.type] = owned_counts.get(it.type, 0) + 1
         objectives = json.loads(p.objectives or '[]')
-        objectives_met = len([obj for obj in objectives if obj in owned_types])
+        objectives_met = 0
+        for obj in objectives:
+            if isinstance(obj, dict):
+                if owned_counts.get(obj.get("type"), 0) >= (obj.get("qty") or 1):
+                    objectives_met += 1
+            else:
+                if obj in owned_counts:
+                    objectives_met += 1
 
         return {
             "username":          p.user.username,
