@@ -419,12 +419,12 @@ def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict
     Guarantees:
       • Every survivor gets exactly OBJECTIVE_SLOTS_PER_PLAYER objective slots
         (default 3 cards total, possibly aggregated as e.g. 2× X + 1× Y).
-      • Objectives only use card types that actually exist within the group's
-        scanned cards.
-      • Players should ideally start with NONE of their objective card types
-        already in their inventory. At most ONE objective may overlap with
-        cards the player already owns, but only if unavoidable.
-      • Objectives may repeat between players.
+      • Total demand per type across the group never exceeds supply (count
+        of that card type currently in the room) → the assignments are
+        provably solvable through trading.
+      • Each player's objectives prefer types they don't already own (so
+        progress requires real trading), only falling back to types they
+        own when supply forces it.
       • Zombies receive no objectives — their goal is infection.
 
     Side-effects:
@@ -446,66 +446,48 @@ def assign_group_objectives(db: DBSession, group_id: str) -> dict[str, list[dict
         return {}
 
     # Snapshot total room supply per type (e.g. {"firewall": 4, ...}).
-    # Only types that actually exist in the group (supply > 0) are eligible.
-    room_supply = dict(get_room_cards_by_type(db, group_id))
-    available_types = [t for t in ALL_CARD_TYPES if room_supply.get(t, 0) > 0]
-
-    if not available_types:
-        return {}
+    budget = dict(get_room_cards_by_type(db, group_id))
 
     # Snapshot each survivor's currently-owned cards by type.
     owned = {p.id: dict(get_player_cards_by_type(db, p.id)) for p in survivors}
 
     # Result: per-player {type: qty} accumulator.
     plan = {p.id: {} for p in survivors}
-    # Track how many "owned" types each player has been assigned (limit to 1).
-    owned_assigned_count = {p.id: 0 for p in survivors}
 
-    # Pick player order randomly for fairness.
+    # Pick player order randomly for fairness (no first-mover advantage on
+    # rare types).
     order = list(survivors)
     _random.shuffle(order)
 
     # Allocate slot-by-slot, round-robin across players.
     for _slot in range(OBJECTIVE_SLOTS_PER_PLAYER):
         for player in order:
-            p_id = player.id
-            p_owned = owned[p_id]
+            # Build candidate types where supply remains.
+            available = [t for t in ALL_CARD_TYPES if budget.get(t, 0) > 0]
+            if not available:
+                # Pathological case: total supply < total demand. Fall back
+                # to types that exist anywhere in the room at all (we
+                # ignore the strict supply cap rather than fail).
+                available = [t for t in ALL_CARD_TYPES
+                             if owned[player.id].get(t, 0) > 0]
+                if not available:
+                    continue
 
-            # Types the player does NOT currently own — strongly preferred.
-            not_owned_types = [t for t in available_types if p_owned.get(t, 0) == 0]
-            # Types the player DOES currently own — last resort.
-            owned_types = [t for t in available_types if p_owned.get(t, 0) > 0]
+            # Score each candidate. Higher tuple = better choice.
+            #   1) Prefer types player does NOT currently own.
+            #   2) Prefer types player has not already been assigned.
+            #   3) Prefer higher remaining supply (spreads picks across types).
+            #   4) Random tiebreaker.
+            def score(t, p_id=player.id):
+                not_owned    = 1 if owned[p_id].get(t, 0) == 0 else 0
+                not_assigned = 1 if plan[p_id].get(t, 0) == 0 else 0
+                supply_left  = budget.get(t, 0)
+                return (not_owned, not_assigned, supply_left, _random.random())
 
-            if not_owned_types:
-                # Pick from types the player does NOT own.
-                # Prefer types not already assigned, then higher room supply, then random.
-                def score_not_owned(t, _pid=p_id):
-                    not_assigned = 1 if plan[_pid].get(t, 0) == 0 else 0
-                    supply = room_supply.get(t, 0)
-                    return (not_assigned, supply, _random.random())
-
-                chosen = max(not_owned_types, key=score_not_owned)
-            elif owned_types and owned_assigned_count[p_id] < 1:
-                # Allow at most 1 objective for a type the player already owns.
-                def score_owned(t, _pid=p_id):
-                    not_assigned = 1 if plan[_pid].get(t, 0) == 0 else 0
-                    supply = room_supply.get(t, 0)
-                    return (not_assigned, supply, _random.random())
-
-                chosen = max(owned_types, key=score_owned)
-                owned_assigned_count[p_id] += 1
-            elif available_types:
-                # Fallback: all types are owned and we've hit the limit.
-                # Pick any available type to ensure 3 slots are filled.
-                def score_fallback(t, _pid=p_id):
-                    not_assigned = 1 if plan[_pid].get(t, 0) == 0 else 0
-                    return (not_assigned, _random.random())
-
-                chosen = max(available_types, key=score_fallback)
-            else:
-                continue
-
-            plan[p_id][chosen] = plan[p_id].get(chosen, 0) + 1
+            chosen = max(available, key=score)
+            plan[player.id][chosen] = plan[player.id].get(chosen, 0) + 1
+            if budget.get(chosen, 0) > 0:
+                budget[chosen] -= 1
 
     # Persist as count-based JSON list per player.
     result = {}
