@@ -1,9 +1,6 @@
-databases:
-  - name: zombieware-db
-    databaseName: zombieware
-    user: zombieware
-    plan: free
-
+# Backend uses Neon PostgreSQL only (see backend/database.py). Create a Neon project,
+# copy the connection string, and set NEON_DATABASE_URL in the Render dashboard for
+# the zombie-attack service (Blueprint sync: false means you paste the secret once).
 services:
   - type: web
     name: zombie-attack
@@ -13,10 +10,8 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     plan: free
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: zombieware-db
-          property: connectionString
+      - key: NEON_DATABASE_URL
+        sync: false
       - key: SECRET_KEY
         generateValue: true
 

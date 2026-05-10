@@ -84,10 +84,12 @@ const Dashboard = ({ setHasSession }) => {
       const sessions = await sessionsRes.json();
       const updatedSession = sessions.find(s => s.id === session.id);
       if (updatedSession) {
-        const newGroups = updatedSession.groups.filter(g => g.group_number !== 0);
-        setLiveGroups(newGroups);
+        setLiveGroups(updatedSession.groups);
         localStorage.setItem('session_data', JSON.stringify(updatedSession));
-        await Promise.all(newGroups.map(g => fetchGroupStats(g.id)));
+        const gameOnly = updatedSession.groups.filter(g => g.group_number !== 0);
+        await Promise.all(gameOnly.map(g => fetchGroupStats(g.id)));
+        const lobby = updatedSession.groups.find(g => g.group_number === 0);
+        if (lobby) await fetchGroupStats(lobby.id);
       }
     } catch (e) { alert('Error: ' + e.message); }
     finally { setActionLoading(null); }
@@ -183,11 +185,11 @@ const Dashboard = ({ setHasSession }) => {
       {/* ── QR fullscreen overlay ── */}
       {qrFullscreen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-start justify-center p-4 pt-24 overflow-y-auto"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto"
           style={{ background: 'rgba(10,12,18,0.96)', backdropFilter: 'blur(12px)' }}
           onClick={() => setQrFullscreen(null)}
         >
-          <div className="flex flex-col items-center gap-6" onClick={e => e.stopPropagation()}>
+          <div className="flex flex-col items-center gap-6 max-w-full" onClick={e => e.stopPropagation()}>
             <div className="bg-white p-6 rounded-3xl shadow-2xl">
               <QRCodeSVG value={qrFullscreen.url} size={280} bgColor="#ffffff" fgColor="#0f172a" level="H" />
             </div>

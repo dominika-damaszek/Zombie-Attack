@@ -891,28 +891,29 @@ async def toggle_ready(group_id: str, payload: dict, db: DBSession = Depends(get
     if not player_id:
         raise HTTPException(status_code=400, detail="Missing player_id")
 
-    player = db.query(models.GroupPlayer).filter(
-        models.GroupPlayer.id == player_id,
-        models.GroupPlayer.group_id == group_id
-    ).first()
+    # Resolve by player id only — after matchmaking the client may still POST using
+    # the old lobby group_id while the membership row already points at a game group.
+    player = db.query(models.GroupPlayer).filter(models.GroupPlayer.id == player_id).first()
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
+
+    effective_group_id = player.group_id
 
     player.is_ready = True
     _touch(player.group)
     db.commit()
 
-    await manager.broadcast_to_group(group_id, {
+    await manager.broadcast_to_group(effective_group_id, {
         "type": "PLAYER_READY",
         "player_id": player_id
     })
 
     # Fresh query after commit — avoids stale ORM cache (race-condition fix)
     db.expire_all()
-    group = db.query(models.Group).filter_by(id=group_id).first()
+    group = db.query(models.Group).filter_by(id=effective_group_id).first()
     if len(group.players) > 0 and all(p.is_ready for p in group.players):
         if group.game_state == "lobby":
-            await start_game(group_id, {}, db)
+            await start_game(effective_group_id, {}, db)
 
     return {"message": "Player ready"}
 

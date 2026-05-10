@@ -46,20 +46,30 @@ const WaitingRoom = () => {
 
   useEffect(() => {
     if (lastMessage?.type === 'MATCHMAKING_COMPLETE') {
-      const handleMatchmaking = async () => {
+      (async () => {
         try {
           const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+          if (!res.ok) return;
           const newGroupData = await res.json();
           setCurrentGroupData(newGroupData);
           localStorage.setItem('player_session', JSON.stringify({ groupData: newGroupData, playerData }));
           await fetchGameState(newGroupData.group_id, newGroupData, playerData);
         } catch (e) { console.error(e); }
-      };
-      setTimeout(handleMatchmaking, 500);
+      })();
     } else if (lastMessage?.type === 'PLAYER_JOINED' || lastMessage?.type === 'PLAYER_READY') {
-      fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
+      if (currentGroupData?.group_id) {
+        fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
+      }
     } else if (lastMessage?.type === 'GAME_STARTED') {
-      navigate('/game', { state: { groupData: currentGroupData, playerData } });
+      (async () => {
+        try {
+          const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+          const g = res.ok ? await res.json() : currentGroupData;
+          navigate('/game', { state: { groupData: g || currentGroupData, playerData } });
+        } catch (e) {
+          navigate('/game', { state: { groupData: currentGroupData, playerData } });
+        }
+      })();
     }
   }, [lastMessage]);
 
@@ -83,15 +93,21 @@ const WaitingRoom = () => {
   }, [currentGroupData?.group_id]);
 
   const markReady = async () => {
-    if (savingReady) return;
+    if (savingReady || !playerData?.id) return;
     setSavingReady(true);
     try {
-      const res = await fetch(`${API_URLS.BASE}/api/game/${currentGroupData.group_id}/ready`, {
+      const gRes = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+      if (!gRes.ok) return;
+      const latest = await gRes.json();
+      setCurrentGroupData(latest);
+      localStorage.setItem('player_session', JSON.stringify({ groupData: latest, playerData }));
+      const res = await fetch(`${API_URLS.BASE}/api/game/${latest.group_id}/ready`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id })
       });
-      if (res.ok) fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
+      if (res.ok) await fetchGameState(latest.group_id, latest, playerData);
+      else console.error('ready failed', await res.text());
     } catch (e) { console.error(e); }
     finally { setSavingReady(false); }
   };
@@ -151,8 +167,8 @@ const WaitingRoom = () => {
               <p className="text-xs uppercase tracking-widest font-mono text-center mb-2" style={{ color: '#6D7162' }}>
                 {t('wait_room_code')}
               </p>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-4xl font-black font-mono tracking-[0.3em]" style={{ color: '#a8c4a0' }}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+                <span className="text-4xl font-black font-mono tracking-[0.3em] break-all sm:break-normal" style={{ color: '#a8c4a0' }}>
                   {currentGroupData.join_code}
                 </span>
                 <button
@@ -161,7 +177,7 @@ const WaitingRoom = () => {
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 shrink-0"
                   style={copied
                     ? { background: 'rgba(168,196,160,0.2)', color: '#a8c4a0', border: '1px solid rgba(168,196,160,0.4)' }
                     : { background: 'rgba(109,113,98,0.2)', color: '#AD9E97', border: '1px solid rgba(109,113,98,0.3)' }
