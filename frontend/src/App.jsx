@@ -17,7 +17,32 @@ import History from './pages/History';
 import ScanTest from './pages/ScanTest';
 import Rules from './pages/Rules';
 import AboutUs from './pages/AboutUs';
+// TURN BACK TO FALSE FOR PRODUCTION!!!
+export const DEV_MODE = true; // Enable dev mode to bypass auth for certain pages
 
+const FAKE_GAME_DATA = {
+  gameState: {
+    game_state: 'round_active',
+    current_round: 1,
+    game_mode: 'module_1',
+    players: [
+      { id: 'fake-player', username: 'TestUser', role: 'survivor', is_infected: false },
+      { id: 'p2', username: 'ZombieBot', role: 'zombie', is_infected: true },
+      { id: 'p3', username: 'Alice', role: 'survivor', is_infected: false },
+    ]
+  },
+  playerState: {
+    id: 'fake-player',
+    username: 'TestUser',
+    role: 'survivor',
+    is_infected: false,
+    inventory: [
+      { code: 'A1', type: 'security_patch' },
+      { code: 'A2', type: 'firewall' }
+    ],
+    objectives: ['security_patch', 'system_boost']
+  }
+};
 function SpaRedirectHandler() {
   const navigate = useNavigate();
   useEffect(() => {
@@ -31,7 +56,7 @@ function SpaRedirectHandler() {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => true);
   const [hasSession, setHasSession] = useState(() => !!localStorage.getItem('session_id'));
 
   useEffect(() => {
@@ -42,7 +67,7 @@ function App() {
     return () => window.removeEventListener('storage', syncSession);
   }, []);
 
-  const isFullScreenGame = window.location.pathname.startsWith('/game');
+  const isFullScreenGame = window.location.pathname.startsWith('/game') || window.location.pathname.startsWith('/fake-game');
   const isPreview = window.location.pathname.startsWith('/preview');
 
   return (
@@ -78,11 +103,11 @@ function App() {
                 />
                 <Route
                   path="/profile"
-                  element={isAuthenticated ? <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} /> : <Navigate to="/auth" />}
+                  element={(isAuthenticated || DEV_MODE) ? <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} /> : <Navigate to="/auth" />}
                 />
                 <Route
                   path="/history"
-                  element={isAuthenticated ? <History /> : <Navigate to="/auth" state={{ from: '/history' }} />}
+                  element={(isAuthenticated || DEV_MODE) ? <History /> : <Navigate to="/auth" state={{ from: '/history' }} />}
                 />
                 <Route
                   path="/join"
@@ -92,8 +117,10 @@ function App() {
                   path="/join/:code"
                   element={isAuthenticated ? <JoinGame /> : <Navigate to="/auth" state={{ from: '/join' }} />}
                 />
+                <Route path="/scan-test" element={<ScanTest />} />
                 <Route path="/waiting" element={<WaitingRoom />} />
                 <Route path="/game" element={<GameScreen />} />
+                <Route path="/fake-game" element={<GameScreen mockData={FAKE_GAME_DATA} />} />
                 <Route path="/endgame" element={<EndGame />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

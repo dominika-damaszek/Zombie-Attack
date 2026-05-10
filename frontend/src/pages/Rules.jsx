@@ -151,34 +151,18 @@ export default function Rules() {
             <p className="text-slate-400 text-xs leading-relaxed">{t('rules_password_warning_desc')}</p>
           </div>
           <div className="mt-3 space-y-2">
-            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Examples</p>
-
-            <p className="text-slate-300 text-sm leading-relaxed">{t('slide_m3_5_pw1')}</p>
-
-            {[t('slide_m3_5_h1')].map((h, i) => (
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">{t('rules_good_hints')}</p>
+            {[t('slide_m3_5_h1'), t('slide_m3_5_h3')].map((h, i) => (
               <div key={i} className="flex items-start gap-2 bg-[var(--neon-green-glow)]/10 border border-[var(--neon-green-glow)]/50 rounded-lg p-2">
                 <p className="text-[var(--neon-green-glow)]/80 text-xs">{h}</p>
               </div>
             ))}
-            {[t('slide_m3_5_h2')].map((h, i) => (
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mt-3">{t('rules_bad_hints')}</p>
+            {[t('slide_m3_5_h2'), t('slide_m3_5_h4')].map((h, i) => (
               <div key={i} className="flex items-start gap-2 bg-[#d95959]/10 border border-[#d95959]/40 rounded-lg p-2">
                 <p className="text-[#d95959] text-xs">{h}</p>
               </div>
             ))}
-            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mt-3">OR</p>
-            <p className="text-slate-300 text-sm leading-relaxed">{t('slide_m3_5_pw2')}</p>
-
-            {[t('slide_m3_5_h1')].map((h, i) => (
-              <div key={i} className="flex items-start gap-2 bg-[var(--neon-green-glow)]/10 border border-[var(--neon-green-glow)]/50 rounded-lg p-2">
-                <p className="text-[var(--neon-green-glow)]/80 text-xs">{h}</p>
-              </div>
-            ))}
-            {[t('slide_m3_5_h4')].map((h, i) => (
-              <div key={i} className="flex items-start gap-2 bg-[#d95959]/10 border border-[#d95959]/40 rounded-lg p-2">
-                <p className="text-[#d95959] text-xs">{h}</p>
-              </div>
-            ))}
-
           </div>
         </Section>
 
