@@ -1738,6 +1738,7 @@ if (gamePhase === 'module_instructions') {
         )}
       </div>
     </div>
+    </div>
   );
 }
 
