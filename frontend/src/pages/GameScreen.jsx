@@ -489,8 +489,6 @@ function InfoModal({ onClose, t }) {
 function SlideContent({ slide, playerState, inventory, objectives, t, secretWord }) {
   if (!slide) return null;
   const { type, emoji, title, text, groups } = slide;
-  // For 'hints' slides: flatten all lines from groups into a single array
-  const lines = groups ? groups.flatMap(g => g.lines) : [];
 
   const cardLabel = (key) => getCardLabel(key);
 
@@ -557,23 +555,31 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
   }
 
   if (type === 'hints') {
-    const isZombie = playerState?.role === 'zombie';
+    // Render each group with its example password header (e.g. "Password: Cat")
+    // followed by the good/bad hints for that example. We deliberately do NOT
+    // display the player's real password here — it's already shown in the
+    // header section of the in-game UI for survivors.
+    const groupList = groups || [{ lines: [] }];
     return (
       <div className="text-center">
         <div className="text-5xl sm:text-7xl mb-4 animate-zw-float">{emoji}</div>
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-5">{title}</h2>
-        {secretWord && !isZombie && (
-          <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
-            <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
-            <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
-            <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
-          </div>
-        )}
-        <div className="space-y-3 text-left">
-          {lines.map((line, i) => (
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}>
-              <span className="text-lg flex-shrink-0">{line.ok ? '✅' : '❌'}</span>
-              <p className={`text-sm leading-relaxed ${line.ok ? 'text-emerald-300' : 'text-rose-300'}`}>{line.text}</p>
+        <div className="space-y-5 text-left">
+          {groupList.map((g, gi) => (
+            <div key={gi}>
+              {g.pw && (
+                <div className="mb-2 rounded-xl px-3 py-2 text-center" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
+                  <p className="text-base sm:text-lg font-black tracking-wider font-mono" style={{ color: '#a8c4a0' }}>🔑 {g.pw}</p>
+                </div>
+              )}
+              <div className="space-y-2">
+                {(g.lines || []).map((line, i) => (
+                  <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}>
+                    <span className="text-lg flex-shrink-0">{line.ok ? '✅' : '❌'}</span>
+                    <p className={`text-sm leading-relaxed ${line.ok ? 'text-emerald-300' : 'text-rose-300'}`}>{line.text}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -935,11 +941,16 @@ const GameScreen = ({ mockData } = {}) => {
   }, [groupData?.group_id, playerData?.id, playSFX, fetchState, gameState?.game_state]);
 
   const handleTradeAction = async (action) => {
-    if (!selectedTradePartner) return;
+    // action === null is the m1/m2 simple "Done Trading" path (no partner / no accusation).
+    // For m3/normal accept/decline a partner is required.
+    if (action && !selectedTradePartner) return;
     try {
+      const body = action
+        ? { player_id: playerData.id, partner_id: selectedTradePartner, action }
+        : { player_id: playerData.id };
       await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/trade_done`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player_id: playerData.id, partner_id: selectedTradePartner, action }),
+        body: JSON.stringify(body),
       });
       setIsDoneTrading(true);
     } catch (e) { console.error(e); }
@@ -1363,35 +1374,50 @@ const GameScreen = ({ mockData } = {}) => {
             </div>
             <p className="text-slate-500 text-[10px] sm:text-xs mb-2.5">{t('game_scanner_disabled')}</p>
 
-            <div className="mb-3">
-              <select
-                value={selectedTradePartner}
-                onChange={(e) => setSelectedTradePartner(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-600 text-sm focus:outline-none focus:border-emerald-500"
-              >
-                <option value="">{t('game_select_trade_partner') || 'Select a player...'}</option>
-                {gameState?.players?.filter(p => p.id !== playerData?.id).map(p => (
-                  <option key={p.id} value={p.id}>{p.username}</option>
-                ))}
-              </select>
-            </div>
+            {/* Accept / Decline mechanic only meaningful in m3/normal where
+                passwords let you actually authenticate the other player. */}
+            {(gameMode === 'module_3' || gameMode === 'normal') ? (
+              <>
+                <div className="mb-3">
+                  <select
+                    value={selectedTradePartner}
+                    onChange={(e) => setSelectedTradePartner(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-600 text-sm focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="">{t('game_select_trade_partner') || 'Select a player...'}</option>
+                    {gameState?.players?.filter(p => p.id !== playerData?.id).map(p => (
+                      <option key={p.id} value={p.id}>{p.username}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="flex gap-2">
+                <div className="flex gap-2">
+                  <button
+                    disabled={!selectedTradePartner}
+                    onClick={() => handleTradeAction('accept')}
+                    className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${selectedTradePartner ? 'bg-emerald-600/80 text-white active:scale-95' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'}`}
+                  >
+                    {t('game_trade_accept') || 'Accept'} ✓
+                  </button>
+                  <button
+                    disabled={!selectedTradePartner}
+                    onClick={() => handleTradeAction('decline')}
+                    className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${selectedTradePartner ? 'bg-rose-600/80 text-white active:scale-95' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'}`}
+                  >
+                    {t('game_trade_decline') || 'Decline'} ✗
+                  </button>
+                </div>
+              </>
+            ) : (
+              // module_1 / module_2: simple "Done Trading" — no accusations.
               <button
-                disabled={!selectedTradePartner}
-                onClick={() => handleTradeAction('accept')}
-                className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${selectedTradePartner ? 'bg-emerald-600/80 text-white active:scale-95' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'}`}
+                onClick={() => handleTradeAction(null)}
+                className="w-full py-2.5 sm:py-3 font-bold rounded-xl bg-emerald-600/80 text-white active:scale-95 transition-all text-xs sm:text-sm"
               >
-                {t('game_trade_accept') || 'Accept'} ✓
+                {t('game_done_trading')} ✓
               </button>
-              <button
-                disabled={!selectedTradePartner}
-                onClick={() => handleTradeAction('decline')}
-                className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${selectedTradePartner ? 'bg-rose-600/80 text-white active:scale-95' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'}`}
-              >
-                {t('game_trade_decline') || 'Decline'} ✗
-              </button>
-            </div>
+            )}
+
             {!hasSkippedTrade && (
               <div className="mt-2">
                 <button

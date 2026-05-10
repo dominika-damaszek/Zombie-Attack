@@ -259,6 +259,7 @@ const translations = {
     info_objectives_desc: '3 card types to collect. Complete all 3 to score maximum points.',
     info_skip_round: 'Skip Round',
     info_skip_round_desc: 'Once per game: skip a trade round.',
+    info_unknown_desc: 'Unidentified item. Scan it to reveal what type it is.',
 
     // Module slides
     slide_m1_0_title: 'An Apocalyptic World',
@@ -743,6 +744,7 @@ const translations = {
     info_objectives_desc: '3 kaarttypen om te verzamelen. Voltooi alle 3 voor maximale punten.',
     info_skip_round: 'Ronde overslaan',
     info_skip_round_desc: 'Eenmalig per spel: sla een handelsronde over.',
+    info_unknown_desc: 'Niet-geïdentificeerd item. Scan het om te zien welk type het is.',
 
     slide_m1_0_title: 'Een apocalyptische wereld',
     slide_m1_0_text: 'We bevinden ons in een apocalyptische wereld. Alles valt uit elkaar, zombies komen elke dag dichterbij, en de enige manier om te krijgen wat je nodig hebt is via handel…',
@@ -1222,6 +1224,7 @@ const translations = {
     info_objectives_desc: '3 types de cartes à collecter. Complétez les 3 pour le score maximum.',
     info_skip_round: 'Passer le round',
     info_skip_round_desc: 'Une fois par jeu : passez un round d\'échange.',
+    info_unknown_desc: 'Objet non identifié. Scannez-le pour révéler son type.',
 
     slide_m1_0_title: 'Un monde apocalyptique',
     slide_m1_0_text: 'Nous sommes dans un monde apocalyptique. Tout s\'effondre, les zombies se rapprochent chaque jour, et la seule façon d\'obtenir ce dont vous avez besoin est par le commerce…',
@@ -1701,6 +1704,7 @@ const translations = {
     info_objectives_desc: '3 Kartentypen zu sammeln. Vervollständige alle 3 für maximale Punkte.',
     info_skip_round: 'Runde überspringen',
     info_skip_round_desc: 'Einmal pro Spiel: überspringe eine Handelsrunde.',
+    info_unknown_desc: 'Nicht identifizierter Gegenstand. Scanne ihn, um seinen Typ zu enthüllen.',
 
     slide_m1_0_title: 'Eine apokalyptische Welt',
     slide_m1_0_text: 'Wir befinden uns in einer apokalyptischen Welt. Alles bricht zusammen, Zombies kommen täglich näher, und der einzige Weg, das zu bekommen, was du brauchst, ist durch Handel…',

@@ -443,56 +443,65 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
 
 @router.post("/{group_id}/trade_done")
 async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_db)):
+    """
+    Player signals they've finished their trading decision for the round.
+
+    Payload:
+        player_id   – UUID of the calling player (required)
+        partner_id  – UUID of the player they traded/declined with (optional)
+        action      – "accept" | "decline" (optional, only meaningful in m3/normal)
+
+    Scoring (only the calling player's own score is ever modified — never the
+    partner's, to prevent score-tampering exploits where one client subtracts
+    from another player's total without their consent):
+
+        accept  + both survivors  (m3/normal) → +2  (good cooperation)
+        decline + partner is zombie (m3/normal)→ +2  (correct identification)
+        decline + partner survivor (m3/normal) → -2  (false accusation)
+
+    In module_1 (no zombies) and module_2 (no password to verify with), the
+    accept/decline mechanic isn't meaningful — the call simply marks the
+    player as ready with no point change.
+    """
     player_id = payload.get("player_id")
     partner_id = payload.get("partner_id")
     action = payload.get("action")
-    
+
     player = db.query(models.GroupPlayer).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(status_code=404)
 
-    if partner_id and action:
-        partner = db.query(models.GroupPlayer).filter_by(id=partner_id).first()
-        if partner:
-            if action == 'decline':
-                if not player.is_infected and partner.is_infected:
-                    player.score = (player.score or 0) + 2
-                elif not partner.is_infected:
-                    player.score = (player.score or 0) - 2
-                
-                if partner.is_infected:
-                    partner.score = (partner.score or 0) - 2
-            elif action == 'accept':
+    group = player.group
+    mode = group.game_mode or "normal"
+    accusation_mode = mode in ("module_3", "normal")
+
+    # Apply accept/decline scoring only in modes where authentication makes sense.
+    if accusation_mode and partner_id and action in ("accept", "decline"):
+        partner = db.query(models.GroupPlayer).filter_by(
+            id=partner_id, group_id=group_id
+        ).first()
+        if partner and partner.id != player.id:
+            if action == "accept":
                 if not player.is_infected and not partner.is_infected:
                     player.score = (player.score or 0) + 2
+            elif action == "decline":
+                if not player.is_infected:
+                    if partner.is_infected:
+                        # Correctly identified a zombie
+                        player.score = (player.score or 0) + 2
+                    else:
+                        # Wrongly accused a survivor
+                        player.score = (player.score or 0) - 2
+            # NOTE: We intentionally do NOT modify partner.score — a player
+            # cannot affect another player's score without their own action.
 
     player.is_ready = True
-    _touch(player.group)
+    _touch(group)
     db.commit()
 
-    # Fresh query after commit — avoids stale ORM cache (race-condition fix)
+    # Fresh query after commit — avoids stale ORM cache
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
-
-    # ── Orphaned-player check ──────────────────────────────────────────────
-    # If exactly 1 player remains not-ready and everyone else is done,
-    # that player has no trading partner left. Auto-skip them with +1 point.
-    not_ready = [p for p in group.players if not p.is_ready]
-    if len(not_ready) == 1:
-        orphan = not_ready[0]
-        orphan.is_ready = True
-        orphan.round_skip_used = True
-        orphan.score = (orphan.score or 0) + 1
-        db.commit()
-
-        await manager.broadcast_to_group(group_id, {
-            "type": "FORCED_SKIP",
-            "player_id": orphan.id,
-            "username": orphan.user.username,
-        })
-
-        db.expire_all()
-        group = db.query(models.Group).filter_by(id=group_id).first()
 
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
@@ -576,25 +585,6 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
     # Re-fetch after commit to avoid stale ORM cache
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
-
-    # ── Orphaned-player check ──────────────────────────────────────────────
-    # If exactly 1 player remains not-ready, auto-skip them with +2 points
-    not_ready = [p for p in group.players if not p.is_ready]
-    if len(not_ready) == 1:
-        orphan = not_ready[0]
-        orphan.is_ready = True
-        orphan.round_skip_used = True
-        orphan.score = (orphan.score or 0) + 2
-        db.commit()
-
-        await manager.broadcast_to_group(group_id, {
-            "type": "FORCED_SKIP",
-            "player_id": orphan.id,
-            "username": orphan.user.username,
-        })
-
-        db.expire_all()
-        group = db.query(models.Group).filter_by(id=group_id).first()
 
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
