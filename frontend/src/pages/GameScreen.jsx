@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Shield, Skull, Timer, Package, Camera, X, Zap, AlertTriangle,
-         ChevronRight, ChevronLeft, Info, HelpCircle, Target, CheckCircle2,
-         Users } from 'lucide-react';
+import {
+  Shield, Skull, Timer, Package, Camera, X, Zap, AlertTriangle,
+  ChevronRight, ChevronLeft, Info, HelpCircle, Target, CheckCircle2,
+  Users
+} from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 import { useAudio } from '../hooks/useAudio';
 import AudioToggle from '../components/AudioToggle';
@@ -12,12 +14,12 @@ import { API_URLS } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const CARD_TYPES = {
-  security_patch:  { emoji: '🩹', label: 'Security Patch',  color: 'text-rose-400',    bg: 'bg-rose-500/20 border-rose-500/30',     desc: 'A critical software fix that closes known vulnerabilities. Rare and highly valuable — every network needs it.' },
-  system_boost:    { emoji: '⚡', label: 'System Boost',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20 border-yellow-500/30', desc: 'Optimizes system performance and processing speed. Common but essential for keeping operations running smoothly.' },
-  hacking_tool:    { emoji: '💻', label: 'Hacking Tool',    color: 'text-orange-400',  bg: 'bg-orange-500/20 border-orange-500/30', desc: 'Offensive software used to probe and exploit systems. Powerful in the right hands — dangerous in the wrong ones.' },
-  firewall:        { emoji: '🧱', label: 'Firewall',        color: 'text-blue-400',    bg: 'bg-blue-500/20 border-blue-500/30',     desc: 'Blocks unauthorized access to your network. A solid defensive barrier that keeps threats from getting in.' },
-  security_layer:  { emoji: '🔒', label: 'Security Layer',  color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30',desc: 'An additional encryption or access-control mechanism. Stacks with other defenses to make your system much harder to breach.' },
-  unknown:         { emoji: '📦', label: 'Unknown',         color: 'text-slate-400',   bg: 'bg-slate-500/20 border-slate-500/30',   desc: 'Unidentified item. Scan it to reveal what type it is.' },
+  security_patch: { label: 'Security Patch', symbol: '../../public/medicine2.png', desc: t('info_medicine_desc'), color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
+  system_boost: { label: 'System Boost', symbol: '../../public/food2.png', desc: t('info_food_desc'), color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]', glow: 'shadow-[0_0_15px_#eb9844]' },
+  firewall: { label: 'Firewall', symbol: '../../public/gun2.png', desc: t('info_weapon_desc'), color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
+  security_layer: { label: 'Security Layer', symbol: '../../public/clothing12.png', desc: t('info_clothing_desc'), color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]', glow: 'shadow-[0_0_15px_#e2bdfe]' },
+  hacking_tool: { label: 'Hacking Tool', symbol: '../../public/tool3.png', desc: t('info_tools_desc'), color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]', glow: 'shadow-[0_0_15px_#b8708b]' },
+  unknown: { label: 'Unknown', color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', desc: 'Unidentified item. Scan it to reveal what type it is.', glow: 'shadow-[0_0_15px_slate-500]' },
 };
 
 function getCardLabel(key) {
@@ -28,57 +30,69 @@ function getModuleSlides(t) {
   return {
     module_1: [
       { type: 'story', emoji: '🌍', title: t('slide_m1_0_title'), text: t('slide_m1_0_text') },
-      { type: 'info',  emoji: '📦', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
-      { type: 'info',  emoji: '🃏', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
+      { type: 'info', emoji: '📦', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
+      { type: 'info', emoji: '🃏', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
       { type: 'items', emoji: '🎴', title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
-      { type: 'scan',  emoji: '📱', title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
+      { type: 'scan', emoji: '📱', title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', emoji: '🎯', title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
       { type: 'final', emoji: '⏱️', title: t('slide_m1_6_title'), text: t('slide_m1_6_text') },
     ],
     module_2: [
       { type: 'story', emoji: '🧟', title: t('slide_m2_0_title'), text: t('slide_m2_0_text') },
-      { type: 'info',  emoji: '🃏', title: t('slide_m2_1_title'), text: t('slide_m2_1_text') },
-      { type: 'scan',  emoji: '📱', title: t('slide_m2_2_title'), text: t('slide_m2_2_text') },
-      { type: 'info',  emoji: '☣️', title: t('slide_m2_3_title'), text: t('slide_m2_3_text') },
-      { type: 'info',  emoji: '🦠', title: t('slide_m2_4_title'), text: t('slide_m2_4_text') },
-      { type: 'role',  emoji: '🎭', title: t('slide_m2_5_title'), text: t('slide_m2_5_text') },
+      { type: 'info', emoji: '🃏', title: t('slide_m2_1_title'), text: t('slide_m2_1_text') },
+      { type: 'scan', emoji: '📱', title: t('slide_m2_2_title'), text: t('slide_m2_2_text') },
+      { type: 'info', emoji: '☣️', title: t('slide_m2_3_title'), text: t('slide_m2_3_text') },
+      { type: 'info', emoji: '🦠', title: t('slide_m2_4_title'), text: t('slide_m2_4_text') },
+      { type: 'role', emoji: '🎭', title: t('slide_m2_5_title'), text: t('slide_m2_5_text') },
       { type: 'final', emoji: '⏭️', title: t('slide_m2_6_title'), text: t('slide_m2_6_text') },
     ],
     module_3: [
       { type: 'story', emoji: '🧠', title: t('slide_m3_0_title'), text: t('slide_m3_0_text') },
-      { type: 'scan',  emoji: '🃏', title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
-      { type: 'info',  emoji: '🎭', title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
-      { type: 'info',  emoji: '🔑', title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
-      { type: 'info',  emoji: '🤫', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
-      { type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
-        { pw: t('slide_m3_5_pw1'), lines: [
-          { ok: true,  text: t('slide_m3_5_h1') },
-          { ok: false, text: t('slide_m3_5_h2') },
-        ]},
-        { pw: t('slide_m3_5_pw2'), lines: [
-          { ok: true,  text: t('slide_m3_5_h3') },
-          { ok: false, text: t('slide_m3_5_h4') },
-        ]},
-      ]},
+      { type: 'scan', emoji: '🃏', title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
+      { type: 'info', emoji: '🎭', title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
+      { type: 'info', emoji: '🔑', title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
+      { type: 'info', emoji: '🤫', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
+      {
+        type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
+          {
+            pw: t('slide_m3_5_pw1'), lines: [
+              { ok: true, text: t('slide_m3_5_h1') },
+              { ok: false, text: t('slide_m3_5_h2') },
+            ]
+          },
+          {
+            pw: t('slide_m3_5_pw2'), lines: [
+              { ok: true, text: t('slide_m3_5_h3') },
+              { ok: false, text: t('slide_m3_5_h4') },
+            ]
+          },
+        ]
+      },
       { type: 'final', emoji: '🧟', title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
     ],
     // Normal (Full Game) — same slide structure as module_3 but with different intro text
     normal: [
       { type: 'story', emoji: '🌐', title: t('slide_n0_title'), text: t('slide_n0_text') },
-      { type: 'scan',  emoji: '📱', title: t('slide_n1_title'), text: t('slide_n1_text') },
-      { type: 'info',  emoji: '🎯', title: t('slide_n2_title'), text: t('slide_n2_text') },
-      { type: 'info',  emoji: '🔑', title: t('slide_n3_title'), text: t('slide_n3_text') },
-      { type: 'info',  emoji: '🤫', title: t('slide_n4_title'), text: t('slide_n4_text') },
-      { type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
-        { pw: t('slide_m3_5_pw1'), lines: [
-          { ok: true,  text: t('slide_m3_5_h1') },
-          { ok: false, text: t('slide_m3_5_h2') },
-        ]},
-        { pw: t('slide_m3_5_pw2'), lines: [
-          { ok: true,  text: t('slide_m3_5_h3') },
-          { ok: false, text: t('slide_m3_5_h4') },
-        ]},
-      ]},
+      { type: 'scan', emoji: '📱', title: t('slide_n1_title'), text: t('slide_n1_text') },
+      { type: 'info', emoji: '🎯', title: t('slide_n2_title'), text: t('slide_n2_text') },
+      { type: 'info', emoji: '🔑', title: t('slide_n3_title'), text: t('slide_n3_text') },
+      { type: 'info', emoji: '🤫', title: t('slide_n4_title'), text: t('slide_n4_text') },
+      {
+        type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
+          {
+            pw: t('slide_m3_5_pw1'), lines: [
+              { ok: true, text: t('slide_m3_5_h1') },
+              { ok: false, text: t('slide_m3_5_h2') },
+            ]
+          },
+          {
+            pw: t('slide_m3_5_pw2'), lines: [
+              { ok: true, text: t('slide_m3_5_h3') },
+              { ok: false, text: t('slide_m3_5_h4') },
+            ]
+          },
+        ]
+      },
       { type: 'final', emoji: '⚡', title: t('slide_n6_title'), text: t('slide_n6_text') },
     ],
   };
@@ -86,26 +100,32 @@ function getModuleSlides(t) {
 
 function getInfoSections(t) {
   return [
-    { title: t('game_item_types_title'), items: Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([, ct]) => ({
-      emoji: ct.emoji, label: ct.label, desc: ct.desc,
-    }))},
-    { title: t('game_roles_title'), items: [
-      { emoji: '🛡️', label: t('game_survivor'),  desc: t('info_survivor_desc') },
-      { emoji: '🧟', label: t('game_zombie'),    desc: t('info_zombie_desc') },
-    ]},
-    { title: t('game_mechanics_title'), items: [
-      { emoji: '🔑', label: t('info_password'),   desc: t('info_password_desc') },
-      { emoji: '🎯', label: t('info_objectives'), desc: t('info_objectives_desc') },
-      { emoji: '⏭️', label: t('info_skip_round'), desc: t('info_skip_round_desc') },
-    ]},
+    {
+      title: t('game_item_types_title'), items: Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([, ct]) => ({
+        emoji: ct.emoji, label: ct.label, desc: ct.desc,
+      }))
+    },
+    {
+      title: t('game_roles_title'), items: [
+        { label: t('game_survivor'), desc: t('info_survivor_desc') },
+        { label: t('game_zombie'), desc: t('info_zombie_desc') },
+      ]
+    },
+    {
+      title: t('game_mechanics_title'), items: [
+        { emoji: '🔑', label: t('info_password'), desc: t('info_password_desc') },
+        { emoji: '🎯', label: t('info_objectives'), desc: t('info_objectives_desc') },
+        { emoji: '⏭️', label: t('info_skip_round'), desc: t('info_skip_round_desc') },
+      ]
+    },
   ];
 }
 
 function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
   const isZombie = role === 'zombie';
   const cfg = isZombie
-    ? { emoji: '🧟', label: t('game_zombie'),   color: '#d97559', border: 'rgba(217,117,89,0.5)', glow: 'rgba(217,117,89,0.3)', desc: t('game_zombie_desc') }
-    : { emoji: '🛡️', label: t('game_survivor'), color: '#a8c4a0', border: 'rgba(168,196,160,0.5)', glow: 'rgba(168,196,160,0.25)', desc: t('game_survivor_desc') };
+    ? { label: t('game_zombie'), color: '#d96259ff', border: 'rgba(217, 98, 89, 0.5)', glow: 'rgba(217, 104, 89, 0.3)', desc: t('game_zombie_desc') }
+    : { label: t('game_survivor'), color: '#a8c4a0', border: 'rgba(168,196,160,0.5)', glow: 'rgba(168,196,160,0.25)', desc: t('game_survivor_desc') };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.97)' }}>
@@ -190,11 +210,11 @@ async function startCameraScanner(scanner, handleResult) {
   // Try facingMode: 'environment' first — most reliable on mobile and avoids
   // the black-camera bug that camera-ID enumeration causes on many devices.
   try {
-    await scanner.start({ facingMode: { exact: 'environment' } }, config, handleResult, () => {});
+    await scanner.start({ facingMode: { exact: 'environment' } }, config, handleResult, () => { });
     return true;
   } catch {
     try {
-      await scanner.start({ facingMode: 'environment' }, config, handleResult, () => {});
+      await scanner.start({ facingMode: 'environment' }, config, handleResult, () => { });
       return true;
     } catch {
       // Fall back to explicit camera ID (useful for laptops / desktops)
@@ -202,12 +222,12 @@ async function startCameraScanner(scanner, handleResult) {
         const cameras = await Html5Qrcode.getCameras();
         if (cameras && cameras.length > 0) {
           const back = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
-          await scanner.start(back.id, config, handleResult, () => {});
+          await scanner.start(back.id, config, handleResult, () => { });
           return true;
         }
       } catch { /* ignore */ }
       try {
-        await scanner.start({ facingMode: 'user' }, config, handleResult, () => {});
+        await scanner.start({ facingMode: 'user' }, config, handleResult, () => { });
         return true;
       } catch {
         return false;
@@ -234,7 +254,7 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
       try {
         const s = scannerRef.current;
         scannerRef.current = null;
-        s.stop().catch(() => {});
+        s.stop().catch(() => { });
       } catch { scannerRef.current = null; }
     }
   }, []);
@@ -266,9 +286,9 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
       if (hasScannedRef.current) return;
       hasScannedRef.current = true;
       // Stop the scanner immediately to prevent repeated callbacks
-      if (scannerRef.current) { scannerRef.current.stop().catch(() => {}); scannerRef.current = null; }
+      if (scannerRef.current) { scannerRef.current.stop().catch(() => { }); scannerRef.current = null; }
       let result = text.trim();
-      try { const parsed = JSON.parse(text); result = parsed.code || parsed.id || text; } catch {}
+      try { const parsed = JSON.parse(text); result = parsed.code || parsed.id || text; } catch { }
       onScanRef.current(result.toUpperCase());
     };
     const ok = await startCameraScanner(scanner, handleResult);
@@ -437,7 +457,7 @@ function InfoModal({ onClose, t }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(26,22,18,0.93)' }}>
       <div className="relative w-full max-w-md rounded-3xl overflow-hidden overflow-y-auto max-h-[90vh]"
-           style={{ background: 'rgba(42,38,34,0.98)', border: '1px solid rgba(109,113,98,0.4)' }}>
+        style={{ background: 'rgba(42,38,34,0.98)', border: '1px solid rgba(109,113,98,0.4)' }}>
         <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur">
           <h2 className="text-xl font-black flex items-center gap-2" style={{ color: '#AD9E97' }}>
             <HelpCircle size={20} style={{ color: '#795846' }} /> {t('game_guide')}
@@ -523,7 +543,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
   if (type === 'role') {
     const isZombie = playerState?.role === 'zombie';
     const cfg = isZombie
-      ? { emoji: '🧟', label: t('game_zombie'),   color: '#d97559', bg: 'rgba(80,30,20,0.6)', border: 'rgba(217,117,89,0.4)' }
+      ? { emoji: '🧟', label: t('game_zombie'), color: '#d97559', bg: 'rgba(80,30,20,0.6)', border: 'rgba(217,117,89,0.4)' }
       : { emoji: '🛡️', label: t('game_survivor'), color: '#a8c4a0', bg: 'rgba(30,50,35,0.6)', border: 'rgba(168,196,160,0.4)' };
     return (
       <div className="text-center">
@@ -703,6 +723,12 @@ const GameScreen = ({ mockData } = {}) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { groupData, playerData } = location.state || (() => {
+    if (mockData) {
+      return {
+        groupData: { group_id: 'fake-group', game_mode: 'module_1' },
+        playerData: { id: 'fake-player', username: 'TestUser' }
+      };
+    }
     try {
       const raw = localStorage.getItem('player_session');
       return raw ? JSON.parse(raw) : {};
@@ -727,6 +753,7 @@ const GameScreen = ({ mockData } = {}) => {
   const [initialScanCount, setInitialScanCount] = useState(0);
   const [inventory, setInventory] = useState([]);
   const [objectives, setObjectives] = useState([]);
+  const [selectedTradePartner, setSelectedTradePartner] = useState("");
 
   // Persist session to localStorage so page reload can rejoin the game
   useEffect(() => {
@@ -807,6 +834,7 @@ const GameScreen = ({ mockData } = {}) => {
     if (lastMessage.type === 'ROUND_STARTED') {
       setIsDoneTrading(false);
       setBetweenRoundsDone(false);
+      setSelectedTradePartner("");
       const mode = gameModeRef.current;
       if (mode === 'module_3' || mode === 'normal') setShowRoleReveal(true);
       if (lastMessage.secret_word && playerState?.role !== 'zombie') {
@@ -907,11 +935,12 @@ const GameScreen = ({ mockData } = {}) => {
     }
   }, [groupData?.group_id, playerData?.id, playSFX, fetchState, gameState?.game_state]);
 
-  const handleDoneTrading = async () => {
+  const handleTradeAction = async (action) => {
+    if (!selectedTradePartner) return;
     try {
       await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/trade_done`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player_id: playerData.id }),
+        body: JSON.stringify({ player_id: playerData.id, partner_id: selectedTradePartner, action }),
       });
       setIsDoneTrading(true);
     } catch (e) { console.error(e); }
@@ -1025,10 +1054,9 @@ const GameScreen = ({ mockData } = {}) => {
         <div className="w-full max-w-lg">
           <div className="flex justify-center gap-1.5 mb-4 sm:mb-8">
             {slides.map((_, idx) => (
-              <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${
-                slideIndex === idx ? 'bg-cyan-400 w-8' :
+              <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${slideIndex === idx ? 'bg-cyan-400 w-8' :
                 slideIndex > idx ? 'bg-slate-600 w-4' : 'bg-slate-800 w-4'
-              }`} />
+                }`} />
             ))}
           </div>
 
@@ -1048,7 +1076,7 @@ const GameScreen = ({ mockData } = {}) => {
                 <span className="font-black text-lg" style={{ color: scanDone ? '#a8c4a0' : '#AD9E97' }}>{initialScanCount}/4</span>
               </div>
               <div className="flex gap-2 mb-4">
-                {[0,1,2,3].map(i => (
+                {[0, 1, 2, 3].map(i => (
                   <div key={i} className={`flex-1 h-2.5 rounded-full transition-all ${i < initialScanCount ? 'bg-emerald-500' : 'bg-slate-700'}`} />
                 ))}
               </div>
@@ -1178,7 +1206,7 @@ const GameScreen = ({ mockData } = {}) => {
   const showScanButton = gamePhase !== 'round_active' || !isModule || isDoneTrading || isTimeUp;
 
   return (
-    <>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 relative overflow-hidden max-w-lg mx-auto px-4 py-8">
       {showRoleReveal && playerState?.role && (
         <RoleReveal
           role={playerState.role}
@@ -1232,7 +1260,6 @@ const GameScreen = ({ mockData } = {}) => {
         hasSkippedTrade={hasSkippedTrade}
         isZombie={isZombie}
         initialScanCount={initialScanCount}
-        onDoneTrading={handleDoneTrading}
         onSkipTrade={handleSkipTrade}
         onOpenScanner={() => setShowScanner(true)}
       />
@@ -1240,7 +1267,7 @@ const GameScreen = ({ mockData } = {}) => {
       <button
         onClick={() => setShowInfoModal(true)}
         className="fixed bottom-4 right-4 z-30 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-        style={{ background: 'rgba(121,88,70,0.8)', border: '1px solid rgba(173,158,151,0.4)' }}
+        style={{ background: 'var(--neon-pink)', border: '1px solid rgba(173,158,151,0.4)' }}
       >
         <HelpCircle size={20} style={{ color: '#AD9E97' }} />
       </button>
@@ -1248,7 +1275,7 @@ const GameScreen = ({ mockData } = {}) => {
       <div className="max-w-lg mx-auto py-2 px-2 sm:px-3 animate-zw-fade pb-24">
 
         <div className="rounded-2xl p-3 sm:p-5 mb-2 flex items-center justify-between"
-             style={{ background: `rgba(${isZombie ? '80,30,20' : '30,50,35'},0.6)`, border: `2px solid ${statusColor}33` }}>
+          style={{ background: `rgba(${isZombie ? '80,30,20' : '30,50,35'},0.6)`, border: `2px solid ${statusColor}33` }}>
           <div className="flex items-center gap-3">
             <span className="text-2xl sm:text-4xl">{statusEmoji}</span>
             <div>
@@ -1336,19 +1363,46 @@ const GameScreen = ({ mockData } = {}) => {
               <p className="font-bold text-sm sm:text-base" style={{ color: '#AD9E97' }}>{t('game_go_trade')}</p>
             </div>
             <p className="text-slate-500 text-[10px] sm:text-xs mb-2.5">{t('game_scanner_disabled')}</p>
+
+            <div className="mb-3">
+              <select
+                value={selectedTradePartner}
+                onChange={(e) => setSelectedTradePartner(e.target.value)}
+                className="w-full p-2.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-600 text-sm focus:outline-none focus:border-emerald-500"
+              >
+                <option value="">{t('game_select_trade_partner') || 'Select a player...'}</option>
+                {gameState?.players?.filter(p => p.id !== playerData?.id).map(p => (
+                  <option key={p.id} value={p.id}>{p.username}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex gap-2">
-              <button onClick={handleDoneTrading} className="flex-1 py-2.5 sm:py-3 bg-emerald-600/80 text-white font-bold rounded-xl active:scale-95 transition-all text-xs sm:text-sm">
-                {t('game_done_trading')} ✓
+              <button
+                disabled={!selectedTradePartner}
+                onClick={() => handleTradeAction('accept')}
+                className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${selectedTradePartner ? 'bg-emerald-600/80 text-white active:scale-95' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'}`}
+              >
+                {t('game_trade_accept') || 'Accept'} ✓
               </button>
-              {!hasSkippedTrade && (
+              <button
+                disabled={!selectedTradePartner}
+                onClick={() => handleTradeAction('decline')}
+                className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${selectedTradePartner ? 'bg-rose-600/80 text-white active:scale-95' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'}`}
+              >
+                {t('game_trade_decline') || 'Decline'} ✗
+              </button>
+            </div>
+            {!hasSkippedTrade && (
+              <div className="mt-2">
                 <button
                   onClick={handleSkipTrade}
-                  className="flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm bg-amber-600/80 text-white active:scale-95"
+                  className="w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm bg-amber-600/80 text-white active:scale-95"
                 >
                   {t('game_skip_round')} {t('game_skip_once')}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1380,9 +1434,9 @@ const GameScreen = ({ mockData } = {}) => {
 
         {gamePhase === 'module_between_rounds' && (() => {
           const totalPlayers = gameState?.players?.length || 0;
-          const readyCount   = gameState?.ready_count   || 0;
-          const waitingFor   = gameState?.not_ready      || [];
-          const allReady     = readyCount >= totalPlayers && totalPlayers > 0;
+          const readyCount = gameState?.ready_count || 0;
+          const waitingFor = gameState?.not_ready || [];
+          const allReady = readyCount >= totalPlayers && totalPlayers > 0;
           return (
             <div className="mb-2 glass-panel p-3 sm:p-4 rounded-2xl">
               <h3 className="font-black text-base sm:text-xl mb-1 text-center" style={{ color: '#AD9E97' }}>
@@ -1485,7 +1539,7 @@ const GameScreen = ({ mockData } = {}) => {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -35,20 +35,20 @@ const Dashboard = ({ setHasSession }) => {
   const token = localStorage.getItem('token');
 
   const MODULE_LABELS = {
-    module_1: { label: `${t('mod1_label')}: ${t('mod1_sublabel')}`, emoji: '📘', color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20' },
+    module_1: { label: `${t('mod1_label')}: ${t('mod1_sublabel')}`, emoji: '📘', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
     module_2: { label: `${t('mod2_label')}: ${t('mod2_sublabel')}`, emoji: '⚠️', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
     module_3: { label: `${t('mod3_label')}: ${t('mod3_sublabel')}`, emoji: '🔒', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-    normal:   { label: `${t('host_game')}: ${t('host_normal_mode')}`, emoji: '🧟', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+    normal: { label: `${t('host_game')}: ${t('host_normal_mode')}`, emoji: '🧟', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
   };
 
   const STATE_LABELS = {
-    lobby:              { label: t('dash_state_lobby'),         color: 'text-slate-400',   bg: 'bg-slate-700' },
-    role_assignment:    { label: t('dash_state_assigning'),     color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
-    module_instructions:{ label: t('dash_state_instructions'),  color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
-    initial_scan_phase: { label: t('dash_state_initial_scan'),  color: 'text-blue-400',    bg: 'bg-blue-500/20' },
-    round_active:       { label: t('dash_state_round_active'),  color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-    module_between_rounds: { label: t('dash_state_scan_phase'),color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
-    end_game:           { label: t('dash_state_game_over'),     color: 'text-rose-400',    bg: 'bg-rose-500/20' },
+    lobby: { label: t('dash_state_lobby'), color: 'text-slate-400', bg: 'bg-slate-700' },
+    role_assignment: { label: t('dash_state_assigning'), color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
+    module_instructions: { label: t('dash_state_instructions'), color: 'text-cyan-400', bg: 'bg-cyan-500/20' },
+    initial_scan_phase: { label: t('dash_state_initial_scan'), color: 'text-blue-400', bg: 'bg-blue-500/20' },
+    round_active: { label: t('dash_state_round_active'), color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+    module_between_rounds: { label: t('dash_state_scan_phase'), color: 'text-cyan-400', bg: 'bg-cyan-500/20' },
+    end_game: { label: t('dash_state_game_over'), color: 'text-rose-400', bg: 'bg-rose-500/20' },
   };
 
   const modeInfo = MODULE_LABELS[session?.game_mode] || MODULE_LABELS.normal;
@@ -161,10 +161,10 @@ const Dashboard = ({ setHasSession }) => {
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)]">
+        <BackButton to="/host" />
         <div className="glass-panel p-8 text-center max-w-sm rounded-3xl">
-          <BackButton to="/host" />
           <p className="text-slate-400 mb-4">{t('dash_no_session')}</p>
-          <button onClick={() => navigate('/host')} className="btn-primary px-6 py-3">{t('dash_create_session')}</button>
+          <button onClick={() => navigate('/host')} className="neon-btn-alt px-5 py-3">{t('dash_create_session')}</button>
         </div>
       </div>
     );
@@ -242,7 +242,7 @@ const Dashboard = ({ setHasSession }) => {
                 {/* Summary pills */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: '👥', label: t('end_players'),  value: statsModal.data.total_players },
+                    { icon: '👥', label: t('end_players'), value: statsModal.data.total_players },
                     { icon: '🛡️', label: t('end_survived'), value: statsModal.data.survivors },
                     { icon: '🧟', label: t('end_infected'), value: statsModal.data.zombies },
                   ].map(({ icon, label, value }) => (
@@ -349,11 +349,10 @@ const Dashboard = ({ setHasSession }) => {
         <button
           onClick={saveNote}
           disabled={noteLoading || !note.trim()}
-          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-            noteSaved
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/25 disabled:opacity-40'
-          }`}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${noteSaved
+            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+            : 'bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/25 disabled:opacity-40'
+            }`}
         >
           {noteSaved ? <><Check size={12} /> {t('dash_saved')}</> : t('dash_save')}
         </button>
@@ -469,15 +468,14 @@ const Dashboard = ({ setHasSession }) => {
                     <button
                       onClick={() => isActive ? endGame(group.id) : startGame(group.id)}
                       disabled={(!canStart && !isActive) || actionLoading === group.id}
-                      className={`flex-1 py-2.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm ${
-                        isActive ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
+                      className={`flex-1 py-2.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm ${isActive ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
                         : canStart ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                      }`}
+                          : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                        }`}
                     >
                       {actionLoading === group.id ? <RefreshCw size={14} className="animate-spin" />
                         : isActive ? <><Skull size={14} /> {t('dash_end_game')}</>
-                        : <><Play size={14} fill="currentColor" /> {t('dash_start_game')}</>}
+                          : <><Play size={14} fill="currentColor" /> {t('dash_start_game')}</>}
                     </button>
                   </div>
                 </div>

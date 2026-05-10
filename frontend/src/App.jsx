@@ -17,7 +17,32 @@ import History from './pages/History';
 import ScanTest from './pages/ScanTest';
 import Rules from './pages/Rules';
 import AboutUs from './pages/AboutUs';
+// TURN BACK TO FALSE FOR PRODUCTION!!!
+export const DEV_MODE = true; // Enable dev mode to bypass auth for certain pages
 
+const FAKE_GAME_DATA = {
+  gameState: {
+    game_state: 'round_active',
+    current_round: 1,
+    game_mode: 'module_1',
+    players: [
+      { id: 'fake-player', username: 'TestUser', role: 'survivor', is_infected: false },
+      { id: 'p2', username: 'ZombieBot', role: 'zombie', is_infected: true },
+      { id: 'p3', username: 'Alice', role: 'survivor', is_infected: false },
+    ]
+  },
+  playerState: {
+    id: 'fake-player',
+    username: 'TestUser',
+    role: 'survivor',
+    is_infected: false,
+    inventory: [
+      { code: 'A1', type: 'security_patch' },
+      { code: 'A2', type: 'firewall' }
+    ],
+    objectives: ['security_patch', 'system_boost']
+  }
+};
 function SpaRedirectHandler() {
   const navigate = useNavigate();
   useEffect(() => {
@@ -31,31 +56,8 @@ function SpaRedirectHandler() {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
+  const [isAuthenticated, setIsAuthenticated] = useState(() => true);
   const [hasSession, setHasSession] = useState(() => !!localStorage.getItem('session_id'));
-
-  // On every page load, silently validate the stored token against the backend.
-  // If the token is invalid (expired, user not found, DB was reset, etc.) we
-  // clear localStorage and mark the user as logged-out so they aren't stuck in
-  // a broken "logged-in but all API calls fail" state.
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    fetch(`/auth/me?token=${token}`)
-      .then(res => {
-        if (res.status === 401 || res.status === 403) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('session_id');
-          localStorage.removeItem('session_data');
-          localStorage.removeItem('player_session');
-          setIsAuthenticated(false);
-          setHasSession(false);
-        }
-      })
-      .catch(() => {
-        // Network error (server still waking up) — don't force-logout
-      });
-  }, []);
 
   useEffect(() => {
     const syncSession = () => {
@@ -65,7 +67,7 @@ function App() {
     return () => window.removeEventListener('storage', syncSession);
   }, []);
 
-  const isFullScreenGame = window.location.pathname.startsWith('/game');
+  const isFullScreenGame = window.location.pathname.startsWith('/game') || window.location.pathname.startsWith('/fake-game');
   const isPreview = window.location.pathname.startsWith('/preview');
 
   return (
@@ -101,11 +103,11 @@ function App() {
                 />
                 <Route
                   path="/profile"
-                  element={isAuthenticated ? <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} /> : <Navigate to="/auth" />}
+                  element={(isAuthenticated || DEV_MODE) ? <Profile setIsAuthenticated={setIsAuthenticated} setHasSession={setHasSession} /> : <Navigate to="/auth" />}
                 />
                 <Route
                   path="/history"
-                  element={isAuthenticated ? <History /> : <Navigate to="/auth" state={{ from: '/history' }} />}
+                  element={(isAuthenticated || DEV_MODE) ? <History /> : <Navigate to="/auth" state={{ from: '/history' }} />}
                 />
                 <Route
                   path="/join"
@@ -118,13 +120,14 @@ function App() {
                 <Route path="/scan-test" element={<ScanTest />} />
                 <Route path="/waiting" element={<WaitingRoom />} />
                 <Route path="/game" element={<GameScreen />} />
+                <Route path="/fake-game" element={<GameScreen mockData={FAKE_GAME_DATA} />} />
                 <Route path="/endgame" element={<EndGame />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
 
             <div className="fixed top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none -z-0" />
-            <div className="fixed bottom-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -z-0" />
+            <div className="fixed bottom-0 right-0 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] pointer-events-none -z-0" />
             {/* Floating Viruses */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
               <img src="/uiv1.png" alt="" className="absolute top-[10%] left-[10%] w-32 animate-float-slow" />

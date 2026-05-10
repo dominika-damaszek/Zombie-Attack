@@ -45,32 +45,14 @@ const Home = ({ isAuthenticated }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] sm:min-h-[calc(100vh-73px)] text-center px-4 py-8">
-      {hasActiveGame && (
-        <button
-          onClick={() => navigate('/game', { state: activeGame })}
-          className="fixed top-16 left-0 right-0 z-20 mx-auto w-full max-w-md px-4 mt-2"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <div className="flex items-center justify-between gap-3 px-5 py-3 rounded-2xl border border-emerald-500/50 bg-emerald-500/10 backdrop-blur-md hover:bg-emerald-500/20 transition-all shadow-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-xl animate-pulse">🎮</span>
-              <div className="text-left">
-                <p className="text-emerald-400 font-bold text-sm">{t('home_game_in_progress')}</p>
-                <p className="text-slate-400 text-xs">{t('home_rejoin_hint')}</p>
-              </div>
-            </div>
-            <span className="text-emerald-400 font-bold text-sm">{t('home_rejoin')}</span>
-          </div>
-        </button>
-      )}
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] sm:min-h-[calc(100vh-73px)] text-center px-4 py-8 mb-20">
       <div className="flex flex-col items-center gap-5 mb-8 sm:mb-14">
         <div
-          className="absolute inset-0 pointer-events-none z-[-1] opacity-70 bg-cover bg-center"
+          className="fixed inset-0 pointer-events-none z-[-1] opacity-70 bg-cover bg-center"
           style={{ backgroundImage: "url('/bgzombies1.png')" }}
         />
         <div>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight leading-none mb-3">
+          <h1 className="glitch-h1 text-4xl sm:text-6xl md:text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-400 tracking-tight leading-none mb-3">
             Zombieware
           </h1>
           <p className="text-slate-400 text-sm sm:text-lg max-w-md mx-auto">
@@ -79,13 +61,13 @@ const Home = ({ isAuthenticated }) => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
+      <div className="flex flex-col gap-8 w-full lg:flex-row max-w-xl">
         <button
           onClick={handleJoin}
           className="group flex-1 flex flex-col items-center justify-center gap-3 py-10 px-8 rounded-3xl text-2xl neon-btn transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]">
           <Users size={36} strokeWidth={2.5} />
           {t('home_join')}
-          <span className="text-sm font-medium group-hover:text-black group-hover:font-bold -mt-1">{t('home_join_sub')}</span>
+          <span className="text-sm font-medium group-hover:font-bold -mt-1">Enter a classroom</span>
         </button>
 
         <button
@@ -94,7 +76,7 @@ const Home = ({ isAuthenticated }) => {
         >
           <Monitor size={36} strokeWidth={2.5} />
           {t('home_host')}
-          <span className="text-sm font-medium text-[var(--neon-cyan)] group-hover:text-black  group-hover:font-bold -mt-1">{t('home_host_sub')}</span>
+          <span className="text-sm font-medium text-[var(--neon-pink)]  group-hover:font-bold -mt-1">Create a class session</span>
         </button>
       </div>
 
@@ -104,7 +86,7 @@ const Home = ({ isAuthenticated }) => {
         </p>
       )}
 
-      <div className="mt-8 flex items-center gap-2 text-xs">
+      <div className="my-8 flex items-center gap-2 text-xs pb-15">
         {serverStatus === 'waking' && (
           <>
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />

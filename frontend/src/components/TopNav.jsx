@@ -37,43 +37,44 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
 
   const menuItems = [
     {
-      icon: <BookOpen size={18} className="text-emerald-400" />,
+      icon: <BookOpen size={18} className="text-[var(--neon-green-glow)]/45" />,
       label: t('nav_rules'),
       sublabel: t('nav_rules_sub'),
       path: '/rules',
-      color: 'hover:bg-emerald-500/10',
+      color: 'hover:bg-[var(--neon-green-glow)]/10',
     },
     {
-      icon: <Users size={18} className="text-cyan-400" />,
+      icon: <Users size={18} className="text-[var(--neon-cyan)]/70" />,
       label: t('nav_about'),
       sublabel: t('nav_about_sub'),
       path: '/about',
-      color: 'hover:bg-cyan-500/10',
+      color: 'hover:bg-[var(--neon-cyan-glow)]/10',
     },
     ...(isAuthenticated ? [{
-      icon: <UserCircle size={18} className="text-purple-400" />,
+      icon: <UserCircle size={18} className="text-[var(--neon-pink-glow)]" />,
       label: t('nav_profile'),
       sublabel: t('nav_profile_sub'),
       path: '/profile',
-      color: 'hover:bg-purple-500/10',
+      color: 'hover:bg-[var(--neon-pink-glow)]/10',
     }] : []),
+
   ];
 
   return (
-    <header className="w-full flex items-center justify-between px-6 py-0 bg-[var(--grid-color)]/90 backdrop-blur-xl border-b border-[var(--neon-cyan-glow)]/50 z-30 relative">
+    <header className="w-full flex items-center justify-between px-6 py-0 bg-[var(--grid-color)]/90 backdrop-blur-xl border-b border-[var(--neon-pink-glow)]/50 z-30 relative">
       <div className="flex items-center gap-3 sm:gap-2" ref={menuRef}>
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all"
+            className="p-2 rounded-xl flex items-center justify-center text-xs text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 border border-[var(--neon-pink)]/50 min-w-[42px] transition-all"
             aria-label="Menu"
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
 
           {menuOpen && (
-            <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl shadow-2xl overflow-hidden z-50"
-              style={{ background: 'rgba(15,23,42,0.98)', border: '1px solid rgba(71,85,105,0.5)', backdropFilter: 'blur(20px)' }}>
+            <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl shadow-2xl overflow-hidden z-50 bg-[var(--secondary-grid-color)]"
+              style={{ border: '1px solid var(--neon-cyan-glow)', backdropFilter: 'blur(20px)' }}>
               <div className="px-4 py-3 border-b border-slate-700/50">
                 <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">{t('nav_menu')}</p>
               </div>
@@ -101,9 +102,9 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
                 {isAuthenticated && hasSession && (
                   <button
                     onClick={() => navTo('/dashboard')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/10 transition-all"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--neon-green-glow)]/10 transition-all"
                   >
-                    <LayoutDashboard size={16} className="text-emerald-400" />
+                    <LayoutDashboard size={16} className="text-[var(--neon-green-glow)]/10" />
                     <span className="text-sm font-semibold text-slate-300">{t('nav_dashboard')}</span>
                   </button>
                 )}
@@ -127,10 +128,10 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
                 ) : (
                   <button
                     onClick={() => navTo('/auth')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/10 transition-all"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--neon-pink)]/10 transition-all"
                   >
-                    <LogIn size={16} className="text-emerald-400" />
-                    <span className="text-sm font-semibold text-emerald-400">{t('nav_login')}</span>
+                    <LogIn size={16} className="text-[var(--neon-pink-glow)]" />
+                    <span className="text-sm font-semibold text-[var(--neon-pink-glow)]">{t('nav_login')}</span>
                   </button>
                 )}
               </div>
@@ -142,8 +143,8 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
           onClick={() => navigate('/')}
           className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity"
         >
-          <img src="/zombie-logo.svg" alt="Logo" className="w-25 h-25 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
-          <span className="text-lg font-black text-[var(--neon-light-green)] drop-shadow-[0_0_5px_var(--neon-green)] tracking-tight">
+          <img src="/zombie-logo-new.svg" alt="Logo" className="ml-2 sm:ml-0 w-14 h-14 m-3 my-4 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
+          <span className="hidden sm:flex text-lg font-black text-[var(--neon-light-green)] drop-shadow-[0_0_5px_var(--neon-green)] tracking-tight">
             Zombieware
           </span>
         </button>
@@ -162,7 +163,7 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
         {isAuthenticated && (
           <button
             onClick={() => navigate('/history')}
-            className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 sm:px-4 py-2 rounded-xl transition-all border border-slate-700"
+            className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold  text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50"
           >
             <History size={16} />
             <span>{t('nav_history')}</span>
@@ -171,7 +172,7 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
         {isAuthenticated ? (
           <button
             onClick={handleLogout}
-            className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 sm:px-4 py-2 rounded-xl transition-all border border-slate-700"
+            className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold  text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50"
           >
             <LogOut size={16} />
             <span>{t('nav_logout')}</span>
@@ -179,7 +180,7 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
         ) : (
           <button
             onClick={() => navigate('/auth')}
-            className="flex items-center gap-1 sm:gap-2 text-sm font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 px-3 sm:px-5 py-2 rounded-xl transition-all shadow-md"
+            className="flex items-center gap-1 sm:gap-2 text-sm font-bold text-slate-900 bg-[var(--neon-pink-glow)]/90 hover:bg-[var(--neon-pink)] px-3 sm:px-5 py-2 rounded-xl transition-all shadow-md"
           >
             <LogIn size={16} />
             <span className="hidden sm:inline">{t('nav_login')}</span>
@@ -187,7 +188,7 @@ const TopNav = ({ isAuthenticated, hasSession, setIsAuthenticated, setHasSession
         )}
         <button
           onClick={cycleLanguage}
-          className="flex items-center justify-center text-xs font-black text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-2 rounded-xl transition-all border border-slate-700 min-w-[42px]"
+          className="flex items-center justify-center text-xs text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50 min-w-[42px]"
           title="Change language"
         >
           {LABELS[lang]}

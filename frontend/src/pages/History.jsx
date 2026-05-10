@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { History as HistoryIcon, Shield, Skull, BookOpen, Users, ChevronLeft, Trophy, BarChart2, X, Zap } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import BackButton from '../components/BackButton';
 
 const RANK_EMOJI = ['🥇', '🥈', '🥉'];
 const ONE_MONTH_SECS = 30 * 24 * 60 * 60;
@@ -97,7 +98,7 @@ export default function History() {
       module_1: { label: `${t('mod1_label')}: ${t('mod1_sublabel')}`, emoji: '📘' },
       module_2: { label: `${t('mod2_label')}: ${t('mod2_sublabel')}`, emoji: '⚠️' },
       module_3: { label: `${t('mod3_label')}: ${t('mod3_sublabel')}`, emoji: '🔒' },
-      normal:   { label: t('host_normal_mode'), emoji: '🧟' },
+      normal: { label: t('host_normal_mode'), emoji: '🧟' },
     };
     return map[game_mode] || map.normal;
   };
@@ -118,8 +119,7 @@ export default function History() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4 animate-zw-fade">
-
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 py-10">
       {/* ── Detail Modal ── */}
       {detailModal && (
         <div
@@ -175,8 +175,8 @@ export default function History() {
                 {/* Summary */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: '👥', label: t('end_players'),    value: detailModal.recap.total_players },
-                    { icon: '🛡️', label: t('end_survived'),   value: detailModal.recap.survivors },
+                    { icon: '👥', label: t('end_players'), value: detailModal.recap.total_players },
+                    { icon: '🛡️', label: t('end_survived'), value: detailModal.recap.survivors },
                     { icon: '☣️', label: t('end_infection_rate'), value: `${detailModal.recap.infection_rate}%` },
                   ].map(({ icon, label, value }) => (
                     <div key={label} className="bg-slate-800/40 rounded-xl p-3 text-center">
@@ -272,8 +272,8 @@ export default function History() {
                     {/* Summary stats */}
                     <div className="grid grid-cols-3 gap-3">
                       {[
-                        { icon: '👥', label: t('end_players'),        value: group.recap.total_players },
-                        { icon: '🛡️', label: t('end_survived'),       value: group.recap.survivors },
+                        { icon: '👥', label: t('end_players'), value: group.recap.total_players },
+                        { icon: '🛡️', label: t('end_survived'), value: group.recap.survivors },
                         { icon: '☣️', label: t('end_infection_rate'), value: `${group.recap.infection_rate}%` },
                       ].map(({ icon, label, value }) => (
                         <div key={label} className="bg-slate-800/40 rounded-xl p-3 text-center">
@@ -324,18 +324,13 @@ export default function History() {
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white transition-all"
-        >
-          <ChevronLeft size={20} />
-        </button>
+      <div className="flex items-center gap-3 mb-8 justify-center items-center">
+        <BackButton />
         <div>
-          <h1 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+          <h1 className="text-3xl bg-clip-text items-center justify-center flex">
             {t('history_title')}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">{t('history_subtitle')}</p>
+          <p className="text-[var(--neon-light-green-glow)] text-sm mt-0.5">{t('history_subtitle')}</p>
         </div>
       </div>
 
@@ -344,11 +339,10 @@ export default function History() {
           {hasStudent && (
             <button
               onClick={() => setTab('student')}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                tab === 'student'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${tab === 'student'
+                ? 'bg-[var(--neon-cyan-glow)]/20 text-[var(--neon-cyan)]/80 border border-[var(--neon-cyan-glow)]'
+                : 'text-[var(--neon-cyan-glow)]/30 hover:text-[var(--neon-cyan)]'
+                }`}
             >
               <Shield size={15} /> {t('history_as_student')}
             </button>
@@ -356,11 +350,10 @@ export default function History() {
           {hasTeacher && (
             <button
               onClick={() => setTab('teacher')}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                tab === 'teacher'
-                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${tab === 'teacher'
+                ? 'bg-[var(--neon-cyan-glow)]/20 text-[var(--neon-cyan)]/80 border border-[var(--neon-cyan-glow)]'
+                : 'text-[var(--neon-cyan-glow)]/30 hover:text-[var(--neon-cyan)]'
+                }`}
             >
               <BookOpen size={15} /> {t('history_as_teacher')}
             </button>
@@ -372,10 +365,9 @@ export default function History() {
         <div className="space-y-3">
           {recentGames.length === 0 && studentGames.length === 0 ? (
             <div className="glass-panel rounded-3xl p-10 text-center">
-              <div className="text-5xl mb-4">🧟</div>
               <p className="text-slate-400 font-semibold">{t('history_no_games')}</p>
-              <p className="text-slate-600 text-sm mt-1">{t('history_join_session')}</p>
-              <button onClick={() => navigate('/join')} className="mt-5 btn-primary px-6 py-2.5 text-sm">{t('history_join_game')}</button>
+              <p className="text-slate-600 text-sm mt-1 mb-7">{t('history_join_session')}</p>
+              <button onClick={() => navigate('/join')} className="mt-5 neon-btn-alt px-6 py-3 text-sm">{t('history_join_game')}</button>
             </div>
           ) : recentGames.length > 0 ? (
             <div className="glass-panel rounded-2xl overflow-hidden">
@@ -440,21 +432,19 @@ export default function History() {
                     </div>
                     <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                       {game.role && (
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                          game.role === 'zombie'
-                            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/25'
-                            : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
-                        }`}>
-                          {game.role === 'zombie' ? `🧟 ${t('game_zombie')}` : `🛡️ ${t('game_survivor')}`}
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${game.role === 'zombie'
+                          ? 'bg-[var(--neon-pink-glow)]/15 text-[var(--neon-pink)]/60 border border-[var(--neon-pink)]/50'
+                          : 'bg-[var(--neon-green-glow)]/15 text-[var(--neon-green-glow)]/80 border border-[var(--neon-green-glow)]/50'
+                          }`}>
+                          {game.role === 'zombie' ? `${t('game_zombie')}` : `${t('game_survivor')}`}
                         </span>
                       )}
                       {finished && (
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                          survived
-                            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
-                            : 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
-                        }`}>
-                          {survived ? `✅ ${t('end_survived')}` : `☣️ ${t('end_infected')}`}
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${survived
+                          ? 'bg-[var(--neon-pink-glow)]/15 text-[var(--neon-pink)]/60 border border-[var(--neon-pink)]/50'
+                          : 'bg-[var(--neon-green-glow)]/15 text-[var(--neon-green-glow)]/80 border border-[var(--neon-green-glow)]/50'
+                          }`}>
+                          {survived ? `${t('end_survived')}` : `${t('end_infected')}`}
                         </span>
                       )}
                       {!finished && (
@@ -475,10 +465,9 @@ export default function History() {
         <div className="space-y-3">
           {teacherGames.length === 0 ? (
             <div className="glass-panel rounded-3xl p-10 text-center">
-              <div className="text-5xl mb-4">📋</div>
               <p className="text-slate-400 font-semibold">{t('history_no_sessions')}</p>
               <p className="text-slate-600 text-sm mt-1">{t('history_create_session')}</p>
-              <button onClick={() => navigate('/host')} className="mt-5 btn-primary px-6 py-2.5 text-sm">{t('history_host_game')}</button>
+              <button onClick={() => navigate('/host')} className="mt-5 neon-btn-alt px-6 py-2.5 text-sm">{t('history_host_game')}</button>
             </div>
           ) : (
             teacherGames.map((session, i) => {
@@ -508,11 +497,10 @@ export default function History() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                        session.status === 'finished'
-                          ? 'bg-slate-700 text-slate-400'
-                          : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
-                      }`}>
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${session.status === 'finished'
+                        ? 'bg-slate-700 text-slate-400'
+                        : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                        }`}>
                         {session.status === 'finished' ? t('history_finished') : t('history_active')}
                       </span>
                       {canViewRecap && <span className="text-slate-500 text-sm">→</span>}

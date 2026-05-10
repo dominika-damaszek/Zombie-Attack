@@ -162,7 +162,7 @@ const translations = {
     join_join: 'Join',
 
     // WaitingRoom
-    wait_global_lobby: '🌐 Global Lobby',
+    wait_global_lobby: 'Global Lobby',
     wait_group: 'Group',
     wait_live: 'Live',
     wait_reconnecting: 'Reconnecting...',
@@ -202,7 +202,7 @@ const translations = {
     game_players_scanned: 'players scanned',
     game_done_trading: 'Done Trading',
     game_skip_round: 'Skip Round',
-    game_skip_confirm: 'Use your Skip Round? This can only be used ONCE per game.',
+    game_skip_confirm: 'Use your Skip Round? Declining a trade with a zombie earns you points but skipping a trade from a survivor makes you lose some. So choose wisely!',
     game_already_done: "Done! Waiting for round to end…",
     game_skipped_trade: 'Trade skipped',
     game_waiting_scan: 'Waiting: Post-round scan required',

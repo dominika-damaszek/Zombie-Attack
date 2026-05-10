@@ -44,30 +44,29 @@ const Auth = ({ setIsAuthenticated }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 relative overflow-hidden">
+      <BackButton to="/" />
       <div className="w-full max-w-md z-20 relative">
-        <BackButton to="/" />
-
-        <img src="/uie1.png" alt="Danger" className="w-40 h-40 mx-auto mb-4 animate-slow-scale drop-shadow-[0px_0_10px_rgba(255,125,0,1)]" />
+        <img src="/uie1.png" alt="Danger" className="w-30 h-30 mx-auto mb-4 animate-slow-scale drop-shadow-[0px_0_10px_rgba(255,125,0,1)] mt-10" />
 
         <div className="text-center mb-8">
-          <h2 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-2">
-            {isLogin ? t('auth_welcome_back') : t('auth_create_account')}
+          <h2 className="text-4xl bg-clip-text mb-2">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="text-slate-400 text-sm">
-            {isLogin ? t('auth_sign_in_sub') : t('auth_register_sub')}
+            {isLogin ? 'Sign in with your username and PIN' : 'Register to start playing'}
           </p>
         </div>
 
         <div className="glass-panel p-8 rounded-3xl border border-slate-700/50">
-          <div className="flex mb-8 bg-slate-900/50 rounded-2xl p-1 gap-1">
+          <div className="flex mb-8 bg-[var(--dark-cyan)]/90 rounded-2xl p-1 gap-1">
             <button
-              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${isLogin ? 'bg-[var(--neon-cyan-glow)]/30 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               onClick={() => { setIsLogin(true); setError(''); }}
             >
               {t('auth_login_tab')}
             </button>
             <button
-              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${!isLogin ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all text-sm ${!isLogin ? 'bg-[var(--neon-cyan-glow)]/30 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               onClick={() => { setIsLogin(false); setError(''); }}
             >
               {t('auth_register_tab')}
@@ -109,7 +108,7 @@ const Auth = ({ setIsAuthenticated }) => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="neon-btn w-full flex items-center justify-center gap-2 py-4 text-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="animate-pulse">{t('auth_please_wait')}</span>

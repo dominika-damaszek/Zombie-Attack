@@ -6,7 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const PODIUM_STYLES = [
   { rank: 1, emoji: '🥇', bg: 'bg-yellow-500/15 border-yellow-500/40', color: 'text-yellow-400', size: 'text-5xl', order: 'order-2', height: 'h-28' },
-  { rank: 2, emoji: '🥈', bg: 'bg-slate-500/15 border-slate-400/30',   color: 'text-slate-300',  size: 'text-4xl', order: 'order-1', height: 'h-20' },
+  { rank: 2, emoji: '🥈', bg: 'bg-slate-500/15 border-slate-400/30', color: 'text-slate-300', size: 'text-4xl', order: 'order-1', height: 'h-20' },
   { rank: 3, emoji: '🥉', bg: 'bg-orange-700/15 border-orange-600/30', color: 'text-orange-400', size: 'text-3xl', order: 'order-3', height: 'h-16' },
 ];
 
@@ -52,7 +52,7 @@ export default function EndGame() {
     return (
       <div className="p-8 text-center text-slate-400 max-w-md mx-auto mt-12">
         <p>{t('end_no_recap')}</p>
-        <button onClick={() => navigate('/')} className="mt-4 btn-secondary">{t('end_go_home')}</button>
+        <button onClick={() => navigate('/')} className="mt-4 btn-secondary p-3">{t('end_go_home')}</button>
       </div>
     );
   }
@@ -78,9 +78,9 @@ export default function EndGame() {
       {/* ── Quick stats ── */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {[
-          { label: t('end_players'),  value: recap.total_players, icon: '👥', color: '#AD9E97' },
-          { label: t('end_survived'), value: recap.survivors,     icon: '🛡️', color: '#a8c4a0' },
-          { label: t('end_infected'), value: recap.zombies,       icon: '🧟', color: '#d97559' },
+          { label: t('end_players'), value: recap.total_players, icon: '👥', color: '#AD9E97' },
+          { label: t('end_survived'), value: recap.survivors, icon: '🛡️', color: '#a8c4a0' },
+          { label: t('end_infected'), value: recap.zombies, icon: '🧟', color: '#d97559' },
         ].map(({ label, value, icon, color }) => (
           <div key={label} className="glass-panel p-4 text-center rounded-2xl">
             <div className="text-2xl mb-1">{icon}</div>
@@ -136,7 +136,7 @@ export default function EndGame() {
                 {/* Rank */}
                 <div className="w-7 text-center">
                   {entry.rank <= 3
-                    ? <span className="text-lg">{['🥇','🥈','🥉'][entry.rank - 1]}</span>
+                    ? <span className="text-lg">{['🥇', '🥈', '🥉'][entry.rank - 1]}</span>
                     : <span className="text-slate-600 font-mono text-sm font-bold">#{entry.rank}</span>}
                 </div>
 
@@ -178,12 +178,12 @@ export default function EndGame() {
         <p className="text-xs uppercase tracking-widest font-mono mb-3" style={{ color: '#6D7162' }}>{t('end_scoring_key')}</p>
         <div className="grid grid-cols-2 gap-2 text-xs">
           {[
-            { icon: '🤝', label: t('end_score_trade'),          pts: '+1' },
-            { icon: '☣️', label: t('end_score_infect'),          pts: '+3' },
-            { icon: '🛡️', label: t('end_score_survive'),         pts: '+2' },
-            { icon: '🎯', label: t('end_score_objective'),       pts: '+1' },
-            { icon: '🏆', label: t('end_score_all_objectives'),  pts: '+2' },
-            { icon: '🌟', label: t('end_score_final_survivor'),  pts: '+5' },
+            { icon: '🤝', label: t('end_score_trade'), pts: '+1' },
+            { icon: '☣️', label: t('end_score_infect'), pts: '+3' },
+            { icon: '🛡️', label: t('end_score_survive'), pts: '+2' },
+            { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
+            { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
+            { icon: '🌟', label: t('end_score_final_survivor'), pts: '+5' },
           ].map(({ icon, label, pts }) => (
             <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.15)' }}>
               <span className="flex items-center gap-1.5 text-slate-300">{icon} {label}</span>

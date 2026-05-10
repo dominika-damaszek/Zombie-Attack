@@ -81,7 +81,7 @@ const JoinGame = () => {
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 placeholder="XXXXXX"
                 maxLength={6}
-                className="w-full bg-slate-900 border-2 border-slate-600 rounded-2xl px-4 py-5 text-center text-4xl font-mono tracking-[0.5em] text-emerald-400 placeholder-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full µ border-2 border-[var(--neon-cyan-glow)]/50 rounded-2xl px-4 py-5 text-center text-4xl font-mono tracking-[0.5em] text-[var(--neon-green-glow)] placeholder-[var(--neon-cyan-glow)]/50 focus:outline-none focus:border-[var(--neon-green-glow)] transition-colors"
                 required
                 autoFocus
               />
@@ -90,7 +90,7 @@ const JoinGame = () => {
             <button
               type="submit"
               disabled={loading || joinCode.length < 1}
-              className="w-full py-4 rounded-2xl font-black text-xl text-slate-900 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full py-4 rounded-2xl font-black text-xl text-slate-900 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 neon-btn"
             >
               {loading ? (
                 <><Loader2 size={22} className="animate-spin" /> {t('join_joining')}</>

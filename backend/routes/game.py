@@ -444,9 +444,27 @@ async def next_round(group_id: str, db: DBSession = Depends(get_db)):
 @router.post("/{group_id}/trade_done")
 async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_db)):
     player_id = payload.get("player_id")
+    partner_id = payload.get("partner_id")
+    action = payload.get("action")
+    
     player = db.query(models.GroupPlayer).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(status_code=404)
+
+    if partner_id and action:
+        partner = db.query(models.GroupPlayer).filter_by(id=partner_id).first()
+        if partner:
+            if action == 'decline':
+                if not player.is_infected and partner.is_infected:
+                    player.score = (player.score or 0) + 2
+                elif not partner.is_infected:
+                    player.score = (player.score or 0) - 2
+                
+                if partner.is_infected:
+                    partner.score = (partner.score or 0) - 2
+            elif action == 'accept':
+                if not player.is_infected and not partner.is_infected:
+                    player.score = (player.score or 0) + 2
 
     player.is_ready = True
     _touch(player.group)
