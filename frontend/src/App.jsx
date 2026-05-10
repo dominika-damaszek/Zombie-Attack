@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { API_URLS } from './services/api';
 import TopNav from './components/TopNav';
 import HelpButton from './components/HelpButton';
 import Home from './pages/Home';
@@ -31,8 +32,21 @@ function SpaRedirectHandler() {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const [hasSession, setHasSession] = useState(() => !!localStorage.getItem('session_id'));
+
+  // Validate the stored token once on mount; if it's stale/invalid, log out.
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) { setIsAuthenticated(false); return; }
+    fetch(`${API_URLS.BASE}/auth/me?token=${token}`)
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(() => setIsAuthenticated(true))
+      .catch(() => {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+      });
+  }, []);
 
   useEffect(() => {
     const syncSession = () => {

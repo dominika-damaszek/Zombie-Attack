@@ -164,24 +164,24 @@ function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
     : { label: t('game_survivor'), icon: Shield, color: '#a8c4a0', border: 'rgba(168,196,160,0.5)', glow: 'rgba(168,196,160,0.25)', desc: t('game_survivor_desc') };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.97)' }}>
-      <div className="relative text-center max-w-sm w-full px-6">
-        <div className="relative glass-panel p-8 rounded-3xl" style={{ border: `2px solid ${cfg.border}` }}>
-          <div className="flex justify-center mb-4 sm:mb-5 animate-zw-float" style={{ color: cfg.color, filter: `drop-shadow(0 0 15px ${cfg.glow})` }}>
-            <cfg.icon size={80} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(26,22,18,0.97)' }}>
+      <div className="relative text-center max-w-sm w-full my-auto">
+        <div className="relative glass-panel p-6 sm:p-8 rounded-3xl" style={{ border: `2px solid ${cfg.border}` }}>
+          <div className="flex justify-center mb-4 animate-zw-float" style={{ color: cfg.color, filter: `drop-shadow(0 0 15px ${cfg.glow})` }}>
+            <cfg.icon size={72} />
           </div>
           <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>{t('game_your_role')}</p>
-          <h1 className="text-4xl sm:text-5xl mb-3 sm:mb-4 uppercase" style={{ color: cfg.color, textShadow: `0 0 20px ${cfg.glow}` }}>
+          <h1 className="text-4xl sm:text-5xl mb-3 uppercase" style={{ color: cfg.color, textShadow: `0 0 20px ${cfg.glow}` }}>
             {cfg.label}
           </h1>
           {!isZombie && secretWord && (
-            <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.3)' }}>
+            <div className="mb-4 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.3)' }}>
               <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
-              <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
+              <p className="text-2xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
               <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
             </div>
           )}
-          <p className="text-slate-400 text-sm mb-6 leading-relaxed">{cfg.desc}</p>
+          <p className="text-slate-400 text-sm mb-5 leading-relaxed">{cfg.desc}</p>
           <button
             onClick={onContinue}
             className="w-full py-4 rounded-xl font-bold text-white text-lg flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
@@ -198,8 +198,8 @@ function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
 function CardTakenPopup({ playerName, onClose }) {
   const { t } = useLanguage();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
-      <div className="relative rounded-3xl p-7 max-w-sm w-full mx-4 text-center" style={{ background: 'rgba(42,38,34,0.97)', border: '2px solid rgba(217,117,89,0.5)', backdropFilter: 'blur(20px)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="relative rounded-3xl p-6 max-w-sm w-full mx-auto text-center my-auto" style={{ background: 'rgba(42,38,34,0.97)', border: '2px solid rgba(217,117,89,0.5)', backdropFilter: 'blur(20px)' }}>
         <div className="flex justify-center mb-3 text-rose-500">
           <AlertTriangle size={48} />
         </div>
@@ -231,12 +231,12 @@ function EarlyCompletionPopup({ onDismiss, t }) {
   }, [onDismiss]);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto"
       style={{ background: 'rgba(8,30,40,0.85)' }}
     >
-      <div className="relative text-center max-w-xs w-full px-6">
+      <div className="relative text-center max-w-xs w-full mx-auto my-auto">
         <div
-          className="relative glass-panel p-8 rounded-3xl"
+          className="relative glass-panel p-6 sm:p-8 rounded-3xl"
           style={{
             border: '2px solid #06b6d4',
             boxShadow: '0 0 40px rgba(6,182,212,0.45)',
@@ -273,9 +273,9 @@ function InfectionAlert({ onDismiss, t }) {
     return () => clearTimeout(timer);
   }, [onDismiss]);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(80,20,15,0.85)' }}>
-      <div className="relative text-center max-w-xs w-full px-6">
-        <div className="relative glass-panel p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid #d97559' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(80,20,15,0.85)' }}>
+      <div className="relative text-center max-w-xs w-full mx-auto my-auto">
+        <div className="relative glass-panel p-6 sm:p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid #d97559' }}>
           <div className="flex justify-center mb-4 text-rose-500">
             <Skull size={72} className="animate-bounce" />
           </div>
@@ -618,14 +618,11 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
         <p className="text-slate-400 mb-6">{text}</p>
 
         {cardImages && cardImages.length > 0 ? (
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             {cardImages.map((src, i) => (
               <div
                 key={i}
-                className="rounded-2xl p-2 sm:p-2.5 transition-all hover:scale-105
-                           w-[calc(33.333%-0.5rem)]
-                           sm:w-[calc(33.333%-0.7rem)]
-                           md:w-[calc(20%-0.8rem)]"
+                className="rounded-2xl p-2 sm:p-3 transition-all hover:scale-105"
                 style={{
                   background: 'rgba(56,44,37,0.45)',
                   border: '1px solid rgba(168,196,160,0.25)',
@@ -920,28 +917,27 @@ function WhatToDoNow({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-16 sm:top-20 md:right-16 sm:right-5 z-40 flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full font-bold text-md shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed top-4 right-4 z-40 flex items-center gap-1.5 px-3 py-2 rounded-full font-bold text-md shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{ background: 'rgba(145, 56, 110, 0.36)', border: '1px solid var(--neon-pink)', color: 'var(--neon-pink)', backdropFilter: 'blur(12px)', boxShadow: '0 0 10px rgba(240, 149, 194, 1)' }}
       >
         {"?"}
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 overflow-y-auto" style={{ background: 'rgba(20, 1, 26, 0.53)' }}>
-          <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ background: 'rgba(59, 27, 49, 0.74)', border: '1px solid var(--neon-pink)', backdropFilter: 'blur(24px)', boxShadow: '0 0 30px rgba(216, 123, 196, 0.8)' }}>
-            <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: 'var(--neon-pink-glow)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: 'rgba(20, 1, 26, 0.75)' }}>
+          <div className="w-full max-w-sm rounded-3xl overflow-hidden my-auto" style={{ background: 'rgba(59, 27, 49, 0.95)', border: '1px solid var(--neon-pink)', backdropFilter: 'blur(24px)', boxShadow: '0 0 30px rgba(216, 123, 196, 0.8)' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--neon-pink-glow)' }}>
               <div className="flex items-center gap-2.5 text-[var(--neon-pink)] drop-shadow-[0_0_10px_var(--neon-pink)]">
-                <IconComp size={24} className="!drop-shadow-[0_0_2px_var(--neon-pink-glow)]/50" />
-                <h2 className="text-lg !text-[var(--neon-pink)] !drop-shadow-[0_0_2px_var(--neon-pink-glow)]/10">{title}</h2>
+                <IconComp size={22} />
+                <h2 className="text-base text-[var(--neon-pink)]">{title}</h2>
               </div>
-              <button onClick={() => setOpen(false)} className="p-2 text-[var(--neon-pink)] hover:text-slate-300 transition-colors">
-                <X size={22} />
+              <button onClick={() => setOpen(false)} className="p-1.5 text-[var(--neon-pink)] hover:text-slate-300 transition-colors">
+                <X size={20} />
               </button>
             </div>
             <div className="p-5 space-y-4 flex flex-col items-center">
               <p className="text-slate-300 text-sm leading-relaxed">{body}</p>
-
-              <button onClick={() => setOpen(false)} className=" p-5 py-2.5 rounded-xl text-sm font-bold bg-[var(--neon-pink-glow)]/20 hover:bg-[var(--neon-pink-glow)]/30 neon-btn-alt !mx-0" style={{ color: 'var(--neon-pink)' }}>
+              <button onClick={() => setOpen(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-[var(--neon-pink-glow)]/20 hover:bg-[var(--neon-pink-glow)]/30 neon-btn-alt" style={{ color: 'var(--neon-pink)' }}>
                 {t('wtd_got_it')}
               </button>
             </div>
@@ -1364,7 +1360,8 @@ if (gamePhase === 'module_instructions') {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 px-4 overflow-y-auto py-8">
+    <div className="fixed inset-0 z-40 flex flex-col bg-slate-950 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-start px-4 pt-16 pb-8 min-h-full">
       {showInitialScanner && (
         <QRScannerModal
           onScan={handleInitialScan}
