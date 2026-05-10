@@ -27,14 +27,46 @@ export default function EndGame() {
   const { groupId } = location.state || { groupId: localStorage.getItem('endgame_group_id') };
   const [recap, setRecap] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!groupId) { setLoading(false); return; }
-    fetch(`${API_URLS.BASE}/api/game/${groupId}/recap`)
-      .then((r) => r.json())
-      .then(setRecap)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+
+    let cancelled = false;
+    const fetchRecap = async (retries = 3) => {
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/recap`);
+          if (!res.ok) {
+            // If game state isn't "end_game" yet, retry after a short delay
+            if (attempt < retries - 1) {
+              await new Promise(r => setTimeout(r, 2000));
+              continue;
+            }
+            throw new Error(`Server error: ${res.status}`);
+          }
+          const data = await res.json();
+          if (!cancelled && data && data.scoreboard) {
+            setRecap(data);
+            return;
+          } else if (!cancelled && attempt < retries - 1) {
+            await new Promise(r => setTimeout(r, 2000));
+            continue;
+          }
+        } catch (e) {
+          console.error('Recap fetch failed:', e);
+          if (attempt < retries - 1) {
+            await new Promise(r => setTimeout(r, 2000));
+            continue;
+          }
+          if (!cancelled) setError(e.message);
+        }
+      }
+      if (!cancelled) setLoading(false);
+    };
+
+    fetchRecap().finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [groupId]);
 
   if (loading) {

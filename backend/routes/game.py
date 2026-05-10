@@ -366,7 +366,10 @@ async def _advance_to_next_round(group, group_id: str, db: DBSession):
         group.game_state = "end_game"
         db.commit()
         await manager.broadcast_to_group(group_id, {"type": "GAME_ENDED"})
-        _check_session_complete(group_id, db)
+        try:
+            _check_session_complete(group_id, db)
+        except Exception:
+            pass  # Don't let session-check failure block endgame
     else:
         mode = group.game_mode or "normal"
         if mode in ("module_3", "normal") and group.secret_word:
@@ -978,10 +981,23 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
             models.GroupPlayer.infected_by_id == p.id
         ).count()
 
-        # Count objectives met
-        owned_types = {i.type for i in db.query(models.Item).filter_by(current_owner_id=p.id).all()}
-        objectives = json.loads(p.objectives or '[]')
-        objectives_met = len([obj for obj in objectives if obj in owned_types])
+        # Count objectives met (supports both legacy string and count-based formats)
+        owned_types = {}
+        for i in db.query(models.Item).filter_by(current_owner_id=p.id).all():
+            owned_types[i.type] = owned_types.get(i.type, 0) + 1
+        objectives_raw = json.loads(p.objectives or '[]')
+        # Normalize objectives to count-based format
+        objectives_normalized = []
+        for obj in objectives_raw:
+            if isinstance(obj, dict):
+                objectives_normalized.append(obj)
+            elif isinstance(obj, str):
+                objectives_normalized.append({"type": obj, "qty": 1})
+        objectives_met = sum(
+            min(owned_types.get(obj.get("type", ""), 0), obj.get("qty", 1))
+            for obj in objectives_normalized
+        )
+        objectives_total = sum(obj.get("qty", 1) for obj in objectives_normalized)
 
         return {
             "username":          p.user.username,
@@ -992,7 +1008,7 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
             "trades":            trades,
             "infections_caused": infections_caused,
             "objectives_met":    objectives_met,
-            "objectives_total":  len(objectives),
+            "objectives_total":  objectives_total,
         }
 
     # ── Build ranked scoreboard ───────────────────────────────────────────────

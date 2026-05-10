@@ -5,11 +5,8 @@ import {
   Shield, Skull, Timer, Package, Camera, X, Zap, AlertTriangle,
   ChevronRight, ChevronLeft, Info, HelpCircle, Target, CheckCircle2,
   Users, Globe, Layers, Smartphone, Activity, FastForward, Brain, Key, EyeOff, MessageSquare,
-  PinOffIcon,
   PinIcon,
-  HandCoinsIcon,
-  HandGrabIcon,
-  Handbag,
+  Briefcase,
   HandHelping
 } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
@@ -668,14 +665,12 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
       </div>
     );
   }
-}
-
 
   if (type === 'objectives') {
     const objs = normalizeObjectives(objectives);
     return (
       <div className="text-center">
-        <IconDisplay />
+        <HeroVisual />
         <TitleHeader>{title}</TitleHeader>
         {text.split('\n').map((line, i) => <p key={i} className="text-slate-400 mb-1">{line}</p>)}
         <div className="mt-5 space-y-3 text-left">
@@ -694,9 +689,13 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
                   ) : (
                     <Layers size={20} className={ct.color} />
                   )}
-                  <span className={`font-bold ${met ? 'text-[var(--neon-green-glow)]' : 'text-slate-200'}`}>{getCardLabel(type)}</span>
+                  <span className={`font-bold ${met ? 'text-[var(--neon-green-glow)]' : 'text-slate-200'}`}>
+                    {need}× {getCardLabel(obj.type)}
+                  </span>
                 </div>
-                {owned ? <CheckCircle2 size={20} className="text-[var(--neon-green-glow)]" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-600" />}
+                <span className={`font-mono text-sm ${met ? 'text-[var(--neon-green-glow)]' : 'text-slate-400'}`}>
+                  {Math.min(have, need)}/{need}
+                </span>
               </div>
             );
           })}
@@ -708,11 +707,13 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
   if (type === 'role') {
     const isZombie = playerState?.role === 'zombie';
     const cfg = isZombie
-      ? { label: t('game_zombie'), color: '#d97559', bg: 'rgba(80,30,20,0.6)', border: 'rgba(217,117,89,0.4)' }
-      : { label: t('game_survivor'), color: '#a8c4a0', bg: 'rgba(30,50,35,0.6)', border: 'rgba(168,196,160,0.4)' };
+      ? { label: t('game_zombie'), Icon: Skull, color: '#d97559', bg: 'rgba(80,30,20,0.6)', border: 'rgba(217,117,89,0.4)' }
+      : { label: t('game_survivor'), Icon: Shield, color: '#a8c4a0', bg: 'rgba(30,50,35,0.6)', border: 'rgba(168,196,160,0.4)' };
     return (
       <div className="text-center">
-        <IconDisplay />
+        <div className="flex justify-center mb-4 animate-zw-float" style={{ color: cfg.color }}>
+          <cfg.Icon size={72} />
+        </div>
         <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>{t('game_your_role_is')}</p>
         <h2 className="text-4xl sm:text-5xl mb-4 sm:mb-5 uppercase" style={{ color: cfg.color }}>{cfg.label}</h2>
         <div className="rounded-2xl p-4 mb-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
@@ -728,9 +729,10 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
     // display the player's real password here — it's already shown in the
     // header section of the in-game UI for survivors.
     const groupList = groups || [{ lines: [] }];
+    const isZombie = playerState?.role === 'zombie';
     return (
       <div className="text-center">
-        <IconDisplay />
+        <HeroVisual />
         <TitleHeader>{title}</TitleHeader>
         {secretWord && !isZombie && (
           <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
@@ -739,17 +741,30 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
             <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
           </div>
         )}
-        <div className="space-y-3 text-left">
-          {lines.map((line, i) => (
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-[var(--neon-green)]/10 border border-[var(--neon-green)]/20' : 'bg-[var(--neon-pink)]/10 border border-[var(--neon-pink)]/20'}`}>
-              <span className="flex-shrink-0 mt-0.5">
-                {line.ok ? (
-                  <CheckCircle2 size={18} className="text-[var(--neon-green)]" />
-                ) : (
-                  <X size={18} className="text-[var(--neon-pink)]" />
-                )}
-              </span>
-              <p className={`text-sm leading-relaxed ${line.ok ? 'text-[var(--neon-green)]' : 'text-[var(--neon-pink)]'}`}>{line.text}</p>
+        <div className="space-y-5 text-left">
+          {groupList.map((g, gi) => (
+            <div key={gi}>
+              {g.pw && (
+                <div className="mb-2 rounded-xl px-3 py-2 text-center" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
+                  <p className="text-base sm:text-lg font-black tracking-wider font-mono flex items-center justify-center gap-2" style={{ color: '#a8c4a0' }}>
+                    <Key size={16} /> {g.pw}
+                  </p>
+                </div>
+              )}
+              <div className="space-y-2">
+                {(g.lines || []).map((line, i) => (
+                  <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${line.ok ? 'bg-[var(--neon-green)]/10 border border-[var(--neon-green)]/20' : 'bg-[var(--neon-pink)]/10 border border-[var(--neon-pink)]/20'}`}>
+                    <span className="flex-shrink-0 mt-0.5">
+                      {line.ok ? (
+                        <CheckCircle2 size={18} className="text-[var(--neon-green)]" />
+                      ) : (
+                        <X size={18} className="text-[var(--neon-pink)]" />
+                      )}
+                    </span>
+                    <p className={`text-sm leading-relaxed ${line.ok ? 'text-[var(--neon-green)]' : 'text-[var(--neon-pink)]'}`}>{line.text}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -1205,11 +1220,14 @@ const GameScreen = () => {
 
   const handleNextRound = async () => {
     try {
-      await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/next_round`, {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${groupData.group_id}/next_round`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id }),
       });
+      const data = await res.json();
+      // If the server responded that the game ended, navigate immediately
+      // rather than waiting for the WebSocket or the next poll.
       fetchState();
     } catch (e) { console.error(e); }
   };
@@ -1256,9 +1274,7 @@ if (gamePhase === 'module_instructions') {
     ? MODULE_SLIDES.normal
     : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
 
-  const slideIndex = mockData
-    ? 0
-    : isNormalMode
+  const slideIndex = isNormalMode
       ? localNormalSlideIndex
       : (gameState?.instruction_slide ?? 0);
 
@@ -2278,7 +2294,7 @@ if (gamePhase === 'module_instructions') {
 
         <div className="border-2 border-[var(--neon-green)]/30 bg-[var(--neon-green)]/5 rounded-2xl p-3 sm:p-5">
           <h3 className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-2 flex items-center gap-1.5" style={{ color: '#58a551ff' }}>
-            <Handbag size={16} style={{ color: '#58a551ff' }} />
+            <Briefcase size={16} style={{ color: '#58a551ff' }} />
             {t('game_inventory')}
             <span className="ml-auto text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(19, 34, 21, 0.7)', color: 'var(--neon-light-green-glow)' }}>
               {inventory.length} {t('game_inventory_cards')}
