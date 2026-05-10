@@ -123,7 +123,7 @@ export default function History() {
       {/* ── Detail Modal ── */}
       {detailModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 overflow-y-auto"
           style={{ background: 'rgba(10,12,18,0.93)', backdropFilter: 'blur(10px)' }}
           onClick={() => setDetailModal(null)}
         >
