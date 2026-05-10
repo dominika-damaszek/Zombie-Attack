@@ -91,6 +91,11 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
         p.score = 0
         p.infected_by_id = None
         p.infected_in_round = None
+        p.early_completion_awarded = False
+        p.has_skipped_trade = False
+        p.round_skip_used = False
+
+    group.scan_phase_complete = False
 
     event = None
 
@@ -107,9 +112,6 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
         # Normal mode
         group.secret_word = random.choice(WORDS)
         zombie_count = 1
-
-    for p in players:
-        p.round_skip_used = False
 
     if zombie_count > 0:
         zombie_players = random.sample(
@@ -288,37 +290,10 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
     objectives = json.loads(player.objectives or '[]')
 
     if player.initial_cards_scanned >= 4 and not player.is_ready:
-        # Zombies never receive objectives — their only goal is spreading infection
-        if not player.is_infected:
-            # ── Distribute Objectives (survivors only) ────────────────────────
-            # Goal: minimise how many objectives the player already satisfies
-            # at the start.  Priority order for picking the 3 objectives:
-            #   1. Types the player does NOT own that ARE in the room (tradeable)
-            #   2. Types the player does NOT own that are NOT in the room yet
-            #   3. (last resort) Types the player already owns — pick those
-            #      with the fewest copies so they're easiest to lose via trade.
-
-            player_type_counts = {}
-            for i in inventory_items:
-                player_type_counts[i.type] = player_type_counts.get(i.type, 0) + 1
-            player_types_set = set(player_type_counts.keys())
-
-            room_cards = db_queries.get_room_cards_by_type(db, group_id)
-
-            # Tier 1: not owned + in room (best — player must trade to get them)
-            tier1 = [t for t in ALL_CARD_TYPES if t not in player_types_set and room_cards.get(t, 0) > 0]
-            # Tier 2: not owned + not in room (still forces trading once cards appear)
-            tier2 = [t for t in ALL_CARD_TYPES if t not in player_types_set and room_cards.get(t, 0) == 0]
-            # Tier 3: already owned — sorted fewest-copies-first (easiest to lose)
-            tier3 = sorted(player_types_set, key=lambda t: player_type_counts[t])
-
-            random.shuffle(tier1)
-            random.shuffle(tier2)
-
-            pool = tier1 + tier2 + tier3
-            objectives = pool[:3]
-
-            player.objectives = json.dumps(objectives)
+        # NOTE: Objectives are NOT assigned here per-player anymore.
+        # They are computed once for the entire group, when the last
+        # player has scanned all 4 of their cards (so the room composition
+        # is fully known and we can guarantee solvability across players).
 
         player.is_ready = True
         db.commit()
@@ -337,8 +312,14 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
             "not_ready": not_ready,
         })
 
-        # If all players finished initial scan → advance slide or start round
+        # If all players finished initial scan → assign group objectives,
+        # then advance the slide or start the round.
         if all(p.is_ready for p in group.players):
+            db_queries.assign_group_objectives(db, group_id)
+            db.expire_all()
+            group = db.query(models.Group).filter_by(id=group_id).first()
+            await manager.broadcast_to_group(group_id, {"type": "OBJECTIVES_ASSIGNED"})
+
             if group.game_state == "module_instructions":
                 await _advance_slide(group, db, group_id)
             else:
@@ -350,6 +331,12 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
                     p.is_ready = False
                 db.commit()
                 await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
+
+        # Reload my own objectives if they were just assigned in the
+        # all-players branch above.
+        db.expire_all()
+        player = db.query(models.GroupPlayer).filter_by(id=player_id, group_id=group_id).first()
+        objectives = json.loads(player.objectives or '[]')
 
     return {
         "card_type": card.card_type,
@@ -363,11 +350,17 @@ async def initial_scan(group_id: str, payload: dict, db: DBSession = Depends(get
 # ── Round-progression helpers ──────────────────────────────────────────────────
 
 async def _advance_to_next_round(group, group_id: str, db: DBSession):
-    """Move from module_between_rounds → next round or end_game."""
+    """Move from awaiting-ready → next round or end_game.
+
+    Called only when every player has clicked "Ready" in the between-rounds
+    ready gate (or after the final round, in which case the game ends).
+    """
     group.current_round = (group.current_round or 0) + 1
+    group.scan_phase_complete = False
     for p in group.players:
         p.is_ready = False
         p.round_skip_used = False   # reset per-round skip flag
+        p.has_skipped_trade = False # players can skip again next round
 
     if group.current_round > 3:
         group.game_state = "end_game"
@@ -390,9 +383,17 @@ async def _advance_to_next_round(group, group_id: str, db: DBSession):
 
 
 async def _enter_between_rounds(group, group_id: str, db: DBSession, score_results=None):
-    """Transition from round_active → module_between_rounds, then auto-advance if everyone is already ready."""
-    mode = group.game_mode or "normal"
+    """Transition round_active → module_between_rounds (the SCAN phase).
+
+    In this phase every player must scan exactly one new card. Players who
+    skipped the trade have nothing new to scan, so they're auto-ready. Once
+    every player is ready, we DO NOT auto-advance the round — instead we
+    set scan_phase_complete=True so the client shows a "Round N starting"
+    popup that requires every player to explicitly click Ready before the
+    next round begins (handled by the next_round_ready endpoint).
+    """
     group.game_state = "module_between_rounds"
+    group.scan_phase_complete = False
     _touch(group)
     for p in group.players:
         # Skippers (round_skip_used) have no card to scan → auto-ready
@@ -402,11 +403,26 @@ async def _enter_between_rounds(group, group_id: str, db: DBSession, score_resul
         "type": "ROUND_ENDED",
         "scores": score_results or [],
     })
-    # If all are already ready (everyone skipped) → advance immediately
+    # If all are already ready (everyone skipped) → mark the scan phase
+    # complete and reset is_ready for the explicit ready-gate click.
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
     if group and all(p.is_ready for p in group.players):
-        await _advance_to_next_round(group, group_id, db)
+        await _enter_ready_gate(group, group_id, db)
+
+
+async def _enter_ready_gate(group, group_id: str, db: DBSession):
+    """Mark the scan phase complete and reset is_ready so each player must
+    click 'Ready' before the next round actually starts."""
+    group.scan_phase_complete = True
+    for p in group.players:
+        p.is_ready = False
+    _touch(group)
+    db.commit()
+    await manager.broadcast_to_group(group_id, {
+        "type": "SCAN_PHASE_COMPLETE",
+        "next_round": (group.current_round or 0) + 1,
+    })
 
 
 @router.post("/{group_id}/finish_round")
@@ -427,72 +443,110 @@ async def finish_round(group_id: str, db: DBSession = Depends(get_db)):
 
 
 @router.post("/{group_id}/next_round")
-async def next_round(group_id: str, db: DBSession = Depends(get_db)):
-    """Advance from between_rounds to the next round.
-    Server-driven: only fires once all players have scanned (is_ready) in between_rounds."""
+async def next_round(group_id: str, payload: dict = {}, db: DBSession = Depends(get_db)):
+    """Player clicked 'Ready' on the 'Round N starting' popup.
+
+    Only fires after the scan phase is complete (every player has scanned
+    their 1 card for the round). Marks the calling player ready; once all
+    players are ready, advances to the next round (or ends the game).
+    """
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404)
     if group.game_state != "module_between_rounds":
         return {"message": "already_advanced"}
-    if not all(p.is_ready for p in group.players):
+    if not group.scan_phase_complete:
         return {"message": "waiting_for_scans"}
-    await _advance_to_next_round(group, group_id, db)
-    return {"message": "success"}
+
+    player_id = payload.get("player_id")
+    if player_id:
+        player = db.query(models.GroupPlayer).filter_by(
+            id=player_id, group_id=group_id
+        ).first()
+        if player:
+            player.is_ready = True
+            _touch(group)
+            db.commit()
+            db.expire_all()
+            group = db.query(models.Group).filter_by(id=group_id).first()
+            ready = sum(1 for p in group.players if p.is_ready)
+            total = len(group.players)
+            not_ready = [p.user.username for p in group.players if not p.is_ready]
+            await manager.broadcast_to_group(group_id, {
+                "type": "PLAYER_READY",
+                "ready": ready,
+                "total": total,
+                "not_ready": not_ready,
+            })
+
+    if all(p.is_ready for p in group.players):
+        await _advance_to_next_round(group, group_id, db)
+        return {"message": "round_started"}
+
+    return {"message": "waiting_for_others"}
 
 
 @router.post("/{group_id}/trade_done")
 async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_db)):
+    """
+    Player signals they've finished their trading decision for the round.
+
+    Payload:
+        player_id   – UUID of the calling player (required)
+        partner_id  – UUID of the player they traded/declined with (optional)
+        action      – "accept" | "decline" (optional, only meaningful in m3/normal)
+
+    Scoring (only the calling player's own score is ever modified — never the
+    partner's, to prevent score-tampering exploits where one client subtracts
+    from another player's total without their consent):
+
+        accept  + both survivors  (m3/normal) → +2  (good cooperation)
+        decline + partner is zombie (m3/normal)→ +2  (correct identification)
+        decline + partner survivor (m3/normal) → -2  (false accusation)
+
+    In module_1 (no zombies) and module_2 (no password to verify with), the
+    accept/decline mechanic isn't meaningful — the call simply marks the
+    player as ready with no point change.
+    """
     player_id = payload.get("player_id")
     partner_id = payload.get("partner_id")
     action = payload.get("action")
-    
+
     player = db.query(models.GroupPlayer).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(status_code=404)
 
-    if partner_id and action:
-        partner = db.query(models.GroupPlayer).filter_by(id=partner_id).first()
-        if partner:
-            if action == 'decline':
-                if not player.is_infected and partner.is_infected:
-                    player.score = (player.score or 0) + 2
-                elif not partner.is_infected:
-                    player.score = (player.score or 0) - 2
-                
-                if partner.is_infected:
-                    partner.score = (partner.score or 0) - 2
-            elif action == 'accept':
+    group = player.group
+    mode = group.game_mode or "normal"
+    accusation_mode = mode in ("module_3", "normal")
+
+    # Apply accept/decline scoring only in modes where authentication makes sense.
+    if accusation_mode and partner_id and action in ("accept", "decline"):
+        partner = db.query(models.GroupPlayer).filter_by(
+            id=partner_id, group_id=group_id
+        ).first()
+        if partner and partner.id != player.id:
+            if action == "accept":
                 if not player.is_infected and not partner.is_infected:
                     player.score = (player.score or 0) + 2
+            elif action == "decline":
+                if not player.is_infected:
+                    if partner.is_infected:
+                        # Correctly identified a zombie
+                        player.score = (player.score or 0) + 2
+                    else:
+                        # Wrongly accused a survivor
+                        player.score = (player.score or 0) - 2
+            # NOTE: We intentionally do NOT modify partner.score — a player
+            # cannot affect another player's score without their own action.
 
     player.is_ready = True
-    _touch(player.group)
+    _touch(group)
     db.commit()
 
-    # Fresh query after commit — avoids stale ORM cache (race-condition fix)
+    # Fresh query after commit — avoids stale ORM cache
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
-
-    # ── Orphaned-player check ──────────────────────────────────────────────
-    # If exactly 1 player remains not-ready and everyone else is done,
-    # that player has no trading partner left. Auto-skip them with +1 point.
-    not_ready = [p for p in group.players if not p.is_ready]
-    if len(not_ready) == 1:
-        orphan = not_ready[0]
-        orphan.is_ready = True
-        orphan.round_skip_used = True
-        orphan.score = (orphan.score or 0) + 1
-        db.commit()
-
-        await manager.broadcast_to_group(group_id, {
-            "type": "FORCED_SKIP",
-            "player_id": orphan.id,
-            "username": orphan.user.username,
-        })
-
-        db.expire_all()
-        group = db.query(models.Group).filter_by(id=group_id).first()
 
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
@@ -577,25 +631,6 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
     db.expire_all()
     group = db.query(models.Group).filter_by(id=group_id).first()
 
-    # ── Orphaned-player check ──────────────────────────────────────────────
-    # If exactly 1 player remains not-ready, auto-skip them with +2 points
-    not_ready = [p for p in group.players if not p.is_ready]
-    if len(not_ready) == 1:
-        orphan = not_ready[0]
-        orphan.is_ready = True
-        orphan.round_skip_used = True
-        orphan.score = (orphan.score or 0) + 2
-        db.commit()
-
-        await manager.broadcast_to_group(group_id, {
-            "type": "FORCED_SKIP",
-            "player_id": orphan.id,
-            "username": orphan.user.username,
-        })
-
-        db.expire_all()
-        group = db.query(models.Group).filter_by(id=group_id).first()
-
     if all(p.is_ready for p in group.players):
         is_final = (group.current_round or 0) >= 3
         score_results = db_queries.award_round_points(db, group_id, is_final_round=is_final)
@@ -632,6 +667,31 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
     mode  = group.game_mode or "normal"
     zombies_enabled = (mode != "module_1")
 
+    # ── 0. Phase gating (all modes) ─────────────────────────────────────────
+    # Trading happens PHYSICALLY during round_active. Players only scan
+    # their newly-received card AFTER the round ends (in
+    # module_between_rounds). Each player may scan exactly one card per
+    # between-rounds phase.
+    if group.game_state == "round_active":
+        raise HTTPException(
+            status_code=400,
+            detail="scan_locked_during_round",
+        )
+    if group.game_state == "module_between_rounds":
+        # Once scan_phase_complete is set, the UI should show the ready
+        # gate, not the scanner. Reject any further scans.
+        if group.scan_phase_complete:
+            raise HTTPException(
+                status_code=400,
+                detail="scan_phase_already_complete",
+            )
+        # 1 scan per player per round.
+        if player.is_ready:
+            raise HTTPException(
+                status_code=400,
+                detail="already_scanned_this_round",
+            )
+
     # ── 1. Validate the QR code against the master catalogue ──────────────────
     catalogue_card = db.query(models.Card).filter_by(code=card_code).first()
     if not catalogue_card:
@@ -660,7 +720,11 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         }
 
     elif item.current_owner_id == player.id:
-        # Idempotent – player already owns this card, nothing to do
+        # Idempotent – player already owns this card, no transfer needed.
+        # We still need to count this as "the player has scanned their card
+        # for the round" — otherwise a player who rescans one of their own
+        # cards (or didn't actually trade physically) would never be marked
+        # ready and the between-rounds scan phase would stall forever.
         pass
 
     else:
@@ -723,6 +787,13 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
                 "tag": "integrity_check",
             }
 
+    # In the between-rounds scan phase, ANY successful scan counts as the
+    # player completing their per-round scan obligation — not just trades.
+    # This avoids stalls when a player rescans one of their own cards or
+    # the trade was unilateral.
+    if group.game_state == "module_between_rounds":
+        player.is_ready = True
+
     _touch(group)
     db.commit()
 
@@ -734,19 +805,13 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         db.expire_all()
         group = db.query(models.Group).filter_by(id=group_id).first()
 
-        if group.game_state == "round_active":
+        if group.game_state == "module_between_rounds":
+            # Player scanned their 1 received card → check if all players
+            # have scanned theirs. When the last player finishes, transition
+            # to the ready gate (scan_phase_complete=True). The round will
+            # only advance once every player explicitly clicks "Ready".
             if all(p.is_ready for p in group.players):
-                is_final = (group.current_round or 0) >= 3
-                scores = db_queries.award_round_points(db, group_id, is_final_round=is_final)
-                await _enter_between_rounds(group, group_id, db, scores)
-                round_ended = True
-            else:
-                await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
-
-        elif group.game_state == "module_between_rounds":
-            # Player scanned their received card → check if all between-rounds scans done
-            if all(p.is_ready for p in group.players):
-                await _advance_to_next_round(group, group_id, db)
+                await _enter_ready_gate(group, group_id, db)
                 round_ended = True
             else:
                 await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
@@ -794,6 +859,7 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
         "objectives": json.loads(p.objectives or '[]'),
         "initial_cards_scanned": p.initial_cards_scanned or 0,
         "has_skipped_trade": p.has_skipped_trade or False,
+        "early_completion_awarded": getattr(p, "early_completion_awarded", False),
     } for p in group.players]
 
     ready_count = sum(1 for p in group.players if p.is_ready)
@@ -804,17 +870,18 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
     session_status = session.status if session else "unknown"
 
     return {
-        "game_state":       group.game_state,
-        "current_round":    group.current_round,
-        "round_end_time":   group.round_end_time,
-        "scan_end_time":    group.scan_end_time,
-        "secret_word":      group.secret_word,
-        "game_mode":        group.game_mode,
-        "instruction_slide": group.instruction_slide or 0,
-        "ready_count":      ready_count,
-        "not_ready":        not_ready,
-        "players":          players_data,
-        "session_status":   session_status,
+        "game_state":          group.game_state,
+        "current_round":       group.current_round,
+        "round_end_time":      group.round_end_time,
+        "scan_end_time":       group.scan_end_time,
+        "secret_word":         group.secret_word,
+        "game_mode":           group.game_mode,
+        "instruction_slide":   group.instruction_slide or 0,
+        "ready_count":         ready_count,
+        "not_ready":           not_ready,
+        "players":             players_data,
+        "session_status":      session_status,
+        "scan_phase_complete": getattr(group, "scan_phase_complete", False),
     }
 
 

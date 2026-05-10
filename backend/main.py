@@ -89,9 +89,11 @@ def run_migrations():
             ("game.group_players", "score",                 "INTEGER DEFAULT 0 NOT NULL"),
             ("game.group_players", "infected_by_id",        "VARCHAR"),
             ("game.group_players", "infected_in_round",     "INTEGER"),
+            ("game.group_players", "early_completion_awarded", "BOOLEAN DEFAULT FALSE NOT NULL"),
             ("game.groups",        "instruction_slide",     "INTEGER DEFAULT 0"),
             ("game.groups",        "scan_end_time",         "INTEGER"),
             ("game.groups",        "last_activity",         "INTEGER"),
+            ("game.groups",        "scan_phase_complete",   "BOOLEAN DEFAULT FALSE NOT NULL"),
             ("game.sessions",      "note",                  "VARCHAR"),
         ]
         for table, col, definition in new_cols:
