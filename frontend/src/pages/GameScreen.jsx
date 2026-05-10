@@ -13,13 +13,15 @@ import EduPopup from '../components/EduPopup';
 import { API_URLS } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 
+// NOTE: `desc` keys are translation IDs resolved at render time via t(key).
+// Do NOT call t() at module-load — `t` is not in scope here and would throw.
 const CARD_TYPES = {
-  security_patch: { label: 'Security Patch', symbol: '../../public/medicine2.png', desc: t('info_medicine_desc'), color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
-  system_boost: { label: 'System Boost', symbol: '../../public/food2.png', desc: t('info_food_desc'), color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]', glow: 'shadow-[0_0_15px_#eb9844]' },
-  firewall: { label: 'Firewall', symbol: '../../public/gun2.png', desc: t('info_weapon_desc'), color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
-  security_layer: { label: 'Security Layer', symbol: '../../public/clothing12.png', desc: t('info_clothing_desc'), color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]', glow: 'shadow-[0_0_15px_#e2bdfe]' },
-  hacking_tool: { label: 'Hacking Tool', symbol: '../../public/tool3.png', desc: t('info_tools_desc'), color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]', glow: 'shadow-[0_0_15px_#b8708b]' },
-  unknown: { label: 'Unknown', color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', desc: 'Unidentified item. Scan it to reveal what type it is.', glow: 'shadow-[0_0_15px_slate-500]' },
+  security_patch: { emoji: '🩹', label: 'Security Patch', symbol: '/medicine2.png', desc: 'info_medicine_desc', color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
+  system_boost:   { emoji: '⚡', label: 'System Boost',   symbol: '/food2.png',     desc: 'info_food_desc',     color: 'text-[#eb9844]/80',                bg: 'bg-[#eb9844]/20 border-[#f2cfab]',                       glow: 'shadow-[0_0_15px_#eb9844]' },
+  firewall:       { emoji: '🧱', label: 'Firewall',       symbol: '/gun2.png',      desc: 'info_weapon_desc',   color: 'text-[var(--neon-cyan)]/70',       bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
+  security_layer: { emoji: '🔒', label: 'Security Layer', symbol: '/clothing12.png',desc: 'info_clothing_desc', color: 'text-[#e2bdfe]/70',                bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]',                       glow: 'shadow-[0_0_15px_#e2bdfe]' },
+  hacking_tool:   { emoji: '💻', label: 'Hacking Tool',   symbol: '/tool3.png',     desc: 'info_tools_desc',    color: 'text-[#b8708b]/90',                bg: 'bg-[#a75373]/30 border-[#ddbbc8]',                       glow: 'shadow-[0_0_15px_#b8708b]' },
+  unknown:        { emoji: '📦', label: 'Unknown',        desc: 'info_unknown_desc',color: 'text-slate-400',   bg: 'bg-slate-500/20 border-slate-500/30',                                                                   glow: 'shadow-[0_0_15px_slate-500]' },
 };
 
 function getCardLabel(key) {
@@ -70,30 +72,27 @@ function getModuleSlides(t) {
       },
       { type: 'final', emoji: '🧟', title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
     ],
-    // Normal (Full Game) — same slide structure as module_3 but with different intro text
+    // Normal (Full Game) — same slide structure as module_3, only the
+    // intro story slide is swapped for a cybersecurity-themed one.
     normal: [
       { type: 'story', emoji: '🌐', title: t('slide_n0_title'), text: t('slide_n0_text') },
-      { type: 'scan', emoji: '📱', title: t('slide_n1_title'), text: t('slide_n1_text') },
-      { type: 'info', emoji: '🎯', title: t('slide_n2_title'), text: t('slide_n2_text') },
-      { type: 'info', emoji: '🔑', title: t('slide_n3_title'), text: t('slide_n3_text') },
-      { type: 'info', emoji: '🤫', title: t('slide_n4_title'), text: t('slide_n4_text') },
+      { type: 'scan',  emoji: '🃏', title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
+      { type: 'info',  emoji: '�', title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
+      { type: 'info',  emoji: '🔑', title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
+      { type: 'info',  emoji: '🤫', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       {
         type: 'hints', emoji: '💬', title: t('slide_m3_5_title'), groups: [
-          {
-            pw: t('slide_m3_5_pw1'), lines: [
-              { ok: true, text: t('slide_m3_5_h1') },
-              { ok: false, text: t('slide_m3_5_h2') },
-            ]
-          },
-          {
-            pw: t('slide_m3_5_pw2'), lines: [
-              { ok: true, text: t('slide_m3_5_h3') },
-              { ok: false, text: t('slide_m3_5_h4') },
-            ]
-          },
+          { pw: t('slide_m3_5_pw1'), lines: [
+            { ok: true,  text: t('slide_m3_5_h1') },
+            { ok: false, text: t('slide_m3_5_h2') },
+          ]},
+          { pw: t('slide_m3_5_pw2'), lines: [
+            { ok: true,  text: t('slide_m3_5_h3') },
+            { ok: false, text: t('slide_m3_5_h4') },
+          ]},
         ]
       },
-      { type: 'final', emoji: '⚡', title: t('slide_n6_title'), text: t('slide_n6_text') },
+      { type: 'final', emoji: '🧟', title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
     ],
   };
 }
@@ -102,7 +101,7 @@ function getInfoSections(t) {
   return [
     {
       title: t('game_item_types_title'), items: Object.entries(CARD_TYPES).filter(([k]) => k !== 'unknown').map(([, ct]) => ({
-        emoji: ct.emoji, label: ct.label, desc: ct.desc,
+        emoji: ct.emoji, label: ct.label, desc: t(ct.desc) || ct.desc,
       }))
     },
     {
@@ -994,7 +993,7 @@ const GameScreen = ({ mockData } = {}) => {
   if (gamePhase === 'module_instructions') {
     const isNormalMode = gameMode === 'normal';
     const MODULE_SLIDES = getModuleSlides(t);
-    const slides = isNormalMode ? getNormalSlides(t) : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
+    const slides = MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1;
     const slideIndex = isNormalMode
       ? (mockData ? 0 : localNormalSlideIndex)
       : (mockData ? 0 : (gameState?.instruction_slide ?? 0));
