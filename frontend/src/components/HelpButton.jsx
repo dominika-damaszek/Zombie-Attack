@@ -89,15 +89,15 @@ export default function HelpButton() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center sm:items-center justify-center p-4" style={{ background: 'rgba(14, 18, 20, 0.85)' }}>
+        <div className="fixed inset-0 z-50 flex items-center sm:items-center justify-center p-4 shadow-[0_0_20px_var(--neon-cyan-glow)]" style={{ background: 'rgba(5, 21, 29, 0.75)' }}>
           <div
-            className="w-full max-w-md rounded-3xl overflow-hidden bg-[var(--neon-cyan-glow)]/30"
+            className="w-full max-w-md rounded-3xl overflow-hidden bg-[var(--neon-cyan-glow)]/30 shadow-[0_0_50px_var(--neon-cyan-glow)]/80"
             style={{ border: '1px solid var(--neon-cyan-glow)', backdropFilter: 'blur(24px)' }}
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--neon-cyan-glow)]/50">
               <div className="flex items-center gap-2">
-                <HelpCircle size={20} className="text-[var(--neon-cyan)]/90" />
-                <h2 className="text-xl text-[var(--neon-cyan)]/90 drop-shadow-[none]">Help & Common Problems</h2>
+                <HelpCircle size={20} className="text-[var(--neon-cyan)]/90 drop-shadow-[0_0_3px_var(--neon-cyan)]/80" />
+                <h2 className="text-xl text-[var(--neon-cyan)]/90 drop-shadow-[0_0_3px_var(--neon-cyan)]/80">Help & Common Problems</h2>
               </div>
               <button onClick={handleClose} className="text-[var(--neon-cyan)]/60 hover:text-[var(--neon-cyan)] transition-colors">
                 <X size={22} />
@@ -125,7 +125,7 @@ export default function HelpButton() {
                 <button
                   key={p.id}
                   onClick={() => p.action(setStatus)}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all hover:scale-[1.01] active:scale-[0.99] bg-[var(--dark-cyan)]/75"
+                  className="w-full flex items-center gap-4 mb-8 p-4 rounded-2xl text-left transition-all hover:scale-[1.01] active:scale-[0.99] bg-[var(--dark-cyan)]/75 border-2 border-[var(--neon-cyan)]/90 shadow-[0_0_10px_var(--neon-cyan)]/80"
                 >
                   <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${p.color}22`, color: p.color }}>
                     {p.icon}

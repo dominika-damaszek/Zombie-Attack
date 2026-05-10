@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { UserCircle, LogOut, Trophy, Gamepad2, TrendingUp, Star, Shield, Skull, Zap, X, BarChart2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { API_URLS } from '../services/api';
-import { DEV_MODE } from '../App';
 import BackButton from '../components/BackButton';
 
 function decodeToken(token) {
@@ -36,8 +35,7 @@ const Profile = ({ setIsAuthenticated, setHasSession }) => {
   const token = localStorage.getItem('token');
   const decoded = token ? decodeToken(token) : null;
 
-  // If in DEV_MODE and no token, fake a user
-  const username = decoded?.sub || decoded?.username || (DEV_MODE ? 'Lara (Dev)' : 'Unknown Agent');
+  const username = decoded?.sub || decoded?.username || 'Unknown Agent';
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,26 +47,6 @@ const Profile = ({ setIsAuthenticated, setHasSession }) => {
   })();
 
   useEffect(() => {
-    if (DEV_MODE && !token) {
-      // Fake stats for testing
-      setTimeout(() => {
-        setStats({
-          total_games: 42,
-          wins: 15,
-          best_score: 1250,
-          avg_score: 840,
-          survived: 28,
-          total_score: 35280,
-          recent_games: [
-            { group_id: 'fake-1', game_mode: 'normal', rank: 1, survived: true, score: 1250, rounds_played: 5, total_players: 10, trades: 3, infections_caused: 0, last_activity: Math.floor(Date.now() / 1000) - 3600 },
-            { group_id: 'fake-2', game_mode: 'module_1', rank: 4, survived: false, score: 600, rounds_played: 5, total_players: 8, trades: 1, infections_caused: 2, last_activity: Math.floor(Date.now() / 1000) - 86400 },
-          ]
-        });
-        setLoading(false);
-      }, 500);
-      return;
-    }
-
     if (!token) { setLoading(false); return; }
     fetch(`${API_URLS.BASE}/auth/stats?token=${token}`)
       .then(r => r.json())
@@ -89,23 +67,6 @@ const Profile = ({ setIsAuthenticated, setHasSession }) => {
 
   const openDetail = async (game) => {
     if (!isWithinOneMonth(game.last_activity)) return;
-
-    if (DEV_MODE && !token) {
-      setDetailModal({
-        game,
-        recap: {
-          total_players: game.total_players,
-          survivors: 4,
-          infection_rate: 60,
-          scoreboard: [
-            { username: 'Lara (Dev)', rank: game.rank, is_infected: !game.survived, score: game.score, trades: game.trades, infections_caused: game.infections_caused },
-            { username: 'Player2', rank: game.rank === 1 ? 2 : 1, is_infected: false, score: game.score + (game.rank === 1 ? -100 : 100), trades: 1, infections_caused: 0 }
-          ]
-        },
-        loading: false
-      });
-      return;
-    }
 
     setDetailModal({ game, recap: null, loading: true });
     setDetailLoading(true);
