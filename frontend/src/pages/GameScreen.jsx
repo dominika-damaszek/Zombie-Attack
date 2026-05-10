@@ -586,11 +586,18 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
         <p className="text-slate-400 mb-6">{text}</p>
         {cardImages && cardImages.length > 0 ? (
           // Custom layout for the Module 1 "5 cards" slide.
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+          // Use flex-wrap with sized children so the last row centers
+          // naturally (5 cards → 3 + 2 on mobile, larger and easier to see
+          // than a 5-across grid). Width calc() includes the gap so 3 cards
+          // exactly fill the row.
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {cardImages.map((src, i) => (
               <div
                 key={i}
-                className="rounded-2xl p-1.5 sm:p-2 transition-all hover:scale-105"
+                className="rounded-2xl p-2 sm:p-2.5 transition-all hover:scale-105
+                           w-[calc(33.333%-0.5rem)]
+                           sm:w-[calc(33.333%-0.7rem)]
+                           md:w-[calc(20%-0.8rem)]"
                 style={{
                   background: 'rgba(56,44,37,0.45)',
                   border: '1px solid rgba(168,196,160,0.25)',
@@ -1079,7 +1086,12 @@ const GameScreen = ({ mockData } = {}) => {
       }
       if (data.round_ended) fetchState();
       // Mark between-rounds scan as done so UI updates immediately
-      if (gameState?.game_state === 'module_between_rounds') setBetweenRoundsDone(true);
+      if (gameState?.game_state === 'module_between_rounds') {
+        setBetweenRoundsDone(true);
+        // Always refresh — the server marked us as ready and may have
+        // triggered the ready-gate transition (scan_phase_complete=True).
+        fetchState();
+      }
     } catch {
       setScanFeedback({ status: 'error', message: t('game_scan_failed') });
       setTimeout(() => setScanFeedback(null), 3000);

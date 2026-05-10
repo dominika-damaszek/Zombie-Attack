@@ -720,7 +720,11 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         }
 
     elif item.current_owner_id == player.id:
-        # Idempotent – player already owns this card, nothing to do
+        # Idempotent – player already owns this card, no transfer needed.
+        # We still need to count this as "the player has scanned their card
+        # for the round" — otherwise a player who rescans one of their own
+        # cards (or didn't actually trade physically) would never be marked
+        # ready and the between-rounds scan phase would stall forever.
         pass
 
     else:
@@ -782,6 +786,13 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
                 "body": "Item logged. In real networks, receiving files triggers integrity checks to ensure the file wasn't tampered with.",
                 "tag": "integrity_check",
             }
+
+    # In the between-rounds scan phase, ANY successful scan counts as the
+    # player completing their per-round scan obligation — not just trades.
+    # This avoids stalls when a player rescans one of their own cards or
+    # the trade was unilateral.
+    if group.game_state == "module_between_rounds":
+        player.is_ready = True
 
     _touch(group)
     db.commit()
