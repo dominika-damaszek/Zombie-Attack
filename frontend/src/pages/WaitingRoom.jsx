@@ -25,6 +25,28 @@ const WaitingRoom = () => {
 
   const { lastMessage, connected } = useGameWebSocket(currentGroupData?.group_id, playerData?.id);
 
+  // Fix stale group in localStorage / navigation state (e.g. after split or refresh).
+  useEffect(() => {
+    if (!playerData?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+        if (!res.ok || cancelled) return;
+        const g = await res.json();
+        if (cancelled) return;
+        setCurrentGroupData((prev) => {
+          if (prev?.group_id === g.group_id && prev?.join_code === g.join_code) return prev;
+          localStorage.setItem('player_session', JSON.stringify({ groupData: g, playerData }));
+          return g;
+        });
+      } catch (e) {
+        if (!cancelled) console.error(e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [playerData?.id]);
+
   const fetchGameState = async (groupId, gData, pData) => {
     const usedGroupData = gData ?? currentGroupData;
     const usedPlayerData = pData ?? playerData;
@@ -57,9 +79,17 @@ const WaitingRoom = () => {
         } catch (e) { console.error(e); }
       })();
     } else if (lastMessage?.type === 'PLAYER_JOINED' || lastMessage?.type === 'PLAYER_READY') {
-      if (currentGroupData?.group_id) {
-        fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
-      }
+      (async () => {
+        try {
+          if (!playerData?.id) return;
+          const res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+          if (!res.ok) return;
+          const g = await res.json();
+          setCurrentGroupData(g);
+          localStorage.setItem('player_session', JSON.stringify({ groupData: g, playerData }));
+          await fetchGameState(g.group_id, g, playerData);
+        } catch (e) { console.error(e); }
+      })();
     } else if (lastMessage?.type === 'GAME_STARTED') {
       (async () => {
         try {
@@ -88,7 +118,7 @@ const WaitingRoom = () => {
         } catch (e) { console.error(e); }
       }
       fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
-    }, 4000);
+    }, currentGroupData.group_number === 0 ? 4000 : 2000);
     return () => clearInterval(id);
   }, [currentGroupData?.group_id]);
 
@@ -101,13 +131,25 @@ const WaitingRoom = () => {
       const latest = await gRes.json();
       setCurrentGroupData(latest);
       localStorage.setItem('player_session', JSON.stringify({ groupData: latest, playerData }));
+
       const res = await fetch(`${API_URLS.BASE}/api/game/${latest.group_id}/ready`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerData.id })
       });
-      if (res.ok) await fetchGameState(latest.group_id, latest, playerData);
-      else console.error('ready failed', await res.text());
+      if (!res.ok) {
+        console.error('ready failed', await res.text());
+        return;
+      }
+      const data = await res.json();
+      if (data.game_started) {
+        const g2Res = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+        const g2 = g2Res.ok ? await g2Res.json() : latest;
+        localStorage.setItem('player_session', JSON.stringify({ groupData: g2, playerData }));
+        navigate('/game', { state: { groupData: g2, playerData } });
+        return;
+      }
+      await fetchGameState(latest.group_id, latest, playerData);
     } catch (e) { console.error(e); }
     finally { setSavingReady(false); }
   };

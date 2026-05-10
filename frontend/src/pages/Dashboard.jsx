@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Play, Users, Skull, RefreshCw, ChevronRight, X, Maximize2, BarChart2, Trophy, Shield, Zap, ArrowRightLeft, NotebookPen, Check } from 'lucide-react';
+import { Users, Skull, RefreshCw, ChevronRight, X, Maximize2, BarChart2, Trophy, Shield, Zap, ArrowRightLeft, NotebookPen, Check } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -95,16 +95,6 @@ const Dashboard = ({ setHasSession }) => {
     finally { setActionLoading(null); }
   };
 
-  const startGame = async (groupId) => {
-    setActionLoading(groupId);
-    try {
-      const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/start`, { method: 'POST' });
-      if (!res.ok) throw new Error(await res.text());
-      await fetchGroupStats(groupId);
-    } catch (e) { alert('Error: ' + e.message); }
-    finally { setActionLoading(null); }
-  };
-
   const endGame = async (groupId) => {
     if (!window.confirm(t('dash_end_game_confirm'))) return;
     setActionLoading(groupId);
@@ -189,7 +179,7 @@ const Dashboard = ({ setHasSession }) => {
           style={{ background: 'rgba(10,12,18,0.96)', backdropFilter: 'blur(12px)' }}
           onClick={() => setQrFullscreen(null)}
         >
-          <div className="flex flex-col items-center gap-6 max-w-full" onClick={e => e.stopPropagation()}>
+          <div className="flex flex-col items-center gap-6" onClick={e => e.stopPropagation()}>
             <div className="bg-white p-6 rounded-3xl shadow-2xl">
               <QRCodeSVG value={qrFullscreen.url} size={280} bgColor="#ffffff" fgColor="#0f172a" level="H" />
             </div>
@@ -412,7 +402,6 @@ const Dashboard = ({ setHasSession }) => {
               const state = stats?.game_state || group.game_state || 'lobby';
               const stateInfo = STATE_LABELS[state] || STATE_LABELS.lobby;
               const isActive = state === 'round_active';
-              const canStart = ['lobby', 'role_assignment'].includes(state);
               const playerCount = stats?.players?.length || group.player_count || 0;
               const infected = stats?.players?.filter(p => p.is_infected).length || 0;
               const infectionPct = playerCount > 0 ? Math.round((infected / playerCount) * 100) : 0;
@@ -463,22 +452,20 @@ const Dashboard = ({ setHasSession }) => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => openStats(group.id)}
-                      className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all text-sm font-semibold"
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all text-sm font-semibold ${isActive ? '' : 'flex-1'}`}
                     >
                       <BarChart2 size={14} /> {t('dash_stats_btn')}
                     </button>
-                    <button
-                      onClick={() => isActive ? endGame(group.id) : startGame(group.id)}
-                      disabled={(!canStart && !isActive) || actionLoading === group.id}
-                      className={`flex-1 py-2.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm ${isActive ? 'bg-gradient-to-r from-rose-600 to-red-500 text-white'
-                        : canStart ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                          : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                        }`}
-                    >
-                      {actionLoading === group.id ? <RefreshCw size={14} className="animate-spin" />
-                        : isActive ? <><Skull size={14} /> {t('dash_end_game')}</>
-                          : <><Play size={14} fill="currentColor" /> {t('dash_start_game')}</>}
-                    </button>
+                    {isActive && (
+                      <button
+                        onClick={() => endGame(group.id)}
+                        disabled={actionLoading === group.id}
+                        className="flex-1 py-2.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm bg-gradient-to-r from-rose-600 to-red-500 text-white disabled:opacity-60"
+                      >
+                        {actionLoading === group.id ? <RefreshCw size={14} className="animate-spin" />
+                          : <><Skull size={14} /> {t('dash_end_game')}</>}
+                      </button>
+                    )}
                   </div>
                 </div>
               );
