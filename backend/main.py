@@ -86,7 +86,7 @@ def run_migrations():
             ("game.group_players", "has_skipped_trade",     "BOOLEAN DEFAULT FALSE"),
             ("game.group_players", "round_skip_used",       "BOOLEAN DEFAULT FALSE"),
             ("game.group_players", "is_initial_zombie",     "BOOLEAN DEFAULT FALSE"),
-            ("game.group_players", "score",                 "INTEGER DEFAULT 0 NOT NULL"),
+            ("game.group_players", "score",                 "INTEGER DEFAULT 0"),
             ("game.group_players", "infected_by_id",        "VARCHAR"),
             ("game.group_players", "infected_in_round",     "INTEGER"),
             ("game.group_players", "early_completion_awarded", "BOOLEAN DEFAULT FALSE NOT NULL"),
@@ -98,7 +98,7 @@ def run_migrations():
         ]
         for table, col, definition in new_cols:
             try:
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {definition}"))
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {definition}"))
                 conn.commit()
             except Exception:
                 conn.rollback()  # reset the aborted transaction so subsequent ALTERs work
