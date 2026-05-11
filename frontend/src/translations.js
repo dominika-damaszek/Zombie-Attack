@@ -360,7 +360,17 @@ const translations = {
     rules_password_zombie_hint_title: 'Zombies get a category hint!',
     rules_password_zombie_hint_desc: 'Zombies don\'t know the password, but they receive its category (e.g. "Animals"). They can use this to bluff survivors into thinking they know the full password.',
     rules_report_zombie_title: 'Reporting a Zombie',
-    rules_report_zombie_desc: 'In Module 3 & Full Game, instead of accepting a trade you can "Report Zombie". Both players sit out the rest of the round. Correctly identifying a zombie: +3 pts. False accusation: −2 pts. Zombies cannot report other zombies.',
+    rules_report_context: 'In Module 3 and Full Game, every time someone requests a trade with you, you face a choice — accept the trade, or call them out as a zombie. Choose carefully: a wrong accusation costs you points.',
+    rules_report_accept_label: 'Accept Trade',
+    rules_report_accept_desc: 'The trade proceeds normally.',
+    rules_report_report_label: 'Report Zombie',
+    rules_report_report_desc: 'Both players sit out the rest of this round.',
+    rules_report_outcomes_label: 'If you report...',
+    rules_report_outcome_correct: 'They were a zombie — correct!',
+    rules_report_outcome_correct_pts: 'You +3 pts · Zombie −2 pts',
+    rules_report_outcome_wrong: 'They were a survivor — false accusation',
+    rules_report_outcome_wrong_pts: 'You −2 pts · Accused player unaffected',
+    rules_report_zombie_note: 'Only survivors can report zombies. Zombies cannot use this action — they can only accept trades.',
 
     // History
     history_title: 'Game History',

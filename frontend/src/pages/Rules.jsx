@@ -157,9 +157,45 @@ export default function Rules() {
               </div>
             ))}
           </div>
-          <div className="bg-[var(--neon-pink-glow)]/10 border border-[var(--neon-pink)]/20 rounded-xl p-3">
-            <p className="text-[var(--neon-pink)] text-xs font-bold mb-1">☠️ {t('rules_report_zombie_title')}</p>
-            <p className="text-slate-400 text-xs leading-relaxed">{t('rules_report_zombie_desc')}</p>
+        </Section>
+
+        <Section icon={<AlertTriangle size={18} className="text-[var(--neon-pink)]" />} title={t('rules_report_zombie_title')} color="bg-[var(--neon-pink-glow)]/20">
+          <p className="text-slate-300 text-sm leading-relaxed mb-5">{t('rules_report_context')}</p>
+
+          {/* Non-clickable button mockups */}
+          <div className="flex gap-3 mb-5">
+            <div className="flex-1 py-4 px-3 rounded-xl border-2 border-[var(--neon-green-glow)]/60 bg-[var(--neon-green-glow)]/10 flex flex-col items-center gap-1.5 select-none">
+              <span className="text-xl">✓</span>
+              <span className="font-black text-[var(--neon-green-glow)] text-sm text-center">{t('rules_report_accept_label')}</span>
+              <span className="text-xs text-slate-400 text-center leading-snug">{t('rules_report_accept_desc')}</span>
+            </div>
+            <div className="flex-1 py-4 px-3 rounded-xl border-2 border-[var(--neon-pink)]/60 bg-[var(--neon-pink-glow)]/10 flex flex-col items-center gap-1.5 select-none">
+              <span className="text-xl">☠️</span>
+              <span className="font-black text-[var(--neon-pink)] text-sm text-center">{t('rules_report_report_label')}</span>
+              <span className="text-xs text-slate-400 text-center leading-snug">{t('rules_report_report_desc')}</span>
+            </div>
+          </div>
+
+          <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-2">{t('rules_report_outcomes_label')}</p>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-start gap-3 bg-[var(--neon-green-glow)]/10 border border-[var(--neon-green-glow)]/30 rounded-xl p-3">
+              <span className="text-base shrink-0 mt-0.5">✅</span>
+              <div>
+                <p className="text-[var(--neon-green-glow)] text-xs font-bold">{t('rules_report_outcome_correct')}</p>
+                <p className="text-slate-400 text-xs mt-0.5">{t('rules_report_outcome_correct_pts')}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 bg-[#d95959]/10 border border-[#d95959]/30 rounded-xl p-3">
+              <span className="text-base shrink-0 mt-0.5">❌</span>
+              <div>
+                <p className="text-[#d95959] text-xs font-bold">{t('rules_report_outcome_wrong')}</p>
+                <p className="text-slate-400 text-xs mt-0.5">{t('rules_report_outcome_wrong_pts')}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
+            <p className="text-slate-400 text-xs leading-relaxed">🧟 {t('rules_report_zombie_note')}</p>
           </div>
         </Section>
 
