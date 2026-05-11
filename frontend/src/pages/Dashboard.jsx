@@ -478,9 +478,22 @@ const Dashboard = ({ setHasSession }) => {
         {/* Title row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl sm:text-4xl bg-clip-text mb-1 mr-3">
-              {t("dash_title")}
-            </h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-3xl sm:text-4xl bg-clip-text">
+                {t("dash_title")}
+              </h1>
+              <button
+                onClick={refreshAll}
+                disabled={refreshing}
+                className="p-1.5 bg-[var(--neon-cyan-glow)]/30 hover:bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/60 rounded-xl text-[var(--neon-cyan)] transition-all shrink-0 self-center"
+                title="Refresh"
+              >
+                <RefreshCw
+                  size={14}
+                  className={refreshing ? "animate-spin" : ""}
+                />
+              </button>
+            </div>
             <div
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border ${modeInfo.bg} ${modeInfo.color}`}
             >
@@ -507,16 +520,6 @@ const Dashboard = ({ setHasSession }) => {
             >
               <X size={14} className=" shrink-0" />
               {t("dash_end_session")}
-            </button>
-            <button
-              onClick={refreshAll}
-              disabled={refreshing}
-              className="p-2.5 bg-[var(--neon-cyan-glow)]/40 hover:bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/80 rounded-2xl text-[var(--neon-cyan)]/100 transition-all shrink-0"
-            >
-              <RefreshCw
-                size={16}
-                className={refreshing ? "animate-spin" : ""}
-              />
             </button>
           </div>
         </div>
