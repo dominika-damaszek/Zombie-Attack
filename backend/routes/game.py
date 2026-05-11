@@ -550,12 +550,30 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                 if not player.is_infected:
                     if partner.is_infected:
                         # Correctly identified a zombie
-                        player.score = (player.score or 0) + 2
+                        player.score = (player.score or 0) + 3
+                        partner.score = (partner.score or 0) - 2
                     else:
                         # Wrongly accused a survivor
                         player.score = (player.score or 0) - 2
-            # NOTE: We intentionally do NOT modify partner.score — a player
-            # cannot affect another player's score without their own action.
+                
+                # Accused MUST skip the round too
+                partner.is_ready = True
+                partner.round_skip_used = True
+                
+                await manager.broadcast_to_group(group_id, {
+                    "type": "REPORTED_AS_ZOMBIE",
+                    "target_id": partner.id,
+                    "accuser_name": player.user.username
+                })
+            elif action == "decline":
+                # Legacy decline (keep for safety, though UI will use report_zombie)
+                if not player.is_infected:
+                    if partner.is_infected:
+                        player.score = (player.score or 0) + 2
+                    else:
+                        player.score = (player.score or 0) - 2
+            # NOTE: For "accept" and "decline", we intentionally do NOT modify partner.score.
+            # But for "report_zombie", we DO modify it because it's a penalty.
 
     player.is_ready = True
     _touch(group)
@@ -627,6 +645,18 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
             accusation_result = "wrong"
     else:
         # "no_partner" or module_1/2 → +2 survival points
+        # RULE: if odd number of players, only ONE player per round can click on skip for points.
+        num_players = len(group.players)
+        if num_players % 2 != 0:
+            # Check if anyone else already used the skip this round
+            already_skipped = db.query(models.GroupPlayer).filter(
+                models.GroupPlayer.group_id == group_id,
+                models.GroupPlayer.round_skip_used == True,
+                models.GroupPlayer.id != player.id
+            ).first()
+            if already_skipped:
+                raise HTTPException(status_code=400, detail="skip_already_used")
+
         player.score = (player.score or 0) + 2
 
     player.has_skipped_trade = True
@@ -737,11 +767,12 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         }
 
     elif item.current_owner_id == player.id:
-        # Idempotent – player already owns this card, no transfer needed.
-        # We still need to count this as "the player has scanned their card
-        # for the round" — otherwise a player who rescans one of their own
-        # cards (or didn't actually trade physically) would never be marked
-        # ready and the between-rounds scan phase would stall forever.
+        # If they already own it, it doesn't count as the new scan of the round.
+        if group.game_state == "module_between_rounds":
+             raise HTTPException(
+                status_code=400,
+                detail="already_owned"
+            )
         pass
 
     else:
@@ -915,6 +946,7 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
         "objectives": json.loads(p.objectives or '[]'),
         "initial_cards_scanned": p.initial_cards_scanned or 0,
         "has_skipped_trade": p.has_skipped_trade or False,
+        "round_skip_used": p.round_skip_used or False,
         "early_completion_awarded": getattr(p, "early_completion_awarded", False),
     } for p in players]
 

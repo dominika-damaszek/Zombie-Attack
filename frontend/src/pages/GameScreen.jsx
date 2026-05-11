@@ -737,13 +737,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
       <div className="text-center">
         <HeroVisual />
         <TitleHeader>{title}</TitleHeader>
-        {secretWord && !isZombieHints && (
-          <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
-            <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
-            <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
-            <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
-          </div>
-        )}
+        {/* Removed secret password from hints slide to prevent reveal in instructions */}
         <div className="space-y-6 text-left">
           {groupList.map((group, gi) => (
             <div key={gi}>
@@ -986,6 +980,9 @@ const GameScreen = () => {
   // True briefly when the player's "all objectives complete" bonus triggers
   // for the first time. Drives the EarlyCompletionPopup.
   const [showEarlyCompletion, setShowEarlyCompletion] = useState(false);
+  const [showAlreadyOwnedPopup, setShowAlreadyOwnedPopup] = useState(false);
+  const [showReportedPopup, setShowReportedPopup] = useState(false);
+  const [reporterName, setReporterName] = useState("");
 
   // Persist session to localStorage so page reload can rejoin the game
   useEffect(() => {
@@ -1127,6 +1124,12 @@ const GameScreen = () => {
       // Group-aware objectives were just generated server-side.
       fetchState();
     }
+    if (lastMessage.type === 'REPORTED_AS_ZOMBIE') {
+      setReporterName(lastMessage.reporter_username || "Someone");
+      setShowReportedPopup(true);
+      setIsDoneTrading(true);
+      fetchState();
+    }
     if (lastMessage.type === 'GAME_ENDED') {
       if (groupData?.group_id) {
         localStorage.setItem('endgame_group_id', (resolvedGroupId.current || groupData.group_id));
@@ -1191,6 +1194,11 @@ const GameScreen = () => {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 400 && data.detail === 'already_owned') {
+          setScanFeedback(null);
+          setShowAlreadyOwnedPopup(true);
+          return;
+        }
         setScanFeedback({ status: 'error', message: data.detail || t('game_scan_failed') });
         setTimeout(() => setScanFeedback(null), 3000);
         return;
@@ -1773,6 +1781,19 @@ if (gamePhase === 'module_instructions') {
       )}
       {showInfectionAlert && <InfectionAlert onDismiss={() => setShowInfectionAlert(false)} t={t} />}
       {showEarlyCompletion && <EarlyCompletionPopup onDismiss={() => setShowEarlyCompletion(false)} t={t} />}
+      {showReportedPopup && (
+        <ReportedPopup
+          reporterName={reporterName}
+          onDismiss={() => setShowReportedPopup(false)}
+          t={t}
+        />
+      )}
+      {showAlreadyOwnedPopup && (
+        <AlreadyOwnedPopup
+          onDismiss={() => setShowAlreadyOwnedPopup(false)}
+          t={t}
+        />
+      )}
       {showScanner && (
         <QRScannerModal
           onScan={handleScan}
@@ -2029,14 +2050,14 @@ if (gamePhase === 'module_instructions') {
             : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
         }`}
       >
-        {'Accept'}{' '}
+        {t('game_accept') || 'Accept'}{' '}
         ✓
       </button>
 
       <button
         disabled={!selectedTradePartner}
         onClick={() =>
-          handleTradeAction('decline')
+          handleTradeAction('report_zombie')
         }
         className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${
           selectedTradePartner
@@ -2044,8 +2065,8 @@ if (gamePhase === 'module_instructions') {
             : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
         }`}
       >
-        {'Decline'}{' '}
-        ✗
+        {t('game_report_zombie')}{' '}
+        🚨
       </button>
     </div>
   </>
@@ -2060,16 +2081,33 @@ if (gamePhase === 'module_instructions') {
   </button>
 )}
 
-            {!hasSkippedTrade && (
-              <div className="mt-2">
-                <button
-                  onClick={handleSkipTrade}
-                  className="w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95"
-                >
-                  {t('game_skip_round')} {t('game_skip_once')}
-                </button>
-              </div>
-            )}
+            {(() => {
+              const playerCount = gameState?.players?.length || 0;
+              const isOdd = playerCount % 2 !== 0;
+              const skipUsedByAnyone = gameState?.players?.some(p => p.round_skip_used);
+              const canSkip = !hasSkippedTrade && (!isOdd || !skipUsedByAnyone);
+
+              if (hasSkippedTrade) return null;
+
+              return (
+                <div className="mt-2">
+                  <button
+                    disabled={!canSkip}
+                    onClick={handleSkipTrade}
+                    className={`w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm flex flex-col items-center justify-center ${
+                      canSkip
+                        ? 'bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95'
+                        : 'bg-slate-800/50 text-slate-600 cursor-not-allowed border border-slate-700'
+                    }`}
+                  >
+                    <span>{t('game_skip_round')} {t('game_skip_once')}</span>
+                    {isOdd && skipUsedByAnyone && !hasSkippedTrade && (
+                      <span className="text-[9px] uppercase font-mono opacity-80 mt-0.5">{t('game_odd_skip_used')}</span>
+                    )}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -2394,6 +2432,60 @@ if (gamePhase === 'module_instructions') {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+};
+
+const ReportedPopup = ({ reporterName, onDismiss, t }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onDismiss} />
+      <div className="relative w-full max-w-sm bg-slate-900 border-2 border-amber-500 rounded-[2rem] p-8 text-center shadow-[0_0_50px_rgba(245,158,11,0.3)] animate-zw-zoom">
+        <div className="flex justify-center mb-6">
+          <div className="p-4 rounded-full bg-amber-500/10 border-2 border-amber-500 text-amber-500 animate-pulse">
+            <AlertTriangle size={48} />
+          </div>
+        </div>
+        <h2 className="text-2xl font-black text-amber-500 mb-2 uppercase tracking-tight">
+          {t('game_reported_as_zombie_title')}
+        </h2>
+        <p className="text-slate-300 text-sm leading-relaxed mb-8">
+          {t('game_reported_as_zombie_body')}
+        </p>
+        <button
+          onClick={onDismiss}
+          className="w-full py-4 rounded-2xl bg-amber-500 text-slate-950 font-black text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+        >
+          {t('wtd_got_it')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const AlreadyOwnedPopup = ({ onDismiss, t }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onDismiss} />
+      <div className="relative w-full max-w-sm bg-slate-900 border-2 border-cyan-500 rounded-[2rem] p-8 text-center shadow-[0_0_50px_rgba(6,182,212,0.3)] animate-zw-zoom">
+        <div className="flex justify-center mb-6">
+          <div className="p-4 rounded-full bg-cyan-500/10 border-2 border-cyan-500 text-cyan-500">
+            <Info size={48} />
+          </div>
+        </div>
+        <h2 className="text-2xl font-black text-cyan-500 mb-2 uppercase tracking-tight">
+          {t('game_already_in_inventory')}
+        </h2>
+        <p className="text-slate-300 text-sm leading-relaxed mb-8">
+          {t('game_card_taken_sub')}
+        </p>
+        <button
+          onClick={onDismiss}
+          className="w-full py-4 rounded-2xl bg-cyan-500 text-slate-950 font-black text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+        >
+          {t('wtd_got_it')}
+        </button>
       </div>
     </div>
   );
