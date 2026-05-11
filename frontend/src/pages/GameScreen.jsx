@@ -71,7 +71,6 @@ function getModuleSlides(t) {
         type: 'items',
         title: t('slide_m1_3_title'),
         text: t('slide_m1_3_text'),
-        cardImages: ['/card1.png', '/card2.png', '/card3.png', '/card4.png', '/card5.png'],
       },
       { type: 'scan', icon: Smartphone, title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', icon: Target, title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
@@ -88,7 +87,7 @@ function getModuleSlides(t) {
     ],
     module_3: [
       { type: 'story', icon: Brain, title: t('slide_m3_0_title'), text: t('slide_m3_0_text') },
-      { type: 'scan', icon: Layers, title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
+      { type: 'scan', image: '/cards4.png', title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
       { type: 'info', icon: Users, title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
       { type: 'info', icon: Key, title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
       { type: 'info', icon: EyeOff, title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
@@ -108,7 +107,8 @@ function getModuleSlides(t) {
           },
         ]
       },
-      { type: 'final', icon: Skull, title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
+      { type: 'info', icon: HandHelping, title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
+      { type: 'final', icon: Skull, title: t('slide_m3_7_title'), text: t('slide_m3_7_text') },
     ],
     // Normal (Full Game) — same slide structure as module_3, only the
     // intro story slide is swapped for a cybersecurity-themed one.
@@ -1271,6 +1271,8 @@ const GameScreen = () => {
     if (action && !selectedTradePartner) return;
     // Block if I was reported as a zombie this round.
     if (reportedAsZombie) return;
+    // Zombies cannot report other zombies.
+    if (action === 'report_zombie' && playerState?.role === 'zombie') return;
     if (action === 'report_zombie') {
       if (!window.confirm(
         t('game_report_zombie_confirm') ||
@@ -1634,12 +1636,10 @@ if (gamePhase === 'module_instructions') {
                 onClick={() =>
                   setShowInitialScanner(true)
                 }
-                className="w-full py-3.5 rounded-xl neon-btn mt-6 font-black text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                className="w-full py-3 sm:py-3.5 rounded-xl neon-btn mt-4 sm:mt-6 font-black text-white flex items-center justify-center gap-2 text-sm sm:text-base transition-all hover:scale-[1.01] active:scale-[0.99]"
               >
-                <Camera size={20} />{' '}
-                {t('game_scan_card_n')}{' '}
-                {initialScanCount + 1}{' '}
-                {t('game_of_4')}
+                <Camera size={18} className="shrink-0" />{' '}
+                <span>{t('game_scan_card_n')}{' '}{initialScanCount + 1}{' '}{t('game_of_4')}</span>
               </button>
             )}
           </div>
@@ -2104,6 +2104,7 @@ if (gamePhase === 'module_instructions') {
         ✓
       </button>
 
+      {playerState?.role !== 'zombie' && (
       <button
         disabled={!selectedTradePartner || !!reportedAsZombie}
         onClick={() =>
@@ -2117,6 +2118,7 @@ if (gamePhase === 'module_instructions') {
       >
         {t('game_report_zombie') || 'Report Zombie'} ☠
       </button>
+      )}
     </div>
   </>
 ) : (

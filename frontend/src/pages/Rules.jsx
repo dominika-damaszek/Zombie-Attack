@@ -148,7 +148,7 @@ export default function Rules() {
 
         <Section icon={<SkullIcon size={18} className="text-[#d95959]" />} title={t('rules_infection_title')} color="bg-[#d95959]/15">
           <p className="text-slate-300 text-sm leading-relaxed mb-3">{t('rules_infection_desc')}</p>
-          <div className="flex gap-2 flex-col sm:flex-row">
+          <div className="flex gap-2 flex-col sm:flex-row mb-4">
             {[{ emoji: '🤝', label: t('rules_infection_step1') },
             { emoji: '📱', label: t('rules_infection_step2') },
             { emoji: '🧟', label: t('rules_infection_step3') }].map((s, i) => (
@@ -157,13 +157,21 @@ export default function Rules() {
               </div>
             ))}
           </div>
+          <div className="bg-[var(--neon-pink-glow)]/10 border border-[var(--neon-pink)]/20 rounded-xl p-3">
+            <p className="text-[var(--neon-pink)] text-xs font-bold mb-1">☠️ {t('rules_report_zombie_title')}</p>
+            <p className="text-slate-400 text-xs leading-relaxed">{t('rules_report_zombie_desc')}</p>
+          </div>
         </Section>
 
         <Section icon={<Key size={18} className="text-[var(--neon-cyan)]" />} title={t('rules_password_title')} color="bg-[var(--neon-cyan-glow)]/50">
           <p className="text-slate-300 text-sm leading-relaxed mb-3">{t('rules_password_desc')}</p>
-          <div className="bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/20 rounded-xl p-4">
+          <div className="bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/20 rounded-xl p-4 mb-3">
             <p className="text-[var(--neon-cyan)]/80 font-bold text-sm mb-2">{t('rules_password_warning_title')}</p>
             <p className="text-slate-400 text-xs leading-relaxed">{t('rules_password_warning_desc')}</p>
+          </div>
+          <div className="bg-[#d95959]/10 border border-[#d95959]/30 rounded-xl p-3">
+            <p className="text-[#d95959] text-xs font-bold mb-1">🧟 {t('rules_password_zombie_hint_title')}</p>
+            <p className="text-slate-400 text-xs leading-relaxed">{t('rules_password_zombie_hint_desc')}</p>
           </div>
           <div className="mt-3 space-y-2">
             <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Examples</p>

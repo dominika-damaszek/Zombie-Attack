@@ -57,12 +57,13 @@ ALL_CARD_TYPES = ["security_patch", "system_boost", "hacking_tool", "firewall", 
 
 # Number of instruction slides per game mode.
 # Must match the slide arrays defined in frontend/src/pages/GameScreen.jsx.
-# module_1/2/3: 7 slides (indices 0–6)
+# module_1/2: 7 slides (indices 0–6)
+# module_3:   8 slides (indices 0–7) — extra "Accept or Report?" slide
 # normal (Full Game): 7 slides (indices 0–6), same flow as module_3
 SLIDES_PER_MODE = {
     "module_1": 7,
     "module_2": 7,
-    "module_3": 7,
+    "module_3": 8,
     "normal":   7,
 }
 
@@ -188,7 +189,11 @@ async def _advance_slide(group, db, group_id: str):
         group.current_round = 1
         group.round_end_time = int(time.time()) + 180
         db.commit()
-        await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
+        await manager.broadcast_to_group(group_id, {
+            "type": "ROUND_STARTED",
+            "secret_word": group.secret_word,
+            "password_hint": _get_password_category(group.secret_word) if group.secret_word else None,
+        })
     else:
         group.instruction_slide = nxt
         db.commit()
@@ -217,7 +222,11 @@ async def skip_slides(group_id: str, db: DBSession = Depends(get_db)):
     _touch(group)
     db.commit()
 
-    await manager.broadcast_to_group(group_id, {"type": "ROUND_STARTED"})
+    await manager.broadcast_to_group(group_id, {
+        "type": "ROUND_STARTED",
+        "secret_word": group.secret_word,
+        "password_hint": _get_password_category(group.secret_word) if group.secret_word else None,
+    })
     return {"message": "Slides skipped", "game_state": "round_active"}
 
 
@@ -582,6 +591,7 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                 #   wrong   (partner is survivor): reporter -2, accused
                 #     unaffected ("nothing happens" — survivors aren't
                 #     penalized for being mistakenly accused).
+                # Zombies cannot report other zombies — only survivors can.
                 if not player.is_infected:
                     if partner.is_infected:
                         # Correctly identified a zombie
@@ -591,22 +601,21 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                         player.score = (player.score or 0) - 2
                         # accused survivor: no change
 
-                # Both players are immediately marked ready and locked out of
-                # further trading this round.  round_skip_used auto-readies
-                # them in the upcoming between-rounds scan phase.
-                partner.is_ready = True
-                partner.round_skip_used = True
-                player.round_skip_used = True
+                    # Both players are immediately marked ready and locked out
+                    # of further trading this round.  round_skip_used
+                    # auto-readies them in the between-rounds scan phase.
+                    partner.is_ready = True
+                    partner.round_skip_used = True
+                    player.round_skip_used = True
 
-                # Notify the accused so their UI can show a "you were reported
-                # as a zombie" popup and disable further trade actions.
-                await manager.broadcast_to_group(group_id, {
-                    "type": "REPORTED_AS_ZOMBIE",
-                    "reporter_id": player.id,
-                    "reporter_username": player.user.username,
-                    "accused_id": partner.id,
-                    "accused_username": partner.user.username,
-                })
+                    # Notify the accused so their UI can show the popup.
+                    await manager.broadcast_to_group(group_id, {
+                        "type": "REPORTED_AS_ZOMBIE",
+                        "reporter_id": player.id,
+                        "reporter_username": player.user.username,
+                        "accused_id": partner.id,
+                        "accused_username": partner.user.username,
+                    })
             elif action == "decline":
                 # Legacy decline (keep for safety, though UI will use report_zombie)
                 if not player.is_infected:
