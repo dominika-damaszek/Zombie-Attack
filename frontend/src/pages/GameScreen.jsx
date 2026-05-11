@@ -1219,6 +1219,7 @@ const GameScreen = () => {
       });
       const data = await res.json();
       if (!res.ok) {
+<<<<<<< HEAD
         // Special case: player rescanned a card they already own during the
         // between-rounds scan phase.  The backend rejects this without
         // consuming their one-per-round scan, so we show a clear popup
@@ -1229,6 +1230,11 @@ const GameScreen = () => {
             message: t('game_already_owned') || 'You already have this card in your inventory. Scan another card.',
           });
           setTimeout(() => setScanFeedback(null), 4000);
+=======
+        if (res.status === 400 && data.detail === 'already_owned') {
+          setScanFeedback(null);
+          setShowAlreadyOwnedPopup(true);
+>>>>>>> b4ff9feca72955998a87b19b84732e920de499f8
           return;
         }
         setScanFeedback({ status: 'error', message: data.detail || t('game_scan_failed') });
@@ -2133,12 +2139,17 @@ if (gamePhase === 'module_instructions') {
 )}
 
             {(() => {
+<<<<<<< HEAD
               // The "no partner" skip is only meaningful when the group
               // has an odd number of players (one person has no partner).
               // At most ONE skip per round is allowed across the group.
               const totalPlayers = gameState?.players?.length || 0;
               const isOdd = totalPlayers % 2 === 1;
               const someoneAlreadySkipped = (gameState?.players || []).some(p => p.has_skipped_trade);
+=======
+              const playerCount = gameState?.players?.length || 0;
+              const isOdd = playerCount % 2 !== 0;
+>>>>>>> b4ff9feca72955998a87b19b84732e920de499f8
               const skipUsedByAnyone = gameState?.players?.some(p => p.round_skip_used);
               const canSkip = isOdd && !hasSkippedTrade && !someoneAlreadySkipped && !reportedAsZombie;
               if (hasSkippedTrade) return null;

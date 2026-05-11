@@ -608,6 +608,7 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                     partner.round_skip_used = True
                     player.round_skip_used = True
 
+<<<<<<< HEAD
                     # Notify the accused so their UI can show the popup.
                     await manager.broadcast_to_group(group_id, {
                         "type": "REPORTED_AS_ZOMBIE",
@@ -616,6 +617,17 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                         "accused_id": partner.id,
                         "accused_username": partner.user.username,
                     })
+=======
+                # Notify the accused so their UI can show a "you were reported
+                # as a zombie" popup and disable further trade actions.
+                await manager.broadcast_to_group(group_id, {
+                    "type": "REPORTED_AS_ZOMBIE",
+                    "reporter_id": player.id,
+                    "reporter_username": player.user.username,
+                    "accused_id": partner.id,
+                    "accused_username": partner.user.username,
+                })
+>>>>>>> b4ff9feca72955998a87b19b84732e920de499f8
             elif action == "decline":
                 # Legacy decline (keep for safety, though UI will use report_zombie)
                 if not player.is_infected:
