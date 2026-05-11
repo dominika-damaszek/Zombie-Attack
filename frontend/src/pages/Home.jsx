@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Monitor } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import LazyImage from '../components/LazyImage';
 
 const Home = ({ isAuthenticated }) => {
   const navigate = useNavigate();
@@ -111,19 +112,19 @@ const Home = ({ isAuthenticated }) => {
       </div>
       <div className="absolute bottom-[5%]  hidden lg:flex gap-10 flex-row w-[70%] justify-center">
         <div className="flex flex-row gap-3 items-center">
-          <img src="/nrp1.png" alt="Players" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
+          <LazyImage src="/nrp1.png" alt="Players" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
           <p className="text-slate-400 text-lg max-w-md mx-auto">
             {t('home_players')}
           </p>
         </div>
         <div className="flex flex-row gap-3 items-center">
-          <img src="/time1.png" alt="Duration" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
+          <LazyImage src="/time1.png" alt="Duration" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
           <p className="text-slate-400 text-lg max-w-md mx-auto">
             {t('home_duration')}
           </p>
         </div>
         <div className="flex flex-row gap-3 items-center">
-          <img src="/age1.png" alt="Age" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
+          <LazyImage src="/age1.png" alt="Age" className="w-[60px] h-[60px] object-contain drop-shadow-[0px_0_10px_rgba(255,255,255,0.3)]" />
           <p className="text-slate-400 text-lg max-w-md mx-auto">
             {t('home_age')}
           </p>
@@ -131,7 +132,7 @@ const Home = ({ isAuthenticated }) => {
       </div>
 
       <div className="fixed right-[-10px] bottom-[30px] w-[100px] h-[100px] lg:w-[200px] lg:h-[200px] opacity-90 pointer-events-none">
-        <img src="/uil1.png" alt="Lock" className="w-full h-full object-contain drop-shadow-[0px_0_20px_rgba(255,255,255,100)]" />
+        <LazyImage src="/uil1.png" alt="Lock" className="w-full h-full object-contain drop-shadow-[0px_0_20px_rgba(255,255,255,100)]" />
       </div>
     </div>
 
