@@ -67,11 +67,11 @@ export default function EndGame() {
       {/* ── Header ── */}
       <div className="text-center mb-8">
         <div className="text-7xl mb-3 animate-zw-float">{infectedPct > 50 ? '🧟' : '🏆'}</div>
-        <h1 className="text-4xl font-black mb-1" style={{ color: '#AD9E97' }}>
-          {recap.game_mode === 'module_1' ? t('end_trading_complete') || 'Trading Complete!' : (infectedPct > 50 ? t('end_zombies_win') : t('end_survivors_triumph'))}
+        <h1 className="text-3xl sm:text-4xl font-black mb-1 leading-tight" style={{ color: '#AD9E97' }}>
+          {recap.game_mode === 'module_1' ? 'Trading Complete!' : (infectedPct > 50 ? t('end_zombies_win') : t('end_survivors_triumph'))}
         </h1>
-        <p className="text-slate-500 font-mono text-sm uppercase tracking-widest">
-          {recap.game_mode?.toUpperCase()} · {recap.rounds_played} {t('dash_rounds_played')} · {recap.total_players} {t('end_players')}
+        <p className="text-slate-500 font-mono text-xs sm:text-sm uppercase tracking-widest">
+          {recap.game_mode?.replace('_', ' ').toUpperCase()} · {Math.min(recap.rounds_played, 3)} {t('dash_rounds_played')} · {recap.total_players} {t('end_players')}
         </p>
       </div>
 
@@ -82,20 +82,20 @@ export default function EndGame() {
           { label: 'Total Trades', value: recap.total_trades || 0, icon: '🤝', color: '#6D9EEB' },
           { label: 'Objectives Met', value: recap.total_objectives_met || 0, icon: '🎯', color: '#a8c4a0' },
         ].map(({ label, value, icon, color }) => (
-          <div key={label} className="glass-panel p-4 text-center rounded-2xl">
-            <div className="text-2xl mb-1">{icon}</div>
-            <p className="text-2xl font-black" style={{ color }}>{value}</p>
-            <p className="text-slate-500 text-xs uppercase tracking-widest">{label}</p>
+          <div key={label} className="glass-panel p-3 sm:p-4 text-center rounded-2xl">
+            <div className="text-xl sm:text-2xl mb-1">{icon}</div>
+            <p className="text-xl sm:text-2xl font-black" style={{ color }}>{value}</p>
+            <p className="text-slate-500 text-[10px] sm:text-xs uppercase tracking-widest mt-1 sm:mt-0">{label}</p>
           </div>
         )) : [
           { label: t('end_players'), value: recap.total_players, icon: '👥', color: '#AD9E97' },
           { label: t('end_survived'), value: recap.survivors, icon: '🛡️', color: '#a8c4a0' },
           { label: t('end_infected'), value: recap.zombies, icon: '🧟', color: '#d97559' },
         ].map(({ label, value, icon, color }) => (
-          <div key={label} className="glass-panel p-4 text-center rounded-2xl">
-            <div className="text-2xl mb-1">{icon}</div>
-            <p className="text-2xl font-black" style={{ color }}>{value}</p>
-            <p className="text-slate-500 text-xs uppercase tracking-widest">{label}</p>
+          <div key={label} className="glass-panel p-3 sm:p-4 text-center rounded-2xl">
+            <div className="text-xl sm:text-2xl mb-1">{icon}</div>
+            <p className="text-xl sm:text-2xl font-black" style={{ color }}>{value}</p>
+            <p className="text-slate-500 text-[10px] sm:text-xs uppercase tracking-widest mt-1 sm:mt-0">{label}</p>
           </div>
         ))}
       </div>
@@ -192,6 +192,7 @@ export default function EndGame() {
             { icon: '✅', label: 'Round completed', pts: '+2' },
             { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
             { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
+            { icon: '⏭️', label: 'Skipped trade (Odd player)', pts: '+2' },
           ] : [
             { icon: '🤝', label: t('end_score_trade'), pts: '+1' },
             { icon: '☣️', label: t('end_score_infect'), pts: '+3' },
@@ -199,10 +200,13 @@ export default function EndGame() {
             { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
             { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
             { icon: '🌟', label: t('end_score_final_survivor'), pts: '+5' },
+            { icon: '🕵️', label: 'Caught a zombie', pts: '+3' },
+            { icon: '❌', label: 'Wrong accusation (Skip/Decline)', pts: '-2' },
+            { icon: '⏭️', label: 'Skipped trade (Odd player)', pts: '+2' },
           ]).map(({ icon, label, pts }) => (
             <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.15)' }}>
               <span className="flex items-center gap-1.5 text-slate-300">{icon} {label}</span>
-              <span className="font-black text-emerald-400 ml-2">{pts}</span>
+              <span className={`font-black ml-2 ${pts.startsWith('-') ? 'text-rose-400' : 'text-emerald-400'}`}>{pts}</span>
             </div>
           ))}
         </div>
