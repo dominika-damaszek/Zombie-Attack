@@ -145,7 +145,7 @@ const TopNav = ({
                       size={16}
                       className="text-orange-400 opacity-80"
                     />
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm font-semibold text-slate-300">
                       {t("nav_dashboard")}
                     </span>
                   </button>
@@ -166,7 +166,7 @@ const TopNav = ({
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-500/10 transition-all"
                   >
-                    <LogOut size={16} className="text-orange" />
+                    <LogOut size={16} className="text-rose-400" />
                     <span className="text-sm font-semibold text-rose-400">
                       {t("nav_logout")}
                     </span>

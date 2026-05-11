@@ -478,13 +478,15 @@ const Dashboard = ({ setHasSession }) => {
         {/* Title row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black bg-clip-text mb-1">
+            <h1 className="text-3xl sm:text-4xl bg-clip-text mb-1 mr-3">
               {t("dash_title")}
             </h1>
             <div
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border ${modeInfo.bg} ${modeInfo.color}`}
             >
-              <span className="truncate max-w-[200px] sm:max-w-none">{modeInfo.label}</span>
+              <span className="truncate max-w-[200px] sm:max-w-none">
+                {modeInfo.label}
+              </span>
             </div>
           </div>
 
@@ -494,14 +496,16 @@ const Dashboard = ({ setHasSession }) => {
               <p className="text-xs text-[var(--neon-green)]/60 uppercase tracking-widest leading-tight">
                 {t("dash_students")}
               </p>
-              <p className="text-xl font-black text-white leading-tight">{totalPlayers}</p>
+              <p className="text-xl font-black text-white leading-tight">
+                {totalPlayers}
+              </p>
             </div>
 
             <button
               onClick={endSession}
               className="flex items-center gap-1.5 bg-[var(--neon-pink-glow)]/40 hover:bg-[var(--neon-pink-glow)]/20 text-[var(--neon-pink)]/80 font-semibold py-2.5 px-3 rounded-2xl transition-all border border-[var(--neon-pink)]/70 text-xs sm:text-sm whitespace-nowrap"
             >
-              <X size={14} className="text-white shrink-0" />
+              <X size={14} className=" shrink-0" />
               {t("dash_end_session")}
             </button>
             <button
@@ -509,7 +513,10 @@ const Dashboard = ({ setHasSession }) => {
               disabled={refreshing}
               className="p-2.5 bg-[var(--neon-cyan-glow)]/40 hover:bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/80 rounded-2xl text-[var(--neon-cyan)]/100 transition-all shrink-0"
             >
-              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+              <RefreshCw
+                size={16}
+                className={refreshing ? "animate-spin" : ""}
+              />
             </button>
           </div>
         </div>
