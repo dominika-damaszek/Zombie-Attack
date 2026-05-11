@@ -65,9 +65,14 @@ function getModuleSlides(t) {
   return {
     module_1: [
       { type: 'story', icon: Globe, title: t('slide_m1_0_title'), text: t('slide_m1_0_text') },
-      { type: 'info', icon: Package, image: '/gamebox.png', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
-      { type: 'info', icon: Layers, image: '/cards4.png', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
-      { type: 'items', icon: Layers, cardImages: ['/security-patch.png', '/system-boost.png', '/firewall.png', '/security-layer.png', '/hacking-tool.png'], title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
+      { type: 'info', image: '/gamebox.png', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
+      { type: 'info', image: '/cards4.png', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
+      {
+        type: 'items',
+        title: t('slide_m1_3_title'),
+        text: t('slide_m1_3_text'),
+        cardImages: ['/card1.png', '/card2.png', '/card3.png', '/card4.png', '/card5.png'],
+      },
       { type: 'scan', icon: Smartphone, title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', icon: Target, title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
       { type: 'final', icon: Timer, title: t('slide_m1_6_title'), text: t('slide_m1_6_text') },
@@ -999,30 +1004,33 @@ const GameScreen = () => {
     playerData?.id
   );
 
-  // Resolve the player's actual group_id from the backend so we never
-  // use a stale lobby group_id that may have been passed via navigation state.
+  // Resolve the player's actual group_id from the backend ONCE on mount.
+  // Avoids using a stale lobby group_id that may have been passed via nav state,
+  // but doesn't hammer the API every poll (was a server-crash culprit).
   const resolvedGroupId = useRef(groupData?.group_id);
 
-  const fetchState = useCallback(async () => {
-    if (!playerData?.id && !resolvedGroupId.current) return;
-    try {
-      // On first call (or when group_id looks like a lobby), ask the backend
-      // which group this player actually belongs to right now.
-      if (playerData?.id) {
-        try {
-          const gRes = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
-          if (gRes.ok) {
-            const g = await gRes.json();
-            if (g.group_id && g.group_number !== 0) {
-              resolvedGroupId.current = g.group_id;
-            }
-          }
-        } catch { /* ignore — fall back to original groupData */ }
-      }
-      const gid = resolvedGroupId.current || groupData?.group_id;
-      if (!gid) return;
+  useEffect(() => {
+    if (!playerData?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${API_URLS.BASE}/player/${playerData.id}/group`);
+        if (!r.ok || cancelled) return;
+        const g = await r.json();
+        if (g.group_id && g.group_number !== 0) {
+          resolvedGroupId.current = g.group_id;
+        }
+      } catch { /* ignore — fall back to original groupData */ }
+    })();
+    return () => { cancelled = true; };
+  }, [playerData?.id]);
 
+  const fetchState = useCallback(async () => {
+    const gid = resolvedGroupId.current || groupData?.group_id;
+    if (!gid) return;
+    try {
       const res = await fetch(`${API_URLS.BASE}/api/game/${gid}/state`);
+      if (!res.ok) return;
       const data = await res.json();
       setGameState(data);
       gameModeRef.current = data.game_mode || 'module_1';
@@ -1048,18 +1056,13 @@ const GameScreen = () => {
     finally { setLoading(false); }
   }, [groupData?.group_id, playerData?.id, navigate]);
 
-  // Fast poll (2 s) for the first 30 seconds after mount, then slow (10 s).
+  // Poll every 10 seconds as a safety net.  Real-time updates flow over the
+  // WebSocket (`lastMessage` handlers below), so this is just a fallback.
+  // Fast polling here caused server overload at 7+ concurrent players.
   useEffect(() => {
     fetchState();
-    const fast = setInterval(fetchState, 2000);
-    const slowTimer = setTimeout(() => {
-      clearInterval(fast);
-      const slow = setInterval(fetchState, 10000);
-      // store for cleanup
-      timerRef.current = slow;
-    }, 30000);
-    const timerRef = { current: null };
-    return () => { clearInterval(fast); clearTimeout(slowTimer); if (timerRef.current) clearInterval(timerRef.current); };
+    const id = setInterval(fetchState, 10000);
+    return () => clearInterval(id);
   }, [fetchState]);
 
   useEffect(() => {

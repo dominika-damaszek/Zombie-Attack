@@ -118,7 +118,7 @@ const WaitingRoom = () => {
         } catch (e) { console.error(e); }
       }
       fetchGameState(currentGroupData.group_id, currentGroupData, playerData);
-    }, currentGroupData.group_number === 0 ? 4000 : 2000);
+    }, currentGroupData.group_number === 0 ? 5000 : 5000);
     return () => clearInterval(id);
   }, [currentGroupData?.group_id]);
 

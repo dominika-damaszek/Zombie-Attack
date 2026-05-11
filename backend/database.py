@@ -22,9 +22,12 @@ if not SQLALCHEMY_DATABASE_URL:
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
+    # Sized for ~33 concurrent players.  Each request holds a connection for
+    # the duration of its DB work; with 10-second polling + WebSocket pushes,
+    # sustained concurrency stays well below 20.  max_overflow absorbs bursts.
+    pool_size=20,
+    max_overflow=30,
+    pool_timeout=10,           # fail fast rather than hang the event loop
     pool_recycle=1800,
     connect_args={"connect_timeout": 10},
 )

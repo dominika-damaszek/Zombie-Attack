@@ -1,5 +1,12 @@
+import asyncio
 from typing import Dict, List
 from fastapi import WebSocket
+
+# Per-send timeout.  A dead/half-open client can take many seconds to fail
+# its TCP write; without this bound a single bad connection would block
+# every broadcast in its group.
+_SEND_TIMEOUT_SEC = 3.0
+
 
 class ConnectionManager:
     def __init__(self):
@@ -21,19 +28,26 @@ class ConnectionManager:
             if not self.active_connections[group_id]:
                 del self.active_connections[group_id]
 
+    async def _send_one(self, ws: WebSocket, message: dict):
+        await asyncio.wait_for(ws.send_json(message), timeout=_SEND_TIMEOUT_SEC)
+
     async def broadcast_to_group(self, group_id: str, message: dict):
-        if group_id not in self.active_connections:
+        connections = list(self.active_connections.get(group_id, []))
+        if not connections:
             return
 
-        dead: List[WebSocket] = []
-        for connection in list(self.active_connections[group_id]):
-            try:
-                await connection.send_json(message)
-            except Exception as e:
-                print(f"WS send error in group {group_id}: {e}")
-                dead.append(connection)
+        # Send to every client concurrently so one slow socket doesn't block
+        # the others.  return_exceptions=True keeps one bad client from
+        # cancelling the whole gather.
+        results = await asyncio.gather(
+            *[self._send_one(c, message) for c in connections],
+            return_exceptions=True,
+        )
 
-        for connection in dead:
-            self.disconnect(connection, group_id)
+        for conn, result in zip(connections, results):
+            if isinstance(result, BaseException):
+                # Don't log every closed-socket noise — common during reconnects.
+                self.disconnect(conn, group_id)
+
 
 manager = ConnectionManager()

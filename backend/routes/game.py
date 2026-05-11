@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from sqlalchemy.orm import Session as DBSession
+from sqlalchemy.orm import Session as DBSession, joinedload
 from database import get_db
 import models
 from websocket_manager import manager
@@ -868,15 +868,39 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
 # ── Game State ─────────────────────────────────────────────────────────────────
 @router.get("/{group_id}/state")
 async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
-    group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    # Eager-load players + their user rows + the session to avoid lazy-loading
+    # one query per player when serving large groups.
+    group = (
+        db.query(models.Group)
+          .options(
+              joinedload(models.Group.players).joinedload(models.GroupPlayer.user),
+              joinedload(models.Group.session),
+          )
+          .filter(models.Group.id == group_id)
+          .first()
+    )
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
-    def _player_inventory(p):
-        return [
-            {"code": i.code, "type": i.type, "contaminated": i.is_contaminated}
-            for i in db.query(models.Item).filter_by(current_owner_id=p.id).all()
-        ]
+    players = group.players
+    player_ids = [p.id for p in players]
+
+    # ── Single bulk query for ALL inventories in the group ────────────────────
+    # Previously we ran one query per player (N+1).  At 33 players this was
+    # 33 separate roundtrips per state call.  Now it's exactly one.
+    inv_by_owner: dict[str, list[dict]] = {pid: [] for pid in player_ids}
+    if player_ids:
+        items = (
+            db.query(models.Item)
+              .filter(models.Item.current_owner_id.in_(player_ids))
+              .all()
+        )
+        for it in items:
+            inv_by_owner.setdefault(it.current_owner_id, []).append({
+                "code": it.code,
+                "type": it.type,
+                "contaminated": it.is_contaminated,
+            })
 
     players_data = [{
         "id": p.id,
@@ -887,19 +911,17 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
         "is_initial_zombie": p.is_initial_zombie or False,
         "is_ready": getattr(p, "is_ready", False),
         "score": p.score or 0,
-        "inventory": _player_inventory(p),
+        "inventory": inv_by_owner.get(p.id, []),
         "objectives": json.loads(p.objectives or '[]'),
         "initial_cards_scanned": p.initial_cards_scanned or 0,
         "has_skipped_trade": p.has_skipped_trade or False,
         "early_completion_awarded": getattr(p, "early_completion_awarded", False),
-    } for p in group.players]
+    } for p in players]
 
-    ready_count = sum(1 for p in group.players if p.is_ready)
-    not_ready = [p.user.username for p in group.players if not p.is_ready]
+    ready_count = sum(1 for p in players if p.is_ready)
+    not_ready = [p.user.username for p in players if not p.is_ready]
 
-    # Check if session is finished
-    session = db.query(models.Session).filter_by(id=group.session_id).first()
-    session_status = session.status if session else "unknown"
+    session_status = group.session.status if group.session else "unknown"
 
     return {
         "game_state":          group.game_state,
