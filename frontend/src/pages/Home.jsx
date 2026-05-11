@@ -55,7 +55,7 @@ const Home = ({ isAuthenticated }) => {
           <h1 className="glitch-h1 text-4xl sm:text-6xl md:text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-400 tracking-tight leading-none mb-2">
             Zombieware
           </h1>
-          <p className="text-xl font-bold text-[var(--neon-green-glow)] tracking-wider uppercase mb-3">
+          <p className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-3">
             {t('home_slogan')}
           </p>
           <p className="text-slate-400 text-sm sm:text-lg max-w-md mx-auto">

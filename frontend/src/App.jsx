@@ -38,7 +38,7 @@ function AppContent({ isAuthenticated, hasSession, setIsAuthenticated, setHasSes
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent selection:bg-emerald-500/30">
-      {!isFullScreenGame && !isPreview && (
+      {!isPreview && (
         <TopNav
           isAuthenticated={isAuthenticated}
           hasSession={hasSession}

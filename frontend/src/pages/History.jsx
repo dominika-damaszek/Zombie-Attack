@@ -134,7 +134,7 @@ export default function History() {
             <div className="sticky top-0 glass-panel rounded-t-3xl px-6 py-4 border-b border-slate-700/50 flex items-center justify-between z-10">
               <div>
                 <p className="font-bold text-white flex items-center gap-2">
-                  <BarChart2 size={16} className="text-emerald-400" />
+                  <BarChart2 size={16} className="text-cyan-400" />
                   {MODE_LABELS[detailModal.game.game_mode] || detailModal.game.game_mode}
                   {detailModal.recap?.session_note && (
                     <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-mono">
@@ -209,6 +209,7 @@ export default function History() {
                           <div className="flex gap-2 mt-0.5">
                             {player.trades > 0 && <span className="text-xs text-slate-500">🤝 {player.trades}</span>}
                             {player.infections_caused > 0 && <span className="text-xs text-slate-500">☣️ {player.infections_caused}</span>}
+                            {player.objectives_met > 0 && <span className="text-xs text-slate-500">🎯 {player.objectives_met}/{player.objectives_total}</span>}
                           </div>
                         </div>
                         <p className="text-white font-black text-sm shrink-0">{player.score} <span className="text-slate-600 font-normal text-xs">{t('end_pts')}</span></p>

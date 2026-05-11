@@ -79,7 +79,7 @@ export default function HelpButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-[90px] left-[20px] z-40 flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-lg transition-all hover:scale-105 active:scale-95 bg-[var(--neon-cyan-glow)]/30 border-3 tertiary-btn"
+        className="fixed bottom-4 left-[20px] z-40 flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-lg transition-all hover:scale-105 active:scale-95 bg-[var(--neon-cyan-glow)]/30 border-3 tertiary-btn"
         style={{
           backdropFilter: 'blur(12px)',
         }}

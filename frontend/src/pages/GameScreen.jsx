@@ -1365,8 +1365,8 @@ if (gamePhase === 'module_instructions') {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-slate-950 overflow-y-auto">
-      <div className="flex-1 flex flex-col items-center justify-start px-4 pt-16 pb-8 min-h-full">
+    <div className="relative z-10 flex flex-col bg-slate-950 min-h-full">
+      <div className="flex-1 flex flex-col items-center justify-start px-4 pt-6 pb-8 min-h-full">
       {showInitialScanner && (
         <QRScannerModal
           onScan={handleInitialScan}
