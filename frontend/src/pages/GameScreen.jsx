@@ -162,7 +162,7 @@ function getInfoSections(t) {
   ];
 }
 
-function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
+function RoleReveal({ role, secretWord, passwordHint, gameMode, onContinue, t }) {
   const isZombie = role === 'zombie';
   const cfg = isZombie
     ? { label: t('game_zombie'), icon: Skull, color: '#d96259ff', border: 'rgba(217, 98, 89, 0.5)', glow: 'rgba(217, 104, 89, 0.3)', desc: t('game_zombie_desc') }
@@ -184,6 +184,13 @@ function RoleReveal({ role, secretWord, gameMode, onContinue, t }) {
               <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
               <p className="text-2xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
               <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
+            </div>
+          )}
+          {isZombie && passwordHint && (
+            <div className="mb-4 rounded-2xl p-4" style={{ background: 'rgba(80,30,20,0.6)', border: '1px solid rgba(217,117,89,0.4)' }}>
+              <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#d97559' }}>🔍 {t('game_zombie_category_hint')}</p>
+              <p className="text-xl font-black tracking-widest font-mono" style={{ color: '#d97559' }}>{t('cat_' + passwordHint.toLowerCase()) || passwordHint}</p>
+              <p className="text-slate-500 text-xs mt-1">{t('game_hint_desc')}</p>
             </div>
           )}
           <p className="text-slate-400 text-sm mb-5 leading-relaxed">{cfg.desc}</p>
@@ -986,6 +993,13 @@ const GameScreen = () => {
   // True briefly when the player's "all objectives complete" bonus triggers
   // for the first time. Drives the EarlyCompletionPopup.
   const [showEarlyCompletion, setShowEarlyCompletion] = useState(false);
+  // Set when ANOTHER player reports me as a zombie this round.  Locks my
+  // trade UI (cannot accept/decline/report any further) and shows a popup.
+  // Cleared every time a new round starts (ROUND_STARTED handler).
+  const [reportedAsZombie, setReportedAsZombie] = useState(null);
+  // Set briefly on the reporter to surface the accusation result locally
+  // (correct → +3, wrong → -2).  Cleared at next round.
+  const [reportFeedback, setReportFeedback] = useState(null);
 
   // Persist session to localStorage so page reload can rejoin the game
   useEffect(() => {
@@ -1097,6 +1111,9 @@ const GameScreen = () => {
       setIsDoneTrading(false);
       setBetweenRoundsDone(false);
       setSelectedTradePartner("");
+      setReportedAsZombie(null);
+      setReportFeedback(null);
+      setHasSkippedTrade(false);
       const mode = gameModeRef.current;
       if (mode === 'module_3' || mode === 'normal') setShowRoleReveal(true);
       if (lastMessage.secret_word && playerState?.role !== 'zombie') {
@@ -1121,6 +1138,16 @@ const GameScreen = () => {
       // Every player has scanned their 1 card → the ready-gate popup
       // becomes the active UI. Refresh so we can render it.
       setBetweenRoundsDone(false);
+      fetchState();
+    }
+    if (lastMessage.type === 'REPORTED_AS_ZOMBIE') {
+      // If I am the accused → lock trade UI and show a popup.
+      if (lastMessage.accused_id === playerData?.id) {
+        setReportedAsZombie({
+          reporter: lastMessage.reporter_username || 'a player',
+        });
+        setIsDoneTrading(true);
+      }
       fetchState();
     }
     if (lastMessage.type === 'OBJECTIVES_ASSIGNED') {
@@ -1191,6 +1218,18 @@ const GameScreen = () => {
       });
       const data = await res.json();
       if (!res.ok) {
+        // Special case: player rescanned a card they already own during the
+        // between-rounds scan phase.  The backend rejects this without
+        // consuming their one-per-round scan, so we show a clear popup
+        // and let them scan another card.
+        if (data.detail === 'already_owned') {
+          setScanFeedback({
+            status: 'error',
+            message: t('game_already_owned') || 'You already have this card in your inventory. Scan another card.',
+          });
+          setTimeout(() => setScanFeedback(null), 4000);
+          return;
+        }
         setScanFeedback({ status: 'error', message: data.detail || t('game_scan_failed') });
         setTimeout(() => setScanFeedback(null), 3000);
         return;
@@ -1227,8 +1266,16 @@ const GameScreen = () => {
 
   const handleTradeAction = async (action) => {
     // action === null is the m1/m2 simple "Done Trading" path (no partner / no accusation).
-    // For m3/normal accept/decline a partner is required.
+    // For m3/normal accept/report_zombie a partner is required.
     if (action && !selectedTradePartner) return;
+    // Block if I was reported as a zombie this round.
+    if (reportedAsZombie) return;
+    if (action === 'report_zombie') {
+      if (!window.confirm(
+        t('game_report_zombie_confirm') ||
+        'Report this player as a zombie? Both of you will skip the rest of this round.'
+      )) return;
+    }
     try {
       const body = action
         ? { player_id: playerData.id, partner_id: selectedTradePartner, action }
@@ -1245,10 +1292,19 @@ const GameScreen = () => {
     if (hasSkippedTrade) return;
     if (!window.confirm(t('game_skip_confirm'))) return;
     try {
-      await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/skip_trade`, {
+      const res = await fetch(`${API_URLS.BASE}/api/game/${(resolvedGroupId.current || groupData.group_id)}/skip_trade`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player_id: playerData.id }),
+        body: JSON.stringify({ player_id: playerData.id, skip_reason: 'no_partner' }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data.detail === 'no_partner_skip_already_used_this_round') {
+          window.alert(t('game_skip_already_used') || 'Another player has already used this round\u2019s skip.');
+        } else if (data.detail === 'no_partner_skip_not_allowed_even_group') {
+          window.alert(t('game_skip_not_needed') || 'Skip is only available when there is an odd number of players.');
+        }
+        return;
+      }
       setHasSkippedTrade(true);
       setIsDoneTrading(true);
     } catch (e) { console.error(e); }
@@ -1429,14 +1485,7 @@ if (gamePhase === 'module_instructions') {
           inventory={inventory}
           objectives={objectives}
           t={t}
-          secretWord={
-            playerState?.role !== 'zombie'
-              ? (
-                  gameState?.secret_word ||
-                  localStorage.getItem('active_secret_word')
-                )
-              : null
-          }
+          secretWord={null}
         />
 
         {isScanSlide && (
@@ -1766,6 +1815,7 @@ if (gamePhase === 'module_instructions') {
         <RoleReveal
           role={playerState.role}
           secretWord={!isZombie ? gameState?.secret_word : null}
+          passwordHint={isZombie ? gameState?.password_hint : null}
           gameMode={gameMode}
           onContinue={() => { setShowRoleReveal(false); playSFX('role_reveal'); }}
           t={t}
@@ -1850,10 +1900,17 @@ if (gamePhase === 'module_instructions') {
 
         {!isZombie && gameState?.secret_word && (
           <div className="rounded-2xl p-3 sm:p-4 mb-2 flex items-center gap-3" style={{ background: '#5338147e', border: '1px solid #8b5815bb' }}>
-
             <div>
               <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono flex flex-row gap-2" style={{ color: '#daa867ff' }}><Shield size={18} style={{ color: '#daa867ff' }} /> {t('game_secret_password')}</p>
               <p className="text-base sm:text-2xl font-black tracking-widest font-mono" style={{ color: '#daa867ff' }}>{gameState.secret_word}</p>
+            </div>
+          </div>
+        )}
+        {isZombie && gameState?.password_hint && (
+          <div className="rounded-2xl p-3 sm:p-4 mb-2 flex items-center gap-3" style={{ background: 'rgba(80,30,20,0.6)', border: '1px solid rgba(217,117,89,0.5)' }}>
+            <div>
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono flex flex-row gap-2" style={{ color: '#d97559' }}><Skull size={18} style={{ color: '#d97559' }} /> {t('game_zombie_category_hint')}</p>
+              <p className="text-base sm:text-2xl font-black tracking-widest font-mono" style={{ color: '#d97559' }}>{t('cat_' + gameState.password_hint.toLowerCase()) || gameState.password_hint}</p>
             </div>
           </div>
         )}
@@ -2034,18 +2091,17 @@ if (gamePhase === 'module_instructions') {
       </button>
 
       <button
-        disabled={!selectedTradePartner}
+        disabled={!selectedTradePartner || !!reportedAsZombie}
         onClick={() =>
-          handleTradeAction('decline')
+          handleTradeAction('report_zombie')
         }
         className={`flex-1 py-2.5 sm:py-3 font-bold rounded-xl transition-all text-xs sm:text-sm ${
-          selectedTradePartner
+          selectedTradePartner && !reportedAsZombie
             ? 'bg-[var(--neon-pink)]/50 text-white active:scale-95 hover:bg-[var(--neon-pink)]/70'
             : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
         }`}
       >
-        {'Decline'}{' '}
-        ✗
+        {t('game_report_zombie') || 'Report Zombie'} ☠
       </button>
     </div>
   </>
@@ -2060,16 +2116,26 @@ if (gamePhase === 'module_instructions') {
   </button>
 )}
 
-            {!hasSkippedTrade && (
-              <div className="mt-2">
-                <button
-                  onClick={handleSkipTrade}
-                  className="w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95"
-                >
-                  {t('game_skip_round')} {t('game_skip_once')}
-                </button>
-              </div>
-            )}
+            {(() => {
+              // The "no partner" skip is only meaningful when the group
+              // has an odd number of players (one person has no partner).
+              // At most ONE skip per round is allowed across the group.
+              const totalPlayers = gameState?.players?.length || 0;
+              const isOdd = totalPlayers % 2 === 1;
+              const someoneAlreadySkipped = (gameState?.players || []).some(p => p.has_skipped_trade);
+              const canSkip = isOdd && !hasSkippedTrade && !someoneAlreadySkipped && !reportedAsZombie;
+              if (!canSkip) return null;
+              return (
+                <div className="mt-2">
+                  <button
+                    onClick={handleSkipTrade}
+                    className="w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95"
+                  >
+                    {t('game_skip_round')} {t('game_skip_once')}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
 

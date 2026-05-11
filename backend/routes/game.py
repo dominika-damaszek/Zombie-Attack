@@ -23,8 +23,28 @@ async def list_cards(db: DBSession = Depends(get_db)):
     cards = db.query(models.Card).all()
     return [{"code": c.code, "type": c.card_type} for c in cards]
 
-WORDS = ["ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT",
-         "CIPHER", "PROXY", "TOKEN", "VAULT", "SHIELD", "PATCH"]
+PASSWORD_CATEGORIES = {
+    "Animals":       ["CAT", "DOG", "WOLF", "HAWK", "BEAR", "LION", "TIGER", "SNAKE", "EAGLE", "SHARK"],
+    "Food":          ["BREAD", "APPLE", "RICE", "HONEY", "CHEESE", "PIZZA", "CANDY", "BURGER", "LEMON", "MANGO"],
+    "Technology":    ["LAPTOP", "TABLET", "MOUSE", "SCREEN", "CAMERA", "PHONE", "DRONE", "ROBOT", "HEADSET", "SPEAKER"],
+    "Nature":        ["RIVER", "STORM", "FLAME", "FROST", "STONE", "OCEAN", "CORAL", "DESERT", "FOREST", "COMET"],
+    "Cybersecurity": ["VIRUS", "HACKER", "SPAM", "FIREWALL", "PIRATE", "BACKUP", "GLITCH", "CRYPTO", "AVATAR", "SCAMMER"],
+}
+
+def _get_password_category(word):
+    """Return the category name for a given password, or None."""
+    if not word:
+        return None
+    for cat, words in PASSWORD_CATEGORIES.items():
+        if word in words:
+            return cat
+    return None
+
+def _pick_password(exclude_category=None):
+    """Pick a random password from a random category, excluding a category."""
+    available = [c for c in PASSWORD_CATEGORIES if c != exclude_category]
+    cat = random.choice(available)
+    return random.choice(PASSWORD_CATEGORIES[cat])
 
 ROUND_EVENTS = [
     {"id": "firewall_down", "title": "🔥 Firewall Down!", "desc": "All Firewalls lose their protection for 60 seconds."},
@@ -124,10 +144,10 @@ async def start_game(group_id: str, payload: dict = {}, db: DBSession = Depends(
         group.secret_word = None
     elif mode == "module_3":
         zombie_count = 1
-        group.secret_word = random.choice(WORDS)
+        group.secret_word = _pick_password()
     else:
         # Normal mode
-        group.secret_word = random.choice(WORDS)
+        group.secret_word = _pick_password()
         zombie_count = 1
 
     if zombie_count > 0:
@@ -387,8 +407,8 @@ async def _advance_to_next_round(group, group_id: str, db: DBSession):
     else:
         mode = group.game_mode or "normal"
         if mode in ("module_3", "normal") and group.secret_word:
-            others = [w for w in WORDS if w != group.secret_word]
-            group.secret_word = random.choice(others)
+            current_cat = _get_password_category(group.secret_word)
+            group.secret_word = _pick_password(exclude_category=current_cat)
         group.game_state = "round_active"
         group.round_end_time = int(time.time()) + 180
         _touch(group)
@@ -396,6 +416,7 @@ async def _advance_to_next_round(group, group_id: str, db: DBSession):
         await manager.broadcast_to_group(group_id, {
             "type": "ROUND_STARTED",
             "secret_word": group.secret_word,
+            "password_hint": _get_password_category(group.secret_word),
         })
 
 
@@ -538,7 +559,10 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
     accusation_mode = mode in ("module_3", "normal")
 
     # Apply accept/decline scoring only in modes where authentication makes sense.
-    if accusation_mode and partner_id and action in ("accept", "decline"):
+    # `decline` is kept as a legacy alias for `report_zombie` so older clients
+    # still work during deployment overlap.
+    REPORT_ACTIONS = ("decline", "report_zombie")
+    if accusation_mode and partner_id and action in ("accept",) + REPORT_ACTIONS:
         partner = db.query(models.GroupPlayer).filter_by(
             id=partner_id, group_id=group_id
         ).first()
@@ -546,16 +570,42 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
             if action == "accept":
                 if not player.is_infected and not partner.is_infected:
                     player.score = (player.score or 0) + 2
-            elif action == "decline":
+
+            elif action in REPORT_ACTIONS:
+                # ── Report-zombie mechanic ────────────────────────────────────
+                # The reporter accuses the partner of being a zombie.  Whether
+                # they are right or wrong, BOTH players are now done trading
+                # for this round (they "skip" the remaining trade phase).
+                # Scoring rules:
+                #   correct (partner IS zombie): reporter +3 (more than a
+                #     normal accepted trade), accused -2.
+                #   wrong   (partner is survivor): reporter -2, accused
+                #     unaffected ("nothing happens" — survivors aren't
+                #     penalized for being mistakenly accused).
                 if not player.is_infected:
                     if partner.is_infected:
-                        # Correctly identified a zombie
-                        player.score = (player.score or 0) + 2
+                        player.score = (player.score or 0) + 3
+                        partner.score = (partner.score or 0) - 2
                     else:
-                        # Wrongly accused a survivor
                         player.score = (player.score or 0) - 2
-            # NOTE: We intentionally do NOT modify partner.score — a player
-            # cannot affect another player's score without their own action.
+                        # accused survivor: no change
+
+                # Both players are immediately marked ready and locked out of
+                # further trading this round.  round_skip_used auto-readies
+                # them in the upcoming between-rounds scan phase.
+                partner.is_ready = True
+                partner.round_skip_used = True
+                player.round_skip_used = True
+
+                # Notify the accused so their UI can show a "you were reported
+                # as a zombie" popup and disable further trade actions.
+                await manager.broadcast_to_group(group_id, {
+                    "type": "REPORTED_AS_ZOMBIE",
+                    "reporter_id": player.id,
+                    "reporter_username": player.user.username,
+                    "accused_id": partner.id,
+                    "accused_username": partner.user.username,
+                })
 
     player.is_ready = True
     _touch(group)
@@ -606,6 +656,25 @@ async def skip_trade(group_id: str, payload: dict, db: DBSession = Depends(get_d
     group = player.group
     mode = group.game_mode or "normal"
     accusation_allowed = mode in ("module_3", "normal")
+
+    # ── Odd-player no-partner skip rule ─────────────────────────────────────
+    # When a group has an odd number of players, exactly one player per round
+    # has no trade partner and clicks "Skip" to get +2 bonus points. Only ONE
+    # such skip is allowed per round. In even-sized groups the button should
+    # never be needed at all.
+    if skip_reason == "no_partner":
+        total_players = len(group.players)
+        if total_players % 2 == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="no_partner_skip_not_allowed_even_group",
+            )
+        already_skipped = sum(1 for p in group.players if p.has_skipped_trade)
+        if already_skipped >= 1:
+            raise HTTPException(
+                status_code=400,
+                detail="no_partner_skip_already_used_this_round",
+            )
 
     # ── Handle accusation ──────────────────────────────────────────────────
     accusation_result = None
@@ -737,11 +806,17 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         }
 
     elif item.current_owner_id == player.id:
-        # Idempotent – player already owns this card, no transfer needed.
-        # We still need to count this as "the player has scanned their card
-        # for the round" — otherwise a player who rescans one of their own
-        # cards (or didn't actually trade physically) would never be marked
-        # ready and the between-rounds scan phase would stall forever.
+        # The player already owns this card.
+        #
+        # During the between-rounds scan phase this must NOT count as the
+        # player's one allowed round scan — otherwise scanning your own
+        # inventory would silently burn your scan for the round and let
+        # somebody trick you into doing nothing.  Return a dedicated error
+        # the frontend can show as an "already in inventory" popup.
+        if group.game_state == "module_between_rounds":
+            raise HTTPException(status_code=400, detail="already_owned")
+        # Outside that phase (e.g. legacy initial_scan_phase) the idempotent
+        # behavior is still useful, so we fall through.
         pass
 
     else:
@@ -929,6 +1004,7 @@ async def get_game_state(group_id: str, db: DBSession = Depends(get_db)):
         "round_end_time":      group.round_end_time,
         "scan_end_time":       group.scan_end_time,
         "secret_word":         group.secret_word,
+        "password_hint":       _get_password_category(group.secret_word) if group.secret_word else None,
         "game_mode":           group.game_mode,
         "instruction_slide":   group.instruction_slide or 0,
         "ready_count":         ready_count,

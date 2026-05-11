@@ -500,6 +500,15 @@ const translations = {
 
     // BackButton
     back: 'Back',
+
+    // Password categories & zombie hints
+    game_zombie_category_hint: 'Category Hint',
+    game_hint_desc: 'The password belongs to this category. Use it to bluff!',
+    cat_animals: 'Animals',
+    cat_food: 'Food',
+    cat_technology: 'Technology',
+    cat_nature: 'Nature',
+    cat_cybersecurity: 'Cybersecurity',
   },
 
   nl: {
@@ -986,6 +995,15 @@ const translations = {
     end_survived_label: 'overleefd',
 
     back: 'Terug',
+
+    // Password categories & zombie hints
+    game_zombie_category_hint: 'Categorie Hint',
+    game_hint_desc: 'Het wachtwoord hoort bij deze categorie. Gebruik het om te bluffen!',
+    cat_animals: 'Dieren',
+    cat_food: 'Eten',
+    cat_technology: 'Technologie',
+    cat_nature: 'Natuur',
+    cat_cybersecurity: 'Cybersecurity',
   },
 
   fr: {
@@ -1472,6 +1490,15 @@ const translations = {
     end_survived_label: 'survécu',
 
     back: 'Retour',
+
+    // Password categories & zombie hints
+    game_zombie_category_hint: 'Indice de catégorie',
+    game_hint_desc: 'Le mot de passe appartient à cette catégorie. Utilisez-le pour bluffer !',
+    cat_animals: 'Animaux',
+    cat_food: 'Nourriture',
+    cat_technology: 'Technologie',
+    cat_nature: 'Nature',
+    cat_cybersecurity: 'Cybersécurité',
   },
 
   de: {
@@ -1958,6 +1985,15 @@ const translations = {
     end_survived_label: 'überlebt',
 
     back: 'Zurück',
+
+    // Password categories & zombie hints
+    game_zombie_category_hint: 'Kategorie-Hinweis',
+    game_hint_desc: 'Das Passwort gehört zu dieser Kategorie. Nutze es zum Bluffen!',
+    cat_animals: 'Tiere',
+    cat_food: 'Essen',
+    cat_technology: 'Technologie',
+    cat_nature: 'Natur',
+    cat_cybersecurity: 'Cybersicherheit',
   },
 };
 
