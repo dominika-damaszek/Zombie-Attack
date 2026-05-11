@@ -985,7 +985,6 @@ const GameScreen = () => {
   // True briefly when the player's "all objectives complete" bonus triggers
   // for the first time. Drives the EarlyCompletionPopup.
   const [showEarlyCompletion, setShowEarlyCompletion] = useState(false);
-<<<<<<< HEAD
   // Set when ANOTHER player reports me as a zombie this round.  Locks my
   // trade UI (cannot accept/decline/report any further) and shows a popup.
   // Cleared every time a new round starts (ROUND_STARTED handler).
@@ -993,11 +992,9 @@ const GameScreen = () => {
   // Set briefly on the reporter to surface the accusation result locally
   // (correct → +3, wrong → -2).  Cleared at next round.
   const [reportFeedback, setReportFeedback] = useState(null);
-=======
   const [showAlreadyOwnedPopup, setShowAlreadyOwnedPopup] = useState(false);
   const [showReportedPopup, setShowReportedPopup] = useState(false);
   const [reporterName, setReporterName] = useState("");
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
 
   // Persist session to localStorage so page reload can rejoin the game
   useEffect(() => {
@@ -1222,22 +1219,9 @@ const GameScreen = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-<<<<<<< HEAD
-        // Special case: player rescanned a card they already own during the
-        // between-rounds scan phase.  The backend rejects this without
-        // consuming their one-per-round scan, so we show a clear popup
-        // and let them scan another card.
-        if (data.detail === 'already_owned') {
-          setScanFeedback({
-            status: 'error',
-            message: t('game_already_owned') || 'You already have this card in your inventory. Scan another card.',
-          });
-          setTimeout(() => setScanFeedback(null), 4000);
-=======
         if (res.status === 400 && data.detail === 'already_owned') {
           setScanFeedback(null);
           setShowAlreadyOwnedPopup(true);
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
           return;
         }
         setScanFeedback({ status: 'error', message: data.detail || t('game_scan_failed') });
@@ -2124,12 +2108,7 @@ if (gamePhase === 'module_instructions') {
             : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
         }`}
       >
-<<<<<<< HEAD
         {t('game_report_zombie') || 'Report Zombie'} ☠
-=======
-        {t('game_report_zombie')}{' '}
-        🚨
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
       </button>
     </div>
   </>
@@ -2145,23 +2124,6 @@ if (gamePhase === 'module_instructions') {
 )}
 
             {(() => {
-<<<<<<< HEAD
-              // The "no partner" skip is only meaningful when the group
-              // has an odd number of players (one person has no partner).
-              // At most ONE skip per round is allowed across the group.
-              const totalPlayers = gameState?.players?.length || 0;
-              const isOdd = totalPlayers % 2 === 1;
-              const someoneAlreadySkipped = (gameState?.players || []).some(p => p.has_skipped_trade);
-              const canSkip = isOdd && !hasSkippedTrade && !someoneAlreadySkipped && !reportedAsZombie;
-              if (!canSkip) return null;
-              return (
-                <div className="mt-2">
-                  <button
-                    onClick={handleSkipTrade}
-                    className="w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95"
-                  >
-                    {t('game_skip_round')} {t('game_skip_once')}
-=======
               const playerCount = gameState?.players?.length || 0;
               const isOdd = playerCount % 2 !== 0;
               const skipUsedByAnyone = gameState?.players?.some(p => p.round_skip_used);
@@ -2184,7 +2146,6 @@ if (gamePhase === 'module_instructions') {
                     {isOdd && skipUsedByAnyone && !hasSkippedTrade && (
                       <span className="text-[9px] uppercase font-mono opacity-80 mt-0.5">{t('game_odd_skip_used')}</span>
                     )}
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
                   </button>
                 </div>
               );

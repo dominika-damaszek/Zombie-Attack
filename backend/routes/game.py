@@ -584,15 +584,11 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                 #     penalized for being mistakenly accused).
                 if not player.is_infected:
                     if partner.is_infected:
-<<<<<<< HEAD
-=======
                         # Correctly identified a zombie
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
                         player.score = (player.score or 0) + 3
                         partner.score = (partner.score or 0) - 2
                     else:
                         player.score = (player.score or 0) - 2
-<<<<<<< HEAD
                         # accused survivor: no change
 
                 # Both players are immediately marked ready and locked out of
@@ -611,17 +607,6 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                     "accused_id": partner.id,
                     "accused_username": partner.user.username,
                 })
-=======
-                
-                # Accused MUST skip the round too
-                partner.is_ready = True
-                partner.round_skip_used = True
-                
-                await manager.broadcast_to_group(group_id, {
-                    "type": "REPORTED_AS_ZOMBIE",
-                    "target_id": partner.id,
-                    "accuser_name": player.user.username
-                })
             elif action == "decline":
                 # Legacy decline (keep for safety, though UI will use report_zombie)
                 if not player.is_infected:
@@ -631,7 +616,6 @@ async def trade_done(group_id: str, payload: dict, db: DBSession = Depends(get_d
                         player.score = (player.score or 0) - 2
             # NOTE: For "accept" and "decline", we intentionally do NOT modify partner.score.
             # But for "report_zombie", we DO modify it because it's a penalty.
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
 
     player.is_ready = True
     _touch(group)
@@ -844,7 +828,6 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         }
 
     elif item.current_owner_id == player.id:
-<<<<<<< HEAD
         # The player already owns this card.
         #
         # During the between-rounds scan phase this must NOT count as the
@@ -856,14 +839,6 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
             raise HTTPException(status_code=400, detail="already_owned")
         # Outside that phase (e.g. legacy initial_scan_phase) the idempotent
         # behavior is still useful, so we fall through.
-=======
-        # If they already own it, it doesn't count as the new scan of the round.
-        if group.game_state == "module_between_rounds":
-             raise HTTPException(
-                status_code=400,
-                detail="already_owned"
-            )
->>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
         pass
 
     else:
