@@ -70,3 +70,16 @@ def get_player_group(player_id: str, db: Session = Depends(database.get_db)):
         "player_id": player_id,
         "join_code": group.join_code,
     }
+
+@router.delete("/{player_id}/leave")
+async def leave_group(player_id: str, db: Session = Depends(database.get_db)):
+    membership = db.query(models.GroupPlayer).filter(models.GroupPlayer.id == player_id).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Player not found")
+        
+    group_id = membership.group_id
+    db.delete(membership)
+    db.commit()
+    
+    await manager.broadcast_to_group(group_id, {"type": "PLAYER_LEFT"})
+    return {"status": "success"}

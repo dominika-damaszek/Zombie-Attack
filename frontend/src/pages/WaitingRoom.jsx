@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Loader2, Users, Wifi, WifiOff, Copy, Check } from 'lucide-react';
+import { CheckCircle2, Loader2, Users, Wifi, WifiOff, Copy, Check, LogOut } from 'lucide-react';
 import { useGameWebSocket } from '../hooks/useGameWebSocket';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
@@ -22,6 +22,7 @@ const WaitingRoom = () => {
   const [players, setPlayers] = useState([]);
   const [savingReady, setSavingReady] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const { lastMessage, connected } = useGameWebSocket(currentGroupData?.group_id, playerData?.id);
 
@@ -78,7 +79,7 @@ const WaitingRoom = () => {
           await fetchGameState(newGroupData.group_id, newGroupData, playerData);
         } catch (e) { console.error(e); }
       })();
-    } else if (lastMessage?.type === 'PLAYER_JOINED' || lastMessage?.type === 'PLAYER_READY') {
+    } else if (lastMessage?.type === 'PLAYER_JOINED' || lastMessage?.type === 'PLAYER_READY' || lastMessage?.type === 'PLAYER_LEFT') {
       (async () => {
         try {
           if (!playerData?.id) return;
@@ -152,6 +153,19 @@ const WaitingRoom = () => {
       await fetchGameState(latest.group_id, latest, playerData);
     } catch (e) { console.error(e); }
     finally { setSavingReady(false); }
+  };
+
+  const handleLeave = async () => {
+    if (!playerData?.id || leaving) return;
+    setLeaving(true);
+    try {
+      await fetch(`${API_URLS.BASE}/player/${playerData.id}/leave`, { method: 'DELETE' });
+      localStorage.removeItem('player_session');
+      navigate('/join');
+    } catch (e) {
+      console.error(e);
+      setLeaving(false);
+    }
   };
 
   if (!currentGroupData) {
@@ -282,6 +296,15 @@ const WaitingRoom = () => {
               {myReadyState ? t('wait_ready_waiting') : t('wait_ready')}
             </button>
           )}
+
+          <button
+            onClick={handleLeave}
+            disabled={leaving}
+            className="w-full mt-4 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-all bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-[0.99]"
+          >
+            {leaving ? <Loader2 className="animate-spin" size={18} /> : <LogOut size={18} />}
+            {t('leave_game') || 'Leave Game'}
+          </button>
 
           {isLobby && (
             <div className="flex justify-center gap-2">
