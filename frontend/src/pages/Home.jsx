@@ -45,7 +45,7 @@ const Home = ({ isAuthenticated }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] sm:min-h-[calc(100vh-73px)] text-center px-4 py-8 mb-20">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] sm:min-h-[calc(100vh-73px)] text-center px-4 py-8 relative">
       <div className="flex flex-col items-center gap-5 mb-8 sm:mb-14">
         <div
           className="fixed inset-0 pointer-events-none z-[-1] opacity-70 bg-cover bg-center"
@@ -89,7 +89,7 @@ const Home = ({ isAuthenticated }) => {
         </p>
       )}
 
-      <div className="my-8 flex items-center gap-2 text-xs pb-15">
+      <div className="my-8 flex items-center gap-2 text-xs">
         {serverStatus === 'waking' && (
           <>
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />

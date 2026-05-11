@@ -1060,11 +1060,18 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
 
     podium = scoreboard[:3]   # top 3 for highlighted display
 
-    lessons = [
-        {"icon": "🔑", "concept": "Authentication",  "lesson": "Passwords are like secret words — only share them with verified parties."},
-        {"icon": "🦠", "concept": "Malware Spread",  "lesson": "Infection spread through item scanning mirrors how malware propagates via file sharing."},
-        {"icon": "🚫", "concept": "Zero Trust",       "lesson": "Never trust automatically — always verify before accepting items (files/data)."},
-    ]
+    if group.game_mode == "module_1":
+        lessons = [
+            {"icon": "📦", "concept": "Data Sharing", "lesson": "Trading cards physically mirrors how devices send and receive data across a network."},
+            {"icon": "🔍", "concept": "Verification", "lesson": "Scanning the QR code represents verifying the integrity of data after receiving it to ensure it hasn't been corrupted or altered."},
+            {"icon": "🔒", "concept": "Information Privacy", "lesson": "Keeping your cards hidden ensures that sensitive data is protected from unauthorized access during transit."}
+        ]
+    else:
+        lessons = [
+            {"icon": "🔑", "concept": "Authentication",  "lesson": "Passwords are like secret words — only share them with verified parties."},
+            {"icon": "🦠", "concept": "Malware Spread",  "lesson": "Infection spread through item scanning mirrors how malware propagates via file sharing."},
+            {"icon": "🚫", "concept": "Zero Trust",       "lesson": "Never trust automatically — always verify before accepting items (files/data)."},
+        ]
 
     session_note = None
     if group.session:
@@ -1084,4 +1091,6 @@ async def get_recap(group_id: str, db: DBSession = Depends(get_db)):
         "survivor_names": [p.user.username for p in surv],
         "scoreboard":     scoreboard,
         "podium":         podium,
+        "total_trades":   sum(p["trades"] for p in scoreboard),
+        "total_objectives_met": sum(p["objectives_met"] for p in scoreboard),
     }

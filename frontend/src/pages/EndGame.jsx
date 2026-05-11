@@ -68,7 +68,7 @@ export default function EndGame() {
       <div className="text-center mb-8">
         <div className="text-7xl mb-3 animate-zw-float">{infectedPct > 50 ? '🧟' : '🏆'}</div>
         <h1 className="text-4xl font-black mb-1" style={{ color: '#AD9E97' }}>
-          {infectedPct > 50 ? t('end_zombies_win') : t('end_survivors_triumph')}
+          {recap.game_mode === 'module_1' ? t('end_trading_complete') || 'Trading Complete!' : (infectedPct > 50 ? t('end_zombies_win') : t('end_survivors_triumph'))}
         </h1>
         <p className="text-slate-500 font-mono text-sm uppercase tracking-widest">
           {recap.game_mode?.toUpperCase()} · {recap.rounds_played} {t('dash_rounds_played')} · {recap.total_players} {t('end_players')}
@@ -77,7 +77,17 @@ export default function EndGame() {
 
       {/* ── Quick stats ── */}
       <div className="grid grid-cols-3 gap-3 mb-8">
-        {[
+        {recap.game_mode === 'module_1' ? [
+          { label: t('end_players'), value: recap.total_players, icon: '👥', color: '#AD9E97' },
+          { label: 'Total Trades', value: recap.total_trades || 0, icon: '🤝', color: '#6D9EEB' },
+          { label: 'Objectives Met', value: recap.total_objectives_met || 0, icon: '🎯', color: '#a8c4a0' },
+        ].map(({ label, value, icon, color }) => (
+          <div key={label} className="glass-panel p-4 text-center rounded-2xl">
+            <div className="text-2xl mb-1">{icon}</div>
+            <p className="text-2xl font-black" style={{ color }}>{value}</p>
+            <p className="text-slate-500 text-xs uppercase tracking-widest">{label}</p>
+          </div>
+        )) : [
           { label: t('end_players'), value: recap.total_players, icon: '👥', color: '#AD9E97' },
           { label: t('end_survived'), value: recap.survivors, icon: '🛡️', color: '#a8c4a0' },
           { label: t('end_infected'), value: recap.zombies, icon: '🧟', color: '#d97559' },
@@ -105,7 +115,7 @@ export default function EndGame() {
               const style = PODIUM_STYLES.find(s => s.rank === entry.rank) || PODIUM_STYLES[2];
               return (
                 <div key={entry.username} className={`flex flex-col items-center gap-2 ${style.order}`} style={{ minWidth: 96 }}>
-                  <div className={`${style.size} leading-none`}>{entry.is_infected ? '🧟' : '🛡️'}</div>
+                  <div className={`${style.size} leading-none`}>{recap.game_mode === 'module_1' ? '📦' : (entry.is_infected ? '🧟' : '🛡️')}</div>
                   <p className={`font-black text-sm text-center truncate max-w-[88px] ${style.color}`}>{entry.username}</p>
                   <p className="text-xl font-black text-white">{entry.score} <span className="text-xs font-normal text-slate-500">{t('end_pts')}</span></p>
                   <div className={`w-full rounded-t-xl border-2 flex items-end justify-center pb-2 ${style.bg} ${style.height}`}>
@@ -141,7 +151,7 @@ export default function EndGame() {
                 </div>
 
                 {/* Role icon */}
-                <span className="text-xl shrink-0">{entry.is_infected ? '🧟' : '🛡️'}</span>
+                <span className="text-xl shrink-0">{recap.game_mode === 'module_1' ? '📦' : (entry.is_infected ? '🧟' : '🛡️')}</span>
 
                 {/* Name + stat pills */}
                 <div className="flex-1 min-w-0">
@@ -153,7 +163,7 @@ export default function EndGame() {
                     {(entry.trades || 0) > 0 && (
                       <StatPill icon="🤝" label={t('end_stat_trades')} value={`+${entry.trades}`} color="#6D9EEB" />
                     )}
-                    {(entry.infections_caused || 0) > 0 && (
+                    {recap.game_mode !== 'module_1' && (entry.infections_caused || 0) > 0 && (
                       <StatPill icon="☣️" label={t('end_stat_infected_by')} value={`+${entry.infections_caused}`} color="#d97559" />
                     )}
                     {(entry.objectives_met || 0) > 0 && (
@@ -177,14 +187,19 @@ export default function EndGame() {
       <div className="glass-panel rounded-2xl p-4 mb-6">
         <p className="text-xs uppercase tracking-widest font-mono mb-3" style={{ color: '#6D7162' }}>{t('end_scoring_key')}</p>
         <div className="grid grid-cols-2 gap-2 text-xs">
-          {[
+          {(recap.game_mode === 'module_1' ? [
+            { icon: '🤝', label: t('end_score_trade'), pts: '+1' },
+            { icon: '✅', label: 'Round completed', pts: '+2' },
+            { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
+            { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
+          ] : [
             { icon: '🤝', label: t('end_score_trade'), pts: '+1' },
             { icon: '☣️', label: t('end_score_infect'), pts: '+3' },
             { icon: '🛡️', label: t('end_score_survive'), pts: '+2' },
             { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
             { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
             { icon: '🌟', label: t('end_score_final_survivor'), pts: '+5' },
-          ].map(({ icon, label, pts }) => (
+          ]).map(({ icon, label, pts }) => (
             <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.15)' }}>
               <span className="flex items-center gap-1.5 text-slate-300">{icon} {label}</span>
               <span className="font-black text-emerald-400 ml-2">{pts}</span>
