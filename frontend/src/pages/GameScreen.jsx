@@ -204,11 +204,11 @@ function CardTakenPopup({ playerName, onClose }) {
   const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(26,22,18,0.92)' }}>
-      <div className="relative rounded-3xl p-6 max-w-sm w-full mx-auto text-center my-auto" style={{ background: 'rgba(42,38,34,0.97)', border: '2px solid rgba(217,117,89,0.5)', backdropFilter: 'blur(20px)' }}>
-        <div className="flex justify-center mb-3 text-rose-500">
+      <div className="relative glass-panel rounded-3xl p-6 max-w-sm w-full mx-auto text-center my-auto" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+        <div className="flex justify-center mb-3" style={{ color: '#d97559', filter: 'drop-shadow(0 0 10px rgba(217,117,89,0.5))' }}>
           <AlertTriangle size={48} />
         </div>
-        <h3 className="text-xl mb-2" style={{ color: '#d97559' }}>{t('game_card_taken_title')}</h3>
+        <h3 className="text-xl mb-2" style={{ color: 'var(--neon-pink)' }}>{t('game_card_taken_title')}</h3>
         <p className="text-slate-300 text-sm mb-1 leading-relaxed">
           {t('game_card_taken_body')}
         </p>
@@ -218,8 +218,7 @@ function CardTakenPopup({ playerName, onClose }) {
         </p>
         <button
           onClick={onClose}
-          className="w-full py-3.5 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
-          style={{ background: 'linear-gradient(135deg, #795846, #a87a64)' }}
+          className="neon-btn w-full py-3.5 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           {t('game_card_taken_ok')}
         </button>
@@ -237,32 +236,31 @@ function EarlyCompletionPopup({ onDismiss, t }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto"
-      style={{ background: 'rgba(8,30,40,0.85)' }}
+      style={{ background: 'rgba(26,22,18,0.92)' }}
     >
       <div className="relative text-center max-w-xs w-full mx-auto my-auto">
         <div
           className="relative glass-panel p-6 sm:p-8 rounded-3xl"
           style={{
-            border: '2px solid #06b6d4',
-            boxShadow: '0 0 40px rgba(6,182,212,0.45)',
+            border: '2px solid var(--neon-pink)',
+            boxShadow: '0 0 40px var(--neon-pink-glow)',
           }}
         >
           <div className="text-7xl mb-3 animate-bounce">🏆</div>
-          <h2 className="text-3xl font-black mb-2" style={{ color: '#06b6d4' }}>
+          <h2 className="text-3xl font-black mb-2" style={{ color: 'var(--neon-pink)' }}>
             {t('game_early_complete_title') || 'Objectives Complete!'}
           </h2>
           <p className="text-slate-300 mb-1">
             {t('game_early_complete_desc') ||
               "You've collected all your objective cards!"}
           </p>
-          <p className="text-emerald-300 text-sm font-bold mb-4">
+          <p className="text-[var(--neon-green-glow)] text-sm font-bold mb-4">
             {t('game_early_complete_bonus') ||
               'Bonus points awarded! Keep helping others trade.'}
           </p>
           <button
             onClick={onDismiss}
-            className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
-            style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)' }}
+            className="neon-btn w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
           >
             {t('game_close') || 'Continue'}
           </button>
@@ -278,16 +276,16 @@ function InfectionAlert({ onDismiss, t }) {
     return () => clearTimeout(timer);
   }, [onDismiss]);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(80,20,15,0.85)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(26,22,18,0.92)' }}>
       <div className="relative text-center max-w-xs w-full mx-auto my-auto">
-        <div className="relative glass-panel p-6 sm:p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid #d97559' }}>
-          <div className="flex justify-center mb-4 text-rose-500">
+        <div className="relative glass-panel p-6 sm:p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+          <div className="flex justify-center mb-4" style={{ color: '#d97559', filter: 'drop-shadow(0 0 12px rgba(217,117,89,0.6))' }}>
             <Skull size={72} className="animate-bounce" />
           </div>
-          <h2 className="text-4xl mb-2" style={{ color: '#d97559' }}>{t('game_infected_title')}</h2>
+          <h2 className="text-4xl mb-2" style={{ color: 'var(--neon-pink)' }}>{t('game_infected_title')}</h2>
           <p className="text-slate-300 mb-1">{t('game_infected_desc')}</p>
           <p className="text-slate-500 text-sm mb-4">{t('game_infected_sub')}</p>
-          <button onClick={onDismiss} className="w-full py-3 rounded-xl font-bold text-white" style={{ background: '#795846' }}>
+          <button onClick={onDismiss} className="neon-btn w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98]">
             {t('game_accept_fate')}
           </button>
         </div>
@@ -449,10 +447,10 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
   const needsPermission = permState === 'prompt' || permState === 'denied' || permState === 'requesting';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(19, 26, 18, 0.92)' }}>
-      <div className="relative rounded-3xl p-6 max-w-sm w-full mx-4" style={{ background: 'rgba(34, 42, 34, 0.95)', border: '1px solid rgba(61, 126, 59, 0.4)', backdropFilter: 'blur(20px)' }}>
-        <button onClick={handleClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><X size={24} /></button>
-        <h3 className="text-xl mb-1 flex items-center gap-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="relative glass-panel rounded-3xl p-6 max-w-sm w-full mx-4" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+        <button onClick={handleClose} className="absolute top-4 right-4 text-slate-500 hover:text-[var(--neon-pink)] transition-colors"><X size={24} /></button>
+        <h3 className="text-xl mb-1 flex items-center gap-2" style={{ color: 'var(--neon-pink)' }}>
           <Camera size={20} /> {title}
         </h3>
         {hint && <p className="text-slate-500 text-sm mb-4">{hint}</p>}
@@ -468,22 +466,22 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
                 {t('scan_camera_allow_desc')}
               </p>
               {permState === 'denied' && (
-                <p className="text-xs mt-1" style={{ color: '#d97559' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--neon-pink)' }}>
                   {t('scan_camera_denied')}
                 </p>
               )}
             </div>
             {retryCountdown !== null ? (
-              <div className="text-center py-3 rounded-2xl" style={{ background: 'rgba(176, 214, 70, 0.7)', border: '1px solid rgba(109,113,98,0.2)' }}>
+              <div className="text-center py-3 rounded-2xl" style={{ background: 'rgba(194,95,181,0.1)', border: '1px solid var(--neon-pink-glow)' }}>
                 <p className="text-slate-400 text-sm mb-1">{t('scan_retry_in')}</p>
-                <p className="text-4xl font-black font-mono" style={{ color: '#795846' }}>{retryCountdown}</p>
+                <p className="text-4xl font-black font-mono" style={{ color: 'var(--neon-pink)' }}>{retryCountdown}</p>
               </div>
             ) : (
               <button
                 onClick={doRequest}
                 disabled={permState === 'requesting'}
-                className="w-full py-4 rounded-2xl font-black text-white text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #795846, #a87a64)', opacity: permState === 'requesting' ? 0.7 : 1 }}
+                className="neon-btn w-full py-4 rounded-2xl font-black text-white text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ opacity: permState === 'requesting' ? 0.7 : 1 }}
               >
                 <Camera size={22} />
                 {permState === 'requesting' ? t('scan_requesting') : t('scan_allow_camera')}
@@ -498,12 +496,12 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
             <div
               id="qr-reader"
               className="w-full rounded-2xl overflow-hidden"
-              style={{ border: '1px solid rgba(109,113,98,0.3)', minHeight: 280 }}
+              style={{ border: '1px solid var(--neon-pink-glow)', minHeight: 280 }}
             />
             {(loading || permState === 'checking') && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(42,38,34,0.85)' }}>
+              <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(26,22,18,0.85)' }}>
                 <div className="text-center">
-                  <Camera size={32} style={{ color: '#795846' }} className="mx-auto mb-2 animate-pulse" />
+                  <Camera size={32} className="mx-auto mb-2 animate-pulse" style={{ color: 'var(--neon-pink)' }} />
                   <p className="text-sm" style={{ color: '#AD9E97' }}>{t('scan_starting')}</p>
                 </div>
               </div>
@@ -549,13 +547,13 @@ function InfoModal({ onClose, t }) {
   const sections = getInfoSections(t);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(26,22,18,0.93)' }}>
-      <div className="relative w-full max-w-md rounded-3xl overflow-hidden overflow-y-auto max-h-[90vh]"
-        style={{ background: 'rgba(42,38,34,0.98)', border: '1px solid rgba(109,113,98,0.4)' }}>
-        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur">
-          <h2 className="text-xl flex items-center gap-2" style={{ color: '#AD9E97' }}>
-            <HelpCircle size={20} style={{ color: '#795846' }} /> {t('game_guide')}
+      <div className="relative glass-panel w-full max-w-md rounded-3xl overflow-hidden overflow-y-auto max-h-[90vh]"
+        style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b backdrop-blur" style={{ borderColor: 'var(--neon-pink-glow)', background: 'rgba(26,22,18,0.9)' }}>
+          <h2 className="text-xl flex items-center gap-2" style={{ color: 'var(--neon-pink)' }}>
+            <HelpCircle size={20} style={{ color: 'var(--neon-pink)' }} /> {t('game_guide')}
           </h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={22} /></button>
+          <button onClick={onClose} className="text-slate-500 hover:text-[var(--neon-pink)] transition-colors"><X size={22} /></button>
         </div>
         <div className="p-6 space-y-6">
           {sections.map(section => (
@@ -1805,24 +1803,24 @@ if (gamePhase === 'module_instructions') {
       {eduContext && <EduPopup edu={eduContext} onDismiss={() => setEduContext(null)} />}
       {showInfoModal && <InfoModal onClose={() => setShowInfoModal(false)} t={t} />}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(10, 19, 11, 0.87)' }} onClick={() => setSelectedItem(null)}>
-          <div className="w-full max-w-sm rounded-3xl overflow-hidden bg-[var(--neon-green-glow)]/10 border-2 border-[var(--neon-light-green-glow)] shadow-[0_0_30px_var(--neon-green-glow)]/50" style={{ backdropFilter: 'blur(24px)' }} onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }} onClick={() => setSelectedItem(null)}>
+          <div className="glass-panel w-full max-w-sm rounded-3xl overflow-hidden" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }} onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
               <div className="flex justify-center mb-4">
                 {(() => {
                   const ct = CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown;
                   return ct.symbol ? (
-                    <img src={ct.symbol} alt={ct.label} className="w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(20,200,35,0.5)]" />
+                    <img src={ct.symbol} alt={ct.label} className="w-20 h-20 object-contain drop-shadow-[0_0_15px_var(--neon-pink-glow)]" />
                   ) : (
                     <Layers size={64} className={ct.color} />
                   );
                 })()}
               </div>
-              <h2 className={`text-2xl mb-1 ${(CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).color}`}>
+              <h2 className="text-2xl mb-1" style={{ color: 'var(--neon-pink)' }}>
                 {getCardLabel(selectedItem.type)}
               </h2>
-              <p className="text-xs font-mono mb-4" style={{ color: '#727c69ff' }}>{selectedItem.code}</p>
-              <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(51, 80, 52, 0.38)', border: '1px solid rgba(93, 117, 91, 0.2)' }}>
+              <p className="text-xs font-mono mb-4" style={{ color: '#6D7162' }}>{selectedItem.code}</p>
+              <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(48,26,42,0.5)', border: '1px solid var(--neon-pink-glow)' }}>
                 <p className="text-slate-300 text-sm leading-relaxed">{t((CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).descKey)}</p>
               </div>
               {selectedItem.contaminated && (
@@ -1830,7 +1828,7 @@ if (gamePhase === 'module_instructions') {
                   {t('game_contaminated')}
                 </div>
               )}
-              <button onClick={() => setSelectedItem(null)} className="w-full py-3 rounded-2xl font-bold text-slate-300 transition-all neon-btn mt-2">
+              <button onClick={() => setSelectedItem(null)} className="neon-btn w-full py-3 rounded-2xl font-bold text-white transition-all mt-2">
                 {t('game_close')}
               </button>
             </div>
@@ -2439,15 +2437,15 @@ if (gamePhase === 'module_instructions') {
 
 const ReportedPopup = ({ reporterName, onDismiss, t }) => {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onDismiss} />
-      <div className="relative w-full max-w-sm bg-slate-900 border-2 border-amber-500 rounded-[2rem] p-8 text-center shadow-[0_0_50px_rgba(245,158,11,0.3)] animate-zw-zoom">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="absolute inset-0" onClick={onDismiss} />
+      <div className="relative glass-panel w-full max-w-sm rounded-[2rem] p-8 text-center animate-zw-zoom" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 50px var(--neon-pink-glow)' }}>
         <div className="flex justify-center mb-6">
-          <div className="p-4 rounded-full bg-amber-500/10 border-2 border-amber-500 text-amber-500 animate-pulse">
-            <AlertTriangle size={48} />
+          <div className="p-4 rounded-full" style={{ background: 'rgba(217,117,89,0.1)', border: '2px solid rgba(217,117,89,0.5)' }}>
+            <AlertTriangle size={48} style={{ color: '#d97559', filter: 'drop-shadow(0 0 8px rgba(217,117,89,0.6))' }} />
           </div>
         </div>
-        <h2 className="text-2xl font-black text-amber-500 mb-2 uppercase tracking-tight">
+        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
           {t('game_reported_as_zombie_title')}
         </h2>
         <p className="text-slate-300 text-sm leading-relaxed mb-8">
@@ -2455,7 +2453,7 @@ const ReportedPopup = ({ reporterName, onDismiss, t }) => {
         </p>
         <button
           onClick={onDismiss}
-          className="w-full py-4 rounded-2xl bg-amber-500 text-slate-950 font-black text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+          className="neon-btn w-full py-4 rounded-2xl font-black text-white text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           {t('wtd_got_it')}
         </button>
@@ -2466,15 +2464,15 @@ const ReportedPopup = ({ reporterName, onDismiss, t }) => {
 
 const AlreadyOwnedPopup = ({ onDismiss, t }) => {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onDismiss} />
-      <div className="relative w-full max-w-sm bg-slate-900 border-2 border-cyan-500 rounded-[2rem] p-8 text-center shadow-[0_0_50px_rgba(6,182,212,0.3)] animate-zw-zoom">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="absolute inset-0" onClick={onDismiss} />
+      <div className="relative glass-panel w-full max-w-sm rounded-[2rem] p-8 text-center animate-zw-zoom" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 50px var(--neon-pink-glow)' }}>
         <div className="flex justify-center mb-6">
-          <div className="p-4 rounded-full bg-cyan-500/10 border-2 border-cyan-500 text-cyan-500">
-            <Info size={48} />
+          <div className="p-4 rounded-full" style={{ background: 'rgba(194,95,181,0.1)', border: '2px solid var(--neon-pink-glow)' }}>
+            <Info size={48} style={{ color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 8px var(--neon-pink-glow))' }} />
           </div>
         </div>
-        <h2 className="text-2xl font-black text-cyan-500 mb-2 uppercase tracking-tight">
+        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
           {t('game_already_in_inventory')}
         </h2>
         <p className="text-slate-300 text-sm leading-relaxed mb-8">
@@ -2482,7 +2480,7 @@ const AlreadyOwnedPopup = ({ onDismiss, t }) => {
         </p>
         <button
           onClick={onDismiss}
-          className="w-full py-4 rounded-2xl bg-cyan-500 text-slate-950 font-black text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+          className="neon-btn w-full py-4 rounded-2xl font-black text-white text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           {t('wtd_got_it')}
         </button>
