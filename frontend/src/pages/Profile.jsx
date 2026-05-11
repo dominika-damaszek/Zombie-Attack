@@ -93,7 +93,7 @@ const Profile = ({ setIsAuthenticated, setHasSession }) => {
           onClick={() => setDetailModal(null)}
         >
           <div
-            className="border border-[var(--neon-cyan)]/80 bg-[var(--dark-cyan)]/50 backdrop-blur-md shadow-[0_0_10px_var(--neon-cyan-glow)]/80 rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+            className="border border-[var(--neon-cyan)]/80 bg-[var(--dark-cyan)]/50 backdrop-blur-md shadow-[0_0_10px_var(--neon-cyan-glow)]/80 rounded-3xl w-full max-w-lg max-h-[88vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="sticky top-0  rounded-t-3xl px-6 py-4 border-b border-slate-700/50 flex items-center justify-between z-10">
@@ -124,21 +124,6 @@ const Profile = ({ setIsAuthenticated, setHasSession }) => {
               <div className="py-10 text-center text-slate-500 text-sm">Could not load game data.</div>
             ) : (
               <div className="px-6 py-5 flex flex-col gap-5">
-                {/* Your result */}
-                <div className="bg-[var(--neon-cyan-glow)]/20 rounded-2xl p-4 flex items-center gap-4">
-                  <div className="text-3xl font-black text-slate-300 w-12 text-center">#{detailModal.game.rank}</div>
-                  <div>
-                    <p className="text-slate-400 text-xs uppercase tracking-widest">Your result</p>
-                    <p className="text-white font-black text-xl">{detailModal.game.score} pts</p>
-                    <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-0.5">
-                      <span className={`w-2 h-2 rounded-full ${detailModal.game.survived ? 'bg-[var(--neon-green)] shadow-[0_0_5px_var(--neon-green)]' : 'bg-[var(--neon-pink)] shadow-[0_0_5px_var(--neon-pink)]'}`}></span>
-                      <span className={detailModal.game.survived ? 'text-[var(--neon-green)]/80' : 'text-[var(--neon-pink)]/80'}>
-                        {detailModal.game.survived ? 'Survived' : 'Infected'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
                 {/* Summary */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
@@ -152,6 +137,21 @@ const Profile = ({ setIsAuthenticated, setHasSession }) => {
                       <p className="text-slate-500 text-xs">{label}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Your result */}
+                <div className="bg-[var(--neon-cyan-glow)]/20 rounded-2xl p-4 flex items-center gap-4">
+                  <div className="text-3xl font-black text-slate-300 w-12 text-center">#{detailModal.game.rank}</div>
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest">Your result</p>
+                    <p className="text-white font-black text-xl">{detailModal.game.score} pts</p>
+                    <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-0.5">
+                      <span className={`w-2 h-2 rounded-full ${detailModal.game.survived ? 'bg-[var(--neon-green)] shadow-[0_0_5px_var(--neon-green)]' : 'bg-[var(--neon-pink)] shadow-[0_0_5px_var(--neon-pink)]'}`}></span>
+                      <span className={detailModal.game.survived ? 'text-[var(--neon-green)]/80' : 'text-[var(--neon-pink)]/80'}>
+                        {detailModal.game.survived ? 'Survived' : 'Infected'}
+                      </span>
+                    </p>
+                  </div>
                 </div>
 
                 {/* Scoreboard */}

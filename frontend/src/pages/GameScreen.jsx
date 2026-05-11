@@ -917,7 +917,7 @@ function WhatToDoNow({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-[80px] sm:top-[90px] right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full font-bold text-md shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed top-[120px] sm:top-[130px] right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full font-bold text-md shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{ background: 'rgba(145, 56, 110, 0.36)', border: '1px solid var(--neon-pink)', color: 'var(--neon-pink)', backdropFilter: 'blur(12px)', boxShadow: '0 0 10px rgba(240, 149, 194, 1)' }}
       >
         {"?"}
@@ -1107,9 +1107,10 @@ const GameScreen = () => {
       // If THIS player just completed all their objectives for the first
       // time, show the celebration popup once.
       const myScore = (lastMessage.scores || []).find(s => s.player_id === playerData?.id);
-      if (myScore?.early_completion) {
+      if (myScore?.early_completion && !playerState?.has_completed_objectives) {
         setShowEarlyCompletion(true);
         playSFX('role_reveal');
+        setPlayerState(p => ({ ...p, has_completed_objectives: true }));
       }
       fetchState();
     }
