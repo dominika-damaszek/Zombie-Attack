@@ -102,6 +102,7 @@ const Dashboard = ({ setHasSession }) => {
       const res = await fetch(`${API_URLS.BASE}/api/game/${groupId}/end`, { method: 'POST' });
       if (!res.ok) throw new Error(await res.text());
       await fetchGroupStats(groupId);
+      navigate('/endgame', { state: { groupId } });
     } catch (e) { alert('Error: ' + e.message); }
     finally { setActionLoading(null); }
   };

@@ -192,7 +192,7 @@ export default function EndGame() {
             { icon: '✅', label: 'Round completed', pts: '+2' },
             { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
             { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
-            { icon: '⏭️', label: 'Skipped trade (Odd player)', pts: '+2' },
+            { icon: '⏭️', label: 'Skipped trade', pts: '-2' },
           ] : [
             { icon: '🤝', label: t('end_score_trade'), pts: '+1' },
             { icon: '☣️', label: t('end_score_infect'), pts: '+3' },
@@ -202,7 +202,7 @@ export default function EndGame() {
             { icon: '🌟', label: t('end_score_final_survivor'), pts: '+5' },
             { icon: '🕵️', label: 'Caught a zombie', pts: '+3' },
             { icon: '❌', label: 'Wrong accusation (Skip/Decline)', pts: '-2' },
-            { icon: '⏭️', label: 'Skipped trade (Odd player)', pts: '+2' },
+            { icon: '⏭️', label: 'Skipped trade', pts: '-2' },
           ]).map(({ icon, label, pts }) => (
             <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.15)' }}>
               <span className="flex items-center gap-1.5 text-slate-300">{icon} {label}</span>
