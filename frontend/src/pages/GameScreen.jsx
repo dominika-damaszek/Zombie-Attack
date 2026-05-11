@@ -67,7 +67,7 @@ function getModuleSlides(t) {
       { type: 'story', icon: Globe, title: t('slide_m1_0_title'), text: t('slide_m1_0_text') },
       { type: 'info', icon: Package, image: '/gamebox.png', title: t('slide_m1_1_title'), text: t('slide_m1_1_text') },
       { type: 'info', icon: Layers, image: '/cards4.png', title: t('slide_m1_2_title'), text: t('slide_m1_2_text') },
-      { type: 'items', icon: Layers, cardImages: ['/card1.png', '/card2.png', '/card3.png', '/card4.png', '/card5.png'], title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
+      { type: 'items', icon: Layers, cardImages: ['/security-patch.png', '/system-boost.png', '/firewall.png', '/security-layer.png', '/hacking-tool.png'], title: t('slide_m1_3_title'), text: t('slide_m1_3_text') },
       { type: 'scan', icon: Smartphone, title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', icon: Target, title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
       { type: 'final', icon: Timer, title: t('slide_m1_6_title'), text: t('slide_m1_6_text') },
@@ -917,7 +917,7 @@ function WhatToDoNow({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-4 right-4 z-40 flex items-center gap-1.5 px-3 py-2 rounded-full font-bold text-md shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed top-[80px] sm:top-[90px] right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full font-bold text-md shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{ background: 'rgba(145, 56, 110, 0.36)', border: '1px solid var(--neon-pink)', color: 'var(--neon-pink)', backdropFilter: 'blur(12px)', boxShadow: '0 0 10px rgba(240, 149, 194, 1)' }}
       >
         {"?"}
@@ -1365,7 +1365,7 @@ if (gamePhase === 'module_instructions') {
   };
 
   return (
-    <div className="relative z-10 flex flex-col bg-slate-950 min-h-full">
+    <div className="relative z-10 flex flex-col bg-slate-950 min-h-[calc(100vh-60px)]">
       <div className="flex-1 flex flex-col items-center justify-start px-4 pt-6 pb-8 min-h-full">
       {showInitialScanner && (
         <QRScannerModal

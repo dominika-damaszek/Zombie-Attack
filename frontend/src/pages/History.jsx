@@ -128,7 +128,7 @@ export default function History() {
           onClick={() => setDetailModal(null)}
         >
           <div
-            className="glass-panel rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+            className="glass-panel rounded-3xl w-full max-w-lg max-h-[88vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="sticky top-0 glass-panel rounded-t-3xl px-6 py-4 border-b border-slate-700/50 flex items-center justify-between z-10">
@@ -159,19 +159,6 @@ export default function History() {
               <div className="py-10 text-center text-slate-500 text-sm">{t('profile_stats_error')}</div>
             ) : (
               <div className="px-6 py-5 flex flex-col gap-5">
-                {/* Your result */}
-                <div className="bg-slate-800/60 rounded-2xl p-4 flex items-center gap-4">
-                  <div className="text-4xl">{detailModal.game.rank <= 3 ? RANK_EMOJI[detailModal.game.rank - 1] : `#${detailModal.game.rank}`}</div>
-                  <div>
-                    <p className="text-slate-400 text-xs uppercase tracking-widest">{t('profile_your_result')}</p>
-                    <p className="text-white font-black text-xl">{detailModal.game.score} {t('end_pts')}</p>
-                    <p className="text-slate-500 text-sm">
-                      {detailModal.game.survived ? `🛡️ ${t('end_survived')}` : `🧟 ${t('end_infected')}`} ·
-                      {t('profile_rank')} {detailModal.game.rank}/{detailModal.game.total_players}
-                    </p>
-                  </div>
-                </div>
-
                 {/* Summary */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
@@ -185,6 +172,19 @@ export default function History() {
                       <p className="text-slate-500 text-xs">{label}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Your result */}
+                <div className="bg-slate-800/60 rounded-2xl p-4 flex items-center gap-4">
+                  <div className="text-4xl">{detailModal.game.rank <= 3 ? RANK_EMOJI[detailModal.game.rank - 1] : `#${detailModal.game.rank}`}</div>
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest">{t('profile_your_result')}</p>
+                    <p className="text-white font-black text-xl">{detailModal.game.score} {t('end_pts')}</p>
+                    <p className="text-slate-500 text-sm">
+                      {detailModal.game.survived ? `🛡️ ${t('end_survived')}` : `🧟 ${t('end_infected')}`} ·
+                      {t('profile_rank')} {detailModal.game.rank}/{detailModal.game.total_players}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Scoreboard */}
@@ -340,7 +340,7 @@ export default function History() {
           {hasStudent && (
             <button
               onClick={() => setTab('student')}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${tab === 'student'
+              className={`flex-1 py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${tab === 'student'
                 ? 'bg-[var(--neon-cyan-glow)]/20 text-[var(--neon-cyan)]/80 border border-[var(--neon-cyan-glow)]'
                 : 'text-[var(--neon-cyan-glow)]/30 hover:text-[var(--neon-cyan)]'
                 }`}
@@ -351,7 +351,7 @@ export default function History() {
           {hasTeacher && (
             <button
               onClick={() => setTab('teacher')}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${tab === 'teacher'
+              className={`flex-1 py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${tab === 'teacher'
                 ? 'bg-[var(--neon-cyan-glow)]/20 text-[var(--neon-cyan)]/80 border border-[var(--neon-cyan-glow)]'
                 : 'text-[var(--neon-cyan-glow)]/30 hover:text-[var(--neon-cyan)]'
                 }`}
