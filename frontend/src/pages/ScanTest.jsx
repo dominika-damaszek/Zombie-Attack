@@ -16,12 +16,12 @@ const KNOWN_CODES = new Set([
   "QRC-2K5W9R7D", "QRC-8V1P4Y6N", "QRC-5M7Q2T8H", "QRC-5Q3T4K7D",
 ]);
 
-const ITEMS = [
-  { label: 'Security Patch', symbol: '../../public/medicine2.png', color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-light-green)]' },
-  { label: 'System Boost', symbol: '../../public/food2.png', color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]' },
-  { label: 'Firewall', symbol: '../../public/gun2.png', color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]' },
-  { label: 'Security Layer', symbol: '../../public/clothing12.png', color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]' },
-  { label: 'Hacking Tool', symbol: '../../public/tool3.png', color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]' },
+const TEST_CARDS = [
+  { label: 'Security Patch', symbol: '/icon-security-patch.png', color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-light-green)]' },
+  { label: 'System Boost', symbol: '/icon-system-boost.png', color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]' },
+  { label: 'Firewall', symbol: '/icon-firewall.png', color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]' },
+  { label: 'Security Layer', symbol: '/icon-security-layer.png', color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]' },
+  { label: 'Hacking Tool', symbol: '/icon-hacking-tool.png', color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]' }
 ];
 
 const READER_ID = 'qr-test-reader';
@@ -108,7 +108,7 @@ export default function ScanTest() {
       <div className="glass-panel rounded-2xl p-4 mb-5">
         <p className="text-xs uppercase tracking-widest text-slate-500 font-mono mb-3">Possible Items</p>
         <div className="flex flex-wrap gap-6 gap-y-5 justify-center mb-7">
-          {ITEMS.map(item => (
+          {TEST_CARDS.map(item => (
             <span key={item.label} className={`shadow-[0_0_15px_currentColor] flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold ${item.bg} ${item.color}`}>
               <img src={item.symbol} alt="" className="w-8 h-8 object-cover" /> {item.label}
             </span>

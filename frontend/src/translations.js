@@ -379,7 +379,8 @@ const translations = {
     home_game_in_progress: 'Game in progress!',
     home_rejoin_hint: 'Tap to rejoin your current game',
     home_rejoin: 'Rejoin →',
-    home_players: '6–11 players',
+    home_players: '6+ players',
+    home_slogan: 'Awareness is your only weapon',
     home_duration: '15–20 minutes',
     home_age: '14+ years old',
 
@@ -865,7 +866,8 @@ const translations = {
     home_game_in_progress: 'Spel bezig!',
     home_rejoin_hint: 'Tik om terug te keren naar je spel',
     home_rejoin: 'Terug →',
-    home_players: '6–11 spelers',
+    home_players: '6+ spelers',
+    home_slogan: 'Awareness is your only weapon',
     home_duration: '15–20 minuten',
     home_age: '14+ jaar',
 
@@ -1350,7 +1352,8 @@ const translations = {
     home_game_in_progress: 'Jeu en cours !',
     home_rejoin_hint: 'Appuie pour rejoindre ta partie en cours',
     home_rejoin: 'Rejoindre →',
-    home_players: '6–11 joueurs',
+    home_players: '6+ joueurs',
+    home_slogan: 'Awareness is your only weapon',
     home_duration: '15–20 minutes',
     home_age: '14+ ans',
 
@@ -1835,7 +1838,8 @@ const translations = {
     home_game_in_progress: 'Spiel läuft!',
     home_rejoin_hint: 'Tippe, um deinem aktuellen Spiel beizutreten',
     home_rejoin: 'Beitreten →',
-    home_players: '6–11 Spieler',
+    home_players: '6+ Spieler',
+    home_slogan: 'Awareness is your only weapon',
     home_duration: '15–20 Minuten',
     home_age: 'Ab 14 Jahren',
 

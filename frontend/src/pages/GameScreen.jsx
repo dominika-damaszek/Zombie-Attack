@@ -22,11 +22,11 @@ import { useLanguage } from '../contexts/LanguageContext';
 // NOTE: `desc` keys are translation IDs resolved at render time via t(key).
 // Do NOT call t() at module-load — `t` is not in scope here and would throw.
 const CARD_TYPES = {
-  security_patch: { label: 'Security Patch', symbol: '../../public/medicine2.png', descKey: 'info_medicine_desc', color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
-  system_boost: { label: 'System Boost', symbol: '../../public/food2.png', descKey: 'info_food_desc', color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]', glow: 'shadow-[0_0_15px_#eb9844]' },
-  firewall: { label: 'Firewall', symbol: '../../public/gun2.png', descKey: 'info_weapon_desc', color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
-  security_layer: { label: 'Security Layer', symbol: '../../public/clothing12.png', descKey: 'info_clothing_desc', color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]', glow: 'shadow-[0_0_15px_#e2bdfe]' },
-  hacking_tool: { label: 'Hacking Tool', symbol: '../../public/tool3.png', descKey: 'info_tools_desc', color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]', glow: 'shadow-[0_0_15px_#b8708b]' },
+  security_patch: { label: 'Security Patch', symbol: '/icon-security-patch.png', descKey: 'info_medicine_desc', color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
+  system_boost: { label: 'System Boost', symbol: '/icon-system-boost.png', descKey: 'info_food_desc', color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]', glow: 'shadow-[0_0_15px_#eb9844]' },
+  firewall: { label: 'Firewall', symbol: '/icon-firewall.png', descKey: 'info_weapon_desc', color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
+  security_layer: { label: 'Security Layer', symbol: '/icon-security-layer.png', descKey: 'info_clothing_desc', color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]', glow: 'shadow-[0_0_15px_#e2bdfe]' },
+  hacking_tool: { label: 'Hacking Tool', symbol: '/icon-hacking-tool.png', descKey: 'info_tools_desc', color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]', glow: 'shadow-[0_0_15px_#b8708b]' },
   unknown: { label: 'Unknown', color: 'text-slate-400', bg: 'bg-slate-500/20 border-slate-500/30', descKey: 'info_unknown_desc', glow: 'shadow-[0_0_15px_slate-500]' },
 };
 
@@ -1201,6 +1201,11 @@ const GameScreen = () => {
         playSFX('scan_success');
         setScanFeedback({ status: 'success', item: { type: data.inventory?.find(i => i.code === cardCode)?.type } });
         setTimeout(() => setScanFeedback(null), 3000);
+      }
+      if (data.early_completion && !playerState.has_completed_objectives) {
+        setShowEarlyCompletion(true);
+        playSFX('role_reveal');
+        setPlayerState(p => ({ ...p, has_completed_objectives: true }));
       }
       if (data.round_ended) fetchState();
       // Mark between-rounds scan as done so UI updates immediately

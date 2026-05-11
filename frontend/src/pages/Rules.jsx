@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, BookOpen, Shield, Skull, ArrowRightLeft, Key, Target, SkipForward, AlertTriangle, ChevronDown, ChevronUp, Dice1Icon, Dice2Icon, Dice3Icon, DnaIcon, SkullIcon, PinIcon, DiamondIcon, GemIcon } from 'lucide-react';
+import { Users, ChevronLeft, BookOpen, Shield, Skull, ArrowRightLeft, Key, Target, SkipForward, AlertTriangle, ChevronDown, ChevronUp, Dice1Icon, Dice2Icon, Dice3Icon, DnaIcon, SkullIcon, PinIcon, DiamondIcon, GemIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import BackButton from '../components/BackButton';
 
@@ -69,11 +69,11 @@ export default function Rules() {
   ];
 
   const cardTypes = [
-    { label: 'Security Patch', symbol: '../../public/medicine2.png', desc: t('info_medicine_desc'), color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
-    { label: 'System Boost', symbol: '../../public/food2.png', desc: t('info_food_desc'), color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]', glow: 'shadow-[0_0_15px_#eb9844]' },
-    { label: 'Firewall', symbol: '../../public/gun2.png', desc: t('info_weapon_desc'), color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
-    { label: 'Security Layer', symbol: '../../public/clothing12.png', desc: t('info_clothing_desc'), color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]', glow: 'shadow-[0_0_15px_#e2bdfe]' },
-    { label: 'Hacking Tool', symbol: '../../public/tool3.png', desc: t('info_tools_desc'), color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]', glow: 'shadow-[0_0_15px_#b8708b]' },
+    { label: 'Security Patch', symbol: '/icon-security-patch.png', desc: t('info_medicine_desc'), color: 'text-[var(--neon-green-glow)]/70', bg: 'bg-[var(--neon-green-glow)]/10 border-[var(--neon-green)]', glow: 'shadow-[0_0_15px_var(--neon-green)]' },
+    { label: 'System Boost', symbol: '/icon-system-boost.png', desc: t('info_food_desc'), color: 'text-[#eb9844]/80', bg: 'bg-[#eb9844]/20 border-[#f2cfab]', glow: 'shadow-[0_0_15px_#eb9844]' },
+    { label: 'Firewall', symbol: '/icon-firewall.png', desc: t('info_weapon_desc'), color: 'text-[var(--neon-cyan)]/70', bg: 'bg-[var(--neon-cyan-glow)]/20 border-[var(--neon-cyan)]', glow: 'shadow-[0_0_15px_var(--neon-cyan)]' },
+    { label: 'Security Layer', symbol: '/icon-security-layer.png', desc: t('info_clothing_desc'), color: 'text-[#e2bdfe]/70', bg: 'bg-[#bd68fd]/20 border-[#e2bdfe]', glow: 'shadow-[0_0_15px_#e2bdfe]' },
+    { label: 'Hacking Tool', symbol: '/icon-hacking-tool.png', desc: t('info_tools_desc'), color: 'text-[#b8708b]/90', bg: 'bg-[#a75373]/30 border-[#ddbbc8]', glow: 'shadow-[0_0_15px_#b8708b]' },
   ];
 
   return (
@@ -85,7 +85,22 @@ export default function Rules() {
         <h1 className="flex justify-center items-center gap-2 text-4xl font-black bg-clip-text mb-2">
           <BookOpen size={32} className="text-[var(--neon-light-green-glow)]" />{t('rules_title')}
         </h1>
-        <p className="text-slate-400 max-w-md mx-auto">{t('rules_subtitle')}</p>
+        <p className="text-slate-400 max-w-md mx-auto mb-6">{t('rules_subtitle')}</p>
+
+        <div className="bg-[var(--neon-cyan-glow)]/10 border border-[var(--neon-cyan)]/30 rounded-xl p-4 max-w-md mx-auto text-left">
+          <p className="text-[var(--neon-cyan)] font-bold mb-2 flex items-center gap-2">
+            <Users size={18} />
+            Group Size & Decks
+          </p>
+          <p className="text-slate-300 text-sm mb-3">
+            The game can be played by <strong>6+ players</strong>. A new deck of cards is required for each group of 6–11 players.
+          </p>
+          <div className="space-y-1">
+            <p className="text-slate-400 text-xs flex items-center justify-between"><span>6–11 players</span> <span className="text-white font-bold">1 deck</span></p>
+            <p className="text-slate-400 text-xs flex items-center justify-between"><span>12–22 players</span> <span className="text-white font-bold">2 decks</span></p>
+            <p className="text-slate-400 text-xs flex items-center justify-between"><span>23–33 players</span> <span className="text-white font-bold">3 decks</span></p>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">

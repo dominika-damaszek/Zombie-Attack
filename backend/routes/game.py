@@ -834,10 +834,24 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
                 await manager.broadcast_to_group(group_id, {"type": "PLAYER_READY"})
 
     # ── 5. Build inventory from DB (no JSON blob) ─────────────────────────────
+    inventory_items = db.query(models.Item).filter_by(current_owner_id=player.id).all()
     inventory = [
         {"code": i.code, "type": i.type, "contaminated": i.is_contaminated}
-        for i in db.query(models.Item).filter_by(current_owner_id=player.id).all()
+        for i in inventory_items
     ]
+
+    # ── Check early objective completion ──────────────────────────────────────
+    import json
+    from collections import Counter
+    early_completion = False
+    if not player.is_infected and player.objectives:
+        owned_counts = Counter(i.type for i in inventory_items)
+        try:
+            objs = db_queries._normalize_objectives(json.loads(player.objectives))
+            cards_met, cards_needed = db_queries._objectives_progress(objs, owned_counts)
+            early_completion = (cards_met >= cards_needed) and (cards_needed > 0)
+        except Exception:
+            pass
 
     return {
         "message": "Scan processed",
@@ -847,6 +861,7 @@ async def scan_item(group_id: str, payload: dict, db: DBSession = Depends(get_db
         "inventory": inventory,
         "round_ended": round_ended,
         "scores": scores,
+        "early_completion": early_completion,
     }
 
 

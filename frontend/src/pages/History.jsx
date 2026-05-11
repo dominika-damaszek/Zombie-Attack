@@ -369,92 +369,58 @@ export default function History() {
               <p className="text-slate-600 text-sm mt-1 mb-7">{t('history_join_session')}</p>
               <button onClick={() => navigate('/join')} className="mt-5 neon-btn-alt px-6 py-3 text-sm">{t('history_join_game')}</button>
             </div>
-          ) : recentGames.length > 0 ? (
-            <div className="glass-panel rounded-2xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-slate-700/40">
-                <h3 className="font-bold text-sm flex items-center gap-2" style={{ color: '#AD9E97' }}>
-                  <Trophy size={14} /> {t('history_recent_games')}
-                </h3>
-              </div>
-              <div className="divide-y divide-slate-700/30">
-                {recentGames.map((game) => {
-                  const canView = isWithinOneMonth(game.last_activity);
-                  return (
-                    <button
-                      key={game.group_id}
-                      onClick={() => canView && openDetail(game)}
-                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-left transition-all ${canView ? 'hover:bg-slate-700/20 cursor-pointer' : 'cursor-default opacity-60'}`}
-                    >
-                      <span className="text-lg shrink-0">
-                        {game.rank <= 3 ? RANK_EMOJI[game.rank - 1] : `#${game.rank}`}
-                      </span>
-                      <span className="text-lg shrink-0">{game.survived ? '🛡️' : '🧟'}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-slate-300 text-sm font-semibold truncate">
-                          {MODE_LABELS[game.game_mode] || game.game_mode}
-                          {game.session_note && (
-                            <span className="ml-2 text-xs text-purple-400 font-normal font-mono">{game.session_note}</span>
-                          )}
-                          <span className="text-slate-600 text-xs ml-2">{game.rounds_played} {t('history_rounds_pl')}</span>
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-0.5">
-                          {game.trades > 0 && <span className="text-xs text-slate-500">🤝 {game.trades}</span>}
-                          {game.infections_caused > 0 && <span className="text-xs text-slate-500">☣️ {game.infections_caused}</span>}
-                          <span className="text-xs text-slate-600">{game.rank}/{game.total_players} {t('end_players')}</span>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-white font-black">{game.score}</p>
-                        <p className="text-xs text-slate-600">{t('end_pts')}</p>
-                      </div>
-                      {canView && <span className="text-slate-600 text-xs shrink-0">→</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           ) : (
-            studentGames.map((game, i) => {
+            (recentGames.length > 0 ? recentGames : studentGames).map((game, i) => {
+              const canView = isWithinOneMonth(game.last_activity);
               const mode = getModeLabel(game.game_mode);
-              const survived = game.survived;
-              const finished = game.game_state === 'end_game';
+              const isRecent = 'score' in game; // Check if it's from recentGames
+              const finished = isRecent ? true : game.game_state === 'end_game';
+
               return (
-                <div key={i} className="glass-panel rounded-2xl p-5 border border-slate-700/50">
+                <button
+                  key={game.group_id || i}
+                  onClick={() => (canView && isRecent) && openDetail(game)}
+                  className={`w-full glass-panel rounded-2xl p-5 border border-slate-700/50 text-left transition-all ${(canView && isRecent) ? 'hover:bg-slate-700/20 cursor-pointer' : 'cursor-default'}`}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{mode.emoji}</span>
                       <div>
-                        <p className="font-bold text-white">{mode.label}</p>
+                        <p className="font-bold text-white flex items-center gap-2">
+                          {mode.label}
+                          {game.session_note && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-mono">
+                              {game.session_note}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-slate-500 text-xs mt-0.5">
-                          {t('history_group')} {game.group_number} · {game.rounds_played > 0 ? `${game.rounds_played} ${game.rounds_played !== 1 ? t('history_rounds_pl') : t('history_rounds')}` : t('history_no_rounds')}
+                          {game.rounds_played > 0 ? `${game.rounds_played} ${game.rounds_played !== 1 ? t('history_rounds_pl') : t('history_rounds')}` : t('history_no_rounds')}
+                          {isRecent && ` · ${game.rank}/${game.total_players} ${t('end_players')} · ${game.score} ${t('end_pts')}`}
+                          {!isRecent && ` · ${t('history_group')} ${game.group_number}`}
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      {game.role && (
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${game.role === 'zombie'
-                          ? 'bg-[var(--neon-pink-glow)]/15 text-[var(--neon-pink)]/60 border border-[var(--neon-pink)]/50'
-                          : 'bg-[var(--neon-green-glow)]/15 text-[var(--neon-green-glow)]/80 border border-[var(--neon-green-glow)]/50'
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isRecent ? (
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${game.survived
+                          ? 'bg-[var(--neon-green-glow)]/15 text-[var(--neon-green-glow)]/80 border border-[var(--neon-green-glow)]/50'
+                          : 'bg-[var(--neon-pink-glow)]/15 text-[var(--neon-pink)]/60 border border-[var(--neon-pink)]/50'
                           }`}>
-                          {game.role === 'zombie' ? `${t('game_zombie')}` : `${t('game_survivor')}`}
+                          {game.survived ? `${t('end_survived')} 🛡️` : `${t('end_infected')} 🧟`}
                         </span>
-                      )}
-                      {finished && (
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${survived
-                          ? 'bg-[var(--neon-pink-glow)]/15 text-[var(--neon-pink)]/60 border border-[var(--neon-pink)]/50'
-                          : 'bg-[var(--neon-green-glow)]/15 text-[var(--neon-green-glow)]/80 border border-[var(--neon-green-glow)]/50'
+                      ) : (
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${finished
+                          ? 'bg-slate-700 text-slate-400'
+                          : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
                           }`}>
-                          {survived ? `${t('end_survived')}` : `${t('end_infected')}`}
+                          {finished ? t('history_finished') : getStateLabel(game.game_state)}
                         </span>
                       )}
-                      {!finished && (
-                        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-700 text-slate-400">
-                          {getStateLabel(game.game_state)}
-                        </span>
-                      )}
+                      {(canView && isRecent) && <span className="text-slate-500 text-sm">→</span>}
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
