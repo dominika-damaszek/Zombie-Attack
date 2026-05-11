@@ -183,7 +183,7 @@ export default function Rules() {
             <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mt-3">OR</p>
             <p className="text-slate-300 text-sm leading-relaxed">{t('slide_m3_5_pw2')}</p>
 
-            {[t('slide_m3_5_h1')].map((h, i) => (
+            {[t('slide_m3_5_h3')].map((h, i) => (
               <div key={i} className="flex items-start gap-2 bg-[var(--neon-green-glow)]/10 border border-[var(--neon-green-glow)]/50 rounded-lg p-2">
                 <p className="text-[var(--neon-green-glow)]/80 text-xs">{h}</p>
               </div>
