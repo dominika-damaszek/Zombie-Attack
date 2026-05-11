@@ -167,9 +167,7 @@ const TopNav = ({
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-500/10 transition-all"
                   >
                     <LogOut size={16} className="text-rose-400" />
-                    <span className="text-sm font-semibold text-rose-400">
-                      {t("nav_logout")}
-                    </span>
+                    <span className="text-sm font-semibold text-rose-400"></span>
                   </button>
                 ) : (
                   <button
