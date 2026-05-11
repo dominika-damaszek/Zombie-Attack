@@ -143,9 +143,9 @@ const TopNav = ({
                   >
                     <LayoutDashboard
                       size={16}
-                      className="text-orange-400"
+                      className="text-orange-400 opacity-80"
                     />
-                    <span className="text-sm font-semibold text-orange-400">
+                    <span className="text-sm font-semibold text-white">
                       {t("nav_dashboard")}
                     </span>
                   </button>

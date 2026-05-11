@@ -474,64 +474,71 @@ const Dashboard = ({ setHasSession }) => {
 
       <BackButton to="/host" />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-20 mb-7">
-        <div>
-          <h1 className="flex justify-center items-center gap-2 text-4xl font-black bg-clip-text mb-2">
-            {t("dash_title")}
-          </h1>
-          <div
-            className={`inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full text-sm font-semibold border ${modeInfo.bg} ${modeInfo.color}`}
-          >
-            <span>{modeInfo.label}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-[var(--neon-green-glow)]/15 px-5 py-3 rounded-2xl border border-[var(--neon-green-glow)]/40 text-center">
-            <p className="text-xs text-[var(--neon-green)]/60 uppercase tracking-widest mb-0.5">
-              {t("dash_students")}
-            </p>
-            <p className="text-2xl font-black text-white">{totalPlayers}</p>
+      <div className="flex flex-col gap-3 mt-16 sm:mt-20 mb-7">
+        {/* Title row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-black bg-clip-text mb-1">
+              {t("dash_title")}
+            </h1>
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border ${modeInfo.bg} ${modeInfo.color}`}
+            >
+              <span className="truncate max-w-[200px] sm:max-w-none">{modeInfo.label}</span>
+            </div>
           </div>
 
-          <button
-            onClick={endSession}
-            className="flex items-center gap-2 bg-[var(--neon-pink-glow)]/40 hover:bg-[var(--neon-pink-glow)]/20 text-[var(--neon-pink)]/80 font-semibold py-3 px-4 rounded-2xl transition-all border border-[var(--neon-pink)]/70 text-sm"
-          >
-            <X size={16} className="text-white" />
-            {t("dash_end_session")}
-          </button>
-          <button
-            onClick={refreshAll}
-            disabled={refreshing}
-            className="p-3 bg-[var(--neon-cyan-glow)]/40 hover:bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/80 rounded-2xl text-[var(--neon-cyan)]/100 transition-all"
-          >
-            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
-          </button>
+          {/* Action buttons row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-[var(--neon-green-glow)]/15 px-4 py-2 rounded-2xl border border-[var(--neon-green-glow)]/40 text-center">
+              <p className="text-xs text-[var(--neon-green)]/60 uppercase tracking-widest leading-tight">
+                {t("dash_students")}
+              </p>
+              <p className="text-xl font-black text-white leading-tight">{totalPlayers}</p>
+            </div>
+
+            <button
+              onClick={endSession}
+              className="flex items-center gap-1.5 bg-[var(--neon-pink-glow)]/40 hover:bg-[var(--neon-pink-glow)]/20 text-[var(--neon-pink)]/80 font-semibold py-2.5 px-3 rounded-2xl transition-all border border-[var(--neon-pink)]/70 text-xs sm:text-sm whitespace-nowrap"
+            >
+              <X size={14} className="text-white shrink-0" />
+              {t("dash_end_session")}
+            </button>
+            <button
+              onClick={refreshAll}
+              disabled={refreshing}
+              className="p-2.5 bg-[var(--neon-cyan-glow)]/40 hover:bg-[var(--neon-cyan-glow)]/20 border border-[var(--neon-cyan)]/80 rounded-2xl text-[var(--neon-cyan)]/100 transition-all shrink-0"
+            >
+              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── Session note ── */}
-      <div className="glass-panel rounded-2xl px-5 py-4 mb-6 flex items-center gap-3">
-        <NotebookPen
-          size={16}
-          className="text-[var(--neon-pink-glow)] shrink-0"
-        />
-        <input
-          type="text"
-          value={note}
-          onChange={(e) => {
-            setNote(e.target.value);
-            setNoteSaved(false);
-          }}
-          onKeyDown={(e) => e.key === "Enter" && saveNote()}
-          placeholder={t("dash_note_placeholder")}
-          className="flex-1 bg-transparent text-slate-300 placeholder-slate-600 text-sm outline-none"
-          maxLength={120}
-        />
+      <div className="glass-panel rounded-2xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <NotebookPen
+            size={15}
+            className="text-[var(--neon-pink-glow)] shrink-0"
+          />
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => {
+              setNote(e.target.value);
+              setNoteSaved(false);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && saveNote()}
+            placeholder={t("dash_note_placeholder")}
+            className="flex-1 min-w-0 bg-transparent text-slate-300 placeholder-slate-600 text-sm outline-none"
+            maxLength={120}
+          />
+        </div>
         <button
           onClick={saveNote}
           disabled={noteLoading || !note.trim()}
-          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+          className={`self-end sm:self-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
             noteSaved
               ? "bg-[var(--neon-green-glow)]/20 text-[var(--neon-green-glow)]/80 border border-[var(--neon-green-glow)]/30"
               : "bg-[var(--neon-pink-glow)]/55 text-[var(--neon-pink)] hover:bg-[var(--neon-pink-glow)]/25 disabled:opacity-40"
