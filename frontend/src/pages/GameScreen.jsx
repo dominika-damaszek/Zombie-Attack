@@ -211,11 +211,11 @@ function CardTakenPopup({ playerName, onClose }) {
   const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(26,22,18,0.92)' }}>
-      <div className="relative rounded-3xl p-6 max-w-sm w-full mx-auto text-center my-auto" style={{ background: 'rgba(42,38,34,0.97)', border: '2px solid rgba(217,117,89,0.5)', backdropFilter: 'blur(20px)' }}>
-        <div className="flex justify-center mb-3 text-rose-500">
+      <div className="relative glass-panel rounded-3xl p-6 max-w-sm w-full mx-auto text-center my-auto" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+        <div className="flex justify-center mb-3" style={{ color: '#d97559', filter: 'drop-shadow(0 0 10px rgba(217,117,89,0.5))' }}>
           <AlertTriangle size={48} />
         </div>
-        <h3 className="text-xl mb-2" style={{ color: '#d97559' }}>{t('game_card_taken_title')}</h3>
+        <h3 className="text-xl mb-2" style={{ color: 'var(--neon-pink)' }}>{t('game_card_taken_title')}</h3>
         <p className="text-slate-300 text-sm mb-1 leading-relaxed">
           {t('game_card_taken_body')}
         </p>
@@ -225,8 +225,7 @@ function CardTakenPopup({ playerName, onClose }) {
         </p>
         <button
           onClick={onClose}
-          className="w-full py-3.5 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
-          style={{ background: 'linear-gradient(135deg, #795846, #a87a64)' }}
+          className="neon-btn w-full py-3.5 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           {t('game_card_taken_ok')}
         </button>
@@ -244,32 +243,31 @@ function EarlyCompletionPopup({ onDismiss, t }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto"
-      style={{ background: 'rgba(8,30,40,0.85)' }}
+      style={{ background: 'rgba(26,22,18,0.92)' }}
     >
       <div className="relative text-center max-w-xs w-full mx-auto my-auto">
         <div
           className="relative glass-panel p-6 sm:p-8 rounded-3xl"
           style={{
-            border: '2px solid #06b6d4',
-            boxShadow: '0 0 40px rgba(6,182,212,0.45)',
+            border: '2px solid var(--neon-pink)',
+            boxShadow: '0 0 40px var(--neon-pink-glow)',
           }}
         >
           <div className="text-7xl mb-3 animate-bounce">🏆</div>
-          <h2 className="text-3xl font-black mb-2" style={{ color: '#06b6d4' }}>
+          <h2 className="text-3xl font-black mb-2" style={{ color: 'var(--neon-pink)' }}>
             {t('game_early_complete_title') || 'Objectives Complete!'}
           </h2>
           <p className="text-slate-300 mb-1">
             {t('game_early_complete_desc') ||
               "You've collected all your objective cards!"}
           </p>
-          <p className="text-emerald-300 text-sm font-bold mb-4">
+          <p className="text-[var(--neon-green-glow)] text-sm font-bold mb-4">
             {t('game_early_complete_bonus') ||
               'Bonus points awarded! Keep helping others trade.'}
           </p>
           <button
             onClick={onDismiss}
-            className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
-            style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)' }}
+            className="neon-btn w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
           >
             {t('game_close') || 'Continue'}
           </button>
@@ -285,16 +283,16 @@ function InfectionAlert({ onDismiss, t }) {
     return () => clearTimeout(timer);
   }, [onDismiss]);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(80,20,15,0.85)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-zw-fade overflow-y-auto" style={{ background: 'rgba(26,22,18,0.92)' }}>
       <div className="relative text-center max-w-xs w-full mx-auto my-auto">
-        <div className="relative glass-panel p-6 sm:p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid #d97559' }}>
-          <div className="flex justify-center mb-4 text-rose-500">
+        <div className="relative glass-panel p-6 sm:p-8 rounded-3xl animate-zw-shake" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+          <div className="flex justify-center mb-4" style={{ color: '#d97559', filter: 'drop-shadow(0 0 12px rgba(217,117,89,0.6))' }}>
             <Skull size={72} className="animate-bounce" />
           </div>
-          <h2 className="text-4xl mb-2" style={{ color: '#d97559' }}>{t('game_infected_title')}</h2>
+          <h2 className="text-4xl mb-2" style={{ color: 'var(--neon-pink)' }}>{t('game_infected_title')}</h2>
           <p className="text-slate-300 mb-1">{t('game_infected_desc')}</p>
           <p className="text-slate-500 text-sm mb-4">{t('game_infected_sub')}</p>
-          <button onClick={onDismiss} className="w-full py-3 rounded-xl font-bold text-white" style={{ background: '#795846' }}>
+          <button onClick={onDismiss} className="neon-btn w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98]">
             {t('game_accept_fate')}
           </button>
         </div>
@@ -456,10 +454,10 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
   const needsPermission = permState === 'prompt' || permState === 'denied' || permState === 'requesting';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(19, 26, 18, 0.92)' }}>
-      <div className="relative rounded-3xl p-6 max-w-sm w-full mx-4" style={{ background: 'rgba(34, 42, 34, 0.95)', border: '1px solid rgba(61, 126, 59, 0.4)', backdropFilter: 'blur(20px)' }}>
-        <button onClick={handleClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><X size={24} /></button>
-        <h3 className="text-xl mb-1 flex items-center gap-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="relative glass-panel rounded-3xl p-6 max-w-sm w-full mx-4" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+        <button onClick={handleClose} className="absolute top-4 right-4 text-slate-500 hover:text-[var(--neon-pink)] transition-colors"><X size={24} /></button>
+        <h3 className="text-xl mb-1 flex items-center gap-2" style={{ color: 'var(--neon-pink)' }}>
           <Camera size={20} /> {title}
         </h3>
         {hint && <p className="text-slate-500 text-sm mb-4">{hint}</p>}
@@ -475,22 +473,22 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
                 {t('scan_camera_allow_desc')}
               </p>
               {permState === 'denied' && (
-                <p className="text-xs mt-1" style={{ color: '#d97559' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--neon-pink)' }}>
                   {t('scan_camera_denied')}
                 </p>
               )}
             </div>
             {retryCountdown !== null ? (
-              <div className="text-center py-3 rounded-2xl" style={{ background: 'rgba(176, 214, 70, 0.7)', border: '1px solid rgba(109,113,98,0.2)' }}>
+              <div className="text-center py-3 rounded-2xl" style={{ background: 'rgba(194,95,181,0.1)', border: '1px solid var(--neon-pink-glow)' }}>
                 <p className="text-slate-400 text-sm mb-1">{t('scan_retry_in')}</p>
-                <p className="text-4xl font-black font-mono" style={{ color: '#795846' }}>{retryCountdown}</p>
+                <p className="text-4xl font-black font-mono" style={{ color: 'var(--neon-pink)' }}>{retryCountdown}</p>
               </div>
             ) : (
               <button
                 onClick={doRequest}
                 disabled={permState === 'requesting'}
-                className="w-full py-4 rounded-2xl font-black text-white text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #795846, #a87a64)', opacity: permState === 'requesting' ? 0.7 : 1 }}
+                className="neon-btn w-full py-4 rounded-2xl font-black text-white text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ opacity: permState === 'requesting' ? 0.7 : 1 }}
               >
                 <Camera size={22} />
                 {permState === 'requesting' ? t('scan_requesting') : t('scan_allow_camera')}
@@ -505,12 +503,12 @@ function QRScannerModal({ onScan, onClose, title, hint }) {
             <div
               id="qr-reader"
               className="w-full rounded-2xl overflow-hidden"
-              style={{ border: '1px solid rgba(109,113,98,0.3)', minHeight: 280 }}
+              style={{ border: '1px solid var(--neon-pink-glow)', minHeight: 280 }}
             />
             {(loading || permState === 'checking') && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(42,38,34,0.85)' }}>
+              <div className="absolute inset-0 flex items-center justify-center rounded-3xl" style={{ background: 'rgba(26,22,18,0.85)' }}>
                 <div className="text-center">
-                  <Camera size={32} style={{ color: '#795846' }} className="mx-auto mb-2 animate-pulse" />
+                  <Camera size={32} className="mx-auto mb-2 animate-pulse" style={{ color: 'var(--neon-pink)' }} />
                   <p className="text-sm" style={{ color: '#AD9E97' }}>{t('scan_starting')}</p>
                 </div>
               </div>
@@ -556,13 +554,13 @@ function InfoModal({ onClose, t }) {
   const sections = getInfoSections(t);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(26,22,18,0.93)' }}>
-      <div className="relative w-full max-w-md rounded-3xl overflow-hidden overflow-y-auto max-h-[90vh]"
-        style={{ background: 'rgba(42,38,34,0.98)', border: '1px solid rgba(109,113,98,0.4)' }}>
-        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur">
-          <h2 className="text-xl flex items-center gap-2" style={{ color: '#AD9E97' }}>
-            <HelpCircle size={20} style={{ color: '#795846' }} /> {t('game_guide')}
+      <div className="relative glass-panel w-full max-w-md rounded-3xl overflow-hidden overflow-y-auto max-h-[90vh]"
+        style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }}>
+        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b backdrop-blur" style={{ borderColor: 'var(--neon-pink-glow)', background: 'rgba(26,22,18,0.9)' }}>
+          <h2 className="text-xl flex items-center gap-2" style={{ color: 'var(--neon-pink)' }}>
+            <HelpCircle size={20} style={{ color: 'var(--neon-pink)' }} /> {t('game_guide')}
           </h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={22} /></button>
+          <button onClick={onClose} className="text-slate-500 hover:text-[var(--neon-pink)] transition-colors"><X size={22} /></button>
         </div>
         <div className="p-6 space-y-6">
           {sections.map(section => (
@@ -744,13 +742,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
       <div className="text-center">
         <HeroVisual />
         <TitleHeader>{title}</TitleHeader>
-        {secretWord && !isZombieHints && (
-          <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(56,44,37,0.7)', border: '1px solid rgba(168,196,160,0.4)' }}>
-            <p className="text-xs uppercase tracking-widest mb-1 font-mono" style={{ color: '#a8c4a0' }}>{t('game_your_secret_password')}</p>
-            <p className="text-2xl sm:text-3xl font-black tracking-widest font-mono" style={{ color: '#a8c4a0' }}>{secretWord}</p>
-            <p className="text-slate-500 text-xs mt-1">{t('game_never_share')}</p>
-          </div>
-        )}
+        {/* Removed secret password from hints slide to prevent reveal in instructions */}
         <div className="space-y-6 text-left">
           {groupList.map((group, gi) => (
             <div key={gi}>
@@ -993,6 +985,7 @@ const GameScreen = () => {
   // True briefly when the player's "all objectives complete" bonus triggers
   // for the first time. Drives the EarlyCompletionPopup.
   const [showEarlyCompletion, setShowEarlyCompletion] = useState(false);
+<<<<<<< HEAD
   // Set when ANOTHER player reports me as a zombie this round.  Locks my
   // trade UI (cannot accept/decline/report any further) and shows a popup.
   // Cleared every time a new round starts (ROUND_STARTED handler).
@@ -1000,6 +993,11 @@ const GameScreen = () => {
   // Set briefly on the reporter to surface the accusation result locally
   // (correct → +3, wrong → -2).  Cleared at next round.
   const [reportFeedback, setReportFeedback] = useState(null);
+=======
+  const [showAlreadyOwnedPopup, setShowAlreadyOwnedPopup] = useState(false);
+  const [showReportedPopup, setShowReportedPopup] = useState(false);
+  const [reporterName, setReporterName] = useState("");
+>>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
 
   // Persist session to localStorage so page reload can rejoin the game
   useEffect(() => {
@@ -1154,6 +1152,12 @@ const GameScreen = () => {
       // Group-aware objectives were just generated server-side.
       fetchState();
     }
+    if (lastMessage.type === 'REPORTED_AS_ZOMBIE') {
+      setReporterName(lastMessage.reporter_username || "Someone");
+      setShowReportedPopup(true);
+      setIsDoneTrading(true);
+      fetchState();
+    }
     if (lastMessage.type === 'GAME_ENDED') {
       if (groupData?.group_id) {
         localStorage.setItem('endgame_group_id', (resolvedGroupId.current || groupData.group_id));
@@ -1218,6 +1222,7 @@ const GameScreen = () => {
       });
       const data = await res.json();
       if (!res.ok) {
+<<<<<<< HEAD
         // Special case: player rescanned a card they already own during the
         // between-rounds scan phase.  The backend rejects this without
         // consuming their one-per-round scan, so we show a clear popup
@@ -1228,6 +1233,11 @@ const GameScreen = () => {
             message: t('game_already_owned') || 'You already have this card in your inventory. Scan another card.',
           });
           setTimeout(() => setScanFeedback(null), 4000);
+=======
+        if (res.status === 400 && data.detail === 'already_owned') {
+          setScanFeedback(null);
+          setShowAlreadyOwnedPopup(true);
+>>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
           return;
         }
         setScanFeedback({ status: 'error', message: data.detail || t('game_scan_failed') });
@@ -1823,6 +1833,19 @@ if (gamePhase === 'module_instructions') {
       )}
       {showInfectionAlert && <InfectionAlert onDismiss={() => setShowInfectionAlert(false)} t={t} />}
       {showEarlyCompletion && <EarlyCompletionPopup onDismiss={() => setShowEarlyCompletion(false)} t={t} />}
+      {showReportedPopup && (
+        <ReportedPopup
+          reporterName={reporterName}
+          onDismiss={() => setShowReportedPopup(false)}
+          t={t}
+        />
+      )}
+      {showAlreadyOwnedPopup && (
+        <AlreadyOwnedPopup
+          onDismiss={() => setShowAlreadyOwnedPopup(false)}
+          t={t}
+        />
+      )}
       {showScanner && (
         <QRScannerModal
           onScan={handleScan}
@@ -1834,24 +1857,24 @@ if (gamePhase === 'module_instructions') {
       {eduContext && <EduPopup edu={eduContext} onDismiss={() => setEduContext(null)} />}
       {showInfoModal && <InfoModal onClose={() => setShowInfoModal(false)} t={t} />}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(10, 19, 11, 0.87)' }} onClick={() => setSelectedItem(null)}>
-          <div className="w-full max-w-sm rounded-3xl overflow-hidden bg-[var(--neon-green-glow)]/10 border-2 border-[var(--neon-light-green-glow)] shadow-[0_0_30px_var(--neon-green-glow)]/50" style={{ backdropFilter: 'blur(24px)' }} onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }} onClick={() => setSelectedItem(null)}>
+          <div className="glass-panel w-full max-w-sm rounded-3xl overflow-hidden" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px var(--neon-pink-glow)' }} onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
               <div className="flex justify-center mb-4">
                 {(() => {
                   const ct = CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown;
                   return ct.symbol ? (
-                    <img src={ct.symbol} alt={ct.label} className="w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(20,200,35,0.5)]" />
+                    <img src={ct.symbol} alt={ct.label} className="w-20 h-20 object-contain drop-shadow-[0_0_15px_var(--neon-pink-glow)]" />
                   ) : (
                     <Layers size={64} className={ct.color} />
                   );
                 })()}
               </div>
-              <h2 className={`text-2xl mb-1 ${(CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).color}`}>
+              <h2 className="text-2xl mb-1" style={{ color: 'var(--neon-pink)' }}>
                 {getCardLabel(selectedItem.type)}
               </h2>
-              <p className="text-xs font-mono mb-4" style={{ color: '#727c69ff' }}>{selectedItem.code}</p>
-              <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(51, 80, 52, 0.38)', border: '1px solid rgba(93, 117, 91, 0.2)' }}>
+              <p className="text-xs font-mono mb-4" style={{ color: '#6D7162' }}>{selectedItem.code}</p>
+              <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(48,26,42,0.5)', border: '1px solid var(--neon-pink-glow)' }}>
                 <p className="text-slate-300 text-sm leading-relaxed">{t((CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).descKey)}</p>
               </div>
               {selectedItem.contaminated && (
@@ -1859,7 +1882,7 @@ if (gamePhase === 'module_instructions') {
                   {t('game_contaminated')}
                 </div>
               )}
-              <button onClick={() => setSelectedItem(null)} className="w-full py-3 rounded-2xl font-bold text-slate-300 transition-all neon-btn mt-2">
+              <button onClick={() => setSelectedItem(null)} className="neon-btn w-full py-3 rounded-2xl font-bold text-white transition-all mt-2">
                 {t('game_close')}
               </button>
             </div>
@@ -2086,7 +2109,7 @@ if (gamePhase === 'module_instructions') {
             : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
         }`}
       >
-        {'Accept'}{' '}
+        {t('game_accept') || 'Accept'}{' '}
         ✓
       </button>
 
@@ -2101,7 +2124,12 @@ if (gamePhase === 'module_instructions') {
             : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
         }`}
       >
+<<<<<<< HEAD
         {t('game_report_zombie') || 'Report Zombie'} ☠
+=======
+        {t('game_report_zombie')}{' '}
+        🚨
+>>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
       </button>
     </div>
   </>
@@ -2117,6 +2145,7 @@ if (gamePhase === 'module_instructions') {
 )}
 
             {(() => {
+<<<<<<< HEAD
               // The "no partner" skip is only meaningful when the group
               // has an odd number of players (one person has no partner).
               // At most ONE skip per round is allowed across the group.
@@ -2132,6 +2161,30 @@ if (gamePhase === 'module_instructions') {
                     className="w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95"
                   >
                     {t('game_skip_round')} {t('game_skip_once')}
+=======
+              const playerCount = gameState?.players?.length || 0;
+              const isOdd = playerCount % 2 !== 0;
+              const skipUsedByAnyone = gameState?.players?.some(p => p.round_skip_used);
+              const canSkip = !hasSkippedTrade && (!isOdd || !skipUsedByAnyone);
+
+              if (hasSkippedTrade) return null;
+
+              return (
+                <div className="mt-2">
+                  <button
+                    disabled={!canSkip}
+                    onClick={handleSkipTrade}
+                    className={`w-full py-2 sm:py-2.5 font-bold rounded-xl transition-all text-xs sm:text-sm flex flex-col items-center justify-center ${
+                      canSkip
+                        ? 'bg-[var(--neon-cyan-glow)]/80 hover:bg-[var(--neon-cyan-glow)] text-white active:scale-95'
+                        : 'bg-slate-800/50 text-slate-600 cursor-not-allowed border border-slate-700'
+                    }`}
+                  >
+                    <span>{t('game_skip_round')} {t('game_skip_once')}</span>
+                    {isOdd && skipUsedByAnyone && !hasSkippedTrade && (
+                      <span className="text-[9px] uppercase font-mono opacity-80 mt-0.5">{t('game_odd_skip_used')}</span>
+                    )}
+>>>>>>> f58e567d5b50ab4c19c0620790c9c121dd73d40a
                   </button>
                 </div>
               );
@@ -2460,6 +2513,60 @@ if (gamePhase === 'module_instructions') {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+};
+
+const ReportedPopup = ({ reporterName, onDismiss, t }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="absolute inset-0" onClick={onDismiss} />
+      <div className="relative glass-panel w-full max-w-sm rounded-[2rem] p-8 text-center animate-zw-zoom" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 50px var(--neon-pink-glow)' }}>
+        <div className="flex justify-center mb-6">
+          <div className="p-4 rounded-full" style={{ background: 'rgba(217,117,89,0.1)', border: '2px solid rgba(217,117,89,0.5)' }}>
+            <AlertTriangle size={48} style={{ color: '#d97559', filter: 'drop-shadow(0 0 8px rgba(217,117,89,0.6))' }} />
+          </div>
+        </div>
+        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
+          {t('game_reported_as_zombie_title')}
+        </h2>
+        <p className="text-slate-300 text-sm leading-relaxed mb-8">
+          {t('game_reported_as_zombie_body')}
+        </p>
+        <button
+          onClick={onDismiss}
+          className="neon-btn w-full py-4 rounded-2xl font-black text-white text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          {t('wtd_got_it')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const AlreadyOwnedPopup = ({ onDismiss, t }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-zw-fade" style={{ background: 'rgba(26,22,18,0.92)' }}>
+      <div className="absolute inset-0" onClick={onDismiss} />
+      <div className="relative glass-panel w-full max-w-sm rounded-[2rem] p-8 text-center animate-zw-zoom" style={{ border: '2px solid var(--neon-pink)', boxShadow: '0 0 50px var(--neon-pink-glow)' }}>
+        <div className="flex justify-center mb-6">
+          <div className="p-4 rounded-full" style={{ background: 'rgba(194,95,181,0.1)', border: '2px solid var(--neon-pink-glow)' }}>
+            <Info size={48} style={{ color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 8px var(--neon-pink-glow))' }} />
+          </div>
+        </div>
+        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
+          {t('game_already_in_inventory')}
+        </h2>
+        <p className="text-slate-300 text-sm leading-relaxed mb-8">
+          {t('game_card_taken_sub')}
+        </p>
+        <button
+          onClick={onDismiss}
+          className="neon-btn w-full py-4 rounded-2xl font-black text-white text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          {t('wtd_got_it')}
+        </button>
       </div>
     </div>
   );

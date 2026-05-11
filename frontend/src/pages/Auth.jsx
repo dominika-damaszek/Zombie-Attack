@@ -4,6 +4,7 @@ import { LogIn, UserPlus } from 'lucide-react';
 import { API_URLS } from '../services/api';
 import BackButton from '../components/BackButton';
 import { useLanguage } from '../contexts/LanguageContext';
+import LazyImage from '../components/LazyImage';
 
 const Auth = ({ setIsAuthenticated }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -53,7 +54,7 @@ const Auth = ({ setIsAuthenticated }) => {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 relative overflow-hidden">
       <BackButton to="/" />
       <div className="w-full max-w-md z-20 relative">
-        <img src="/uie1.png" alt="Danger" className="w-30 h-30 mx-auto mb-4 animate-slow-scale drop-shadow-[0px_0_10px_rgba(255,125,0,1)] mt-10" />
+        <LazyImage src="/uie1.png" alt="Danger" className="w-30 h-30 mx-auto mb-4 animate-slow-scale drop-shadow-[0px_0_10px_rgba(255,125,0,1)] mt-10" />
 
         <div className="text-center mb-8">
           <h2 className="text-4xl bg-clip-text mb-2">

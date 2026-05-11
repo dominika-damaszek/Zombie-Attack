@@ -36,43 +36,46 @@ export default function EduPopup({ edu, onDismiss }) {
   const tagLabel = TAG_LABELS[edu.tag] || edu.tag;
 
   return (
-    <div
-      className={`fixed bottom-20 left-4 right-4 md:left-auto md:right-24 md:max-w-sm z-50 edu-popup p-5 animate-zw-slide transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-    >
-      <button
-        onClick={() => { setVisible(false); setTimeout(onDismiss, 300); }}
-        className="absolute top-3 right-3 text-slate-500 hover:text-slate-300 transition-colors"
+    <div className={`fixed inset-0 z-[100] flex items-start justify-center p-4 pointer-events-none transition-all duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md pointer-events-auto" onClick={() => { setVisible(false); setTimeout(onDismiss, 300); }} />
+      <div
+        className={`relative w-full max-w-sm bg-[var(--dark-bg)] border border-[var(--neon-pink)] rounded-2xl p-5 shadow-[0_0_30px_var(--neon-pink-glow)] pointer-events-auto transition-all duration-300 mt-4 ${visible ? 'translate-y-0' : '-translate-y-4'}`}
       >
-        <X size={16} />
-      </button>
+        <button
+          onClick={() => { setVisible(false); setTimeout(onDismiss, 300); }}
+          className="absolute top-3 right-3 text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <X size={16} />
+        </button>
 
-      <div className="flex items-start gap-3">
-        <div className="text-2xl mt-0.5 shrink-0">{edu.icon || '💡'}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-slate-100 font-bold text-sm">{edu.title}</p>
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-mono ${tagStyle}`}>
-              {tagLabel}
-            </span>
+        <div className="flex items-start gap-3">
+          <div className="text-2xl mt-0.5 shrink-0">{edu.icon || '💡'}</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <p className="text-slate-100 font-bold text-sm">{edu.title}</p>
+              <span className={`text-xs px-2 py-0.5 rounded-full border font-mono ${tagStyle}`}>
+                {tagLabel}
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">{edu.body}</p>
+            {edu.prev_owner_infected !== undefined && (
+              <p className={`mt-1.5 text-xs font-bold ${edu.prev_owner_infected ? 'text-rose-400' : 'text-emerald-400'}`}>
+                Verdict: Previous holder was {edu.prev_owner_infected ? '🔴 INFECTED' : '🟢 CLEAN'}
+              </p>
+            )}
           </div>
-          <p className="text-slate-400 text-xs leading-relaxed">{edu.body}</p>
-          {edu.prev_owner_infected !== undefined && (
-            <p className={`mt-1.5 text-xs font-bold ${edu.prev_owner_infected ? 'text-rose-400' : 'text-emerald-400'}`}>
-              Verdict: Previous holder was {edu.prev_owner_infected ? '🔴 INFECTED' : '🟢 CLEAN'}
-            </p>
-          )}
         </div>
-      </div>
 
-      {/* Auto-dismiss bar */}
-      <div className="mt-3 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(173,158,151,0.15)' }}>
-        <div
-          className="h-full rounded-full"
-          style={{
-            background: 'linear-gradient(90deg, #795846, #AD9E97)',
-            animation: 'zw-timer-bar 7s linear forwards',
-          }}
-        />
+        {/* Auto-dismiss bar */}
+        <div className="mt-3 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(173,158,151,0.15)' }}>
+          <div
+            className="h-full rounded-full"
+            style={{
+              background: 'linear-gradient(90deg, var(--neon-pink), var(--neon-pink-glow))',
+              animation: 'zw-timer-bar 7s linear forwards',
+            }}
+          />
+        </div>
       </div>
       <style>{`@keyframes zw-timer-bar { from { width: 100%; } to { width: 0%; } }`}</style>
     </div>
