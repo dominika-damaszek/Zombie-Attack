@@ -167,7 +167,9 @@ const TopNav = ({
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-500/10 transition-all"
                   >
                     <LogOut size={16} className="text-rose-400" />
-                    <span className="text-sm font-semibold text-rose-400"></span>
+                    <span className="text-sm font-semibold text-rose-400">
+                      {t("nav_logout")}
+                    </span>
                   </button>
                 ) : (
                   <button
@@ -204,10 +206,11 @@ const TopNav = ({
         {isAuthenticated && hasSession && (
           <button
             onClick={() => navigate("/dashboard")}
-            className="hidden sm:flex items-center justify-center text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50"
+            className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold  text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50"
             title={t("nav_dashboard")}
           >
             <LayoutDashboard size={16} />
+            <span className="hidden lg:block">{t("nav_dashboard")}</span>
           </button>
         )}
         {isAuthenticated && (
@@ -216,7 +219,7 @@ const TopNav = ({
             className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold  text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50"
           >
             <History size={16} />
-            <span>{t("nav_history")}</span>
+            <span className="hidden md:block">{t("nav_history")}</span>
           </button>
         )}
         {isAuthenticated ? (
@@ -225,7 +228,7 @@ const TopNav = ({
             className="hidden sm:flex items-center gap-1 sm:gap-2 text-sm font-semibold  text-slate-300 hover:text-white bg-[var(--neon-pink-glow)]/30 hover:bg-[var(--neon-pink-glow)]/60 px-2.5 py-2 rounded-xl transition-all border border-[var(--neon-pink)]/50"
           >
             <LogOut size={16} />
-            <span>{t("nav_logout")}</span>
+            <span className="hidden md:block">{t("nav_logout")}</span>
           </button>
         ) : (
           <button

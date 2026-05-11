@@ -155,14 +155,6 @@ const Home = ({ isAuthenticated }) => {
           </p>
         </div>
       </div>
-
-      <div className="fixed right-[-10px] bottom-[30px] w-[100px] h-[100px] lg:w-[200px] lg:h-[200px] opacity-90 pointer-events-none">
-        <LazyImage
-          src="/uil1.png"
-          alt="Lock"
-          className="w-full h-full object-contain drop-shadow-[0px_0_20px_rgba(255,255,255,100)]"
-        />
-      </div>
     </div>
   );
 };
