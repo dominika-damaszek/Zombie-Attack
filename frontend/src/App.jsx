@@ -92,11 +92,11 @@ function AppContent({ isAuthenticated, hasSession, setIsAuthenticated, setHasSes
         <div className="fixed bottom-0 right-0 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] pointer-events-none -z-0" />
         {/* Floating Viruses */}
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          <img src="/uiv1.png" alt="" className="absolute top-[10%] left-[10%] w-32 animate-float-slow" />
-          <img src="/uiv1.png" alt="" className="absolute top-[60%] left-[80%] w-24 animate-float-medium" style={{ animationDelay: '2s' }} />
-          <img src="/uiv1.png" alt="" className="absolute top-[0%] left-[50%] w-28 animate-float-fast" style={{ animationDelay: '4s' }} />
-          <img src="/uiv1.png" alt="" className="absolute top-[80%] left-[20%] w-20 animate-float-slow" style={{ animationDelay: '6s' }} />
-          <img src="/u_iv1.png" alt="" className="absolute top-[2%] left-[50%] w-16 animate-float-medium" style={{ animationDelay: '1s' }} />
+          <img src="/uiv1.png" alt="" className="absolute top-[10%] left-[10%] w-16 sm:w-32 animate-float-slow" />
+          <img src="/uiv1.png" alt="" className="absolute top-[60%] left-[80%] w-12 sm:w-24 animate-float-medium" style={{ animationDelay: '2s' }} />
+          <img src="/uiv1.png" alt="" className="absolute top-[0%] left-[50%] w-14 sm:w-28 animate-float-fast" style={{ animationDelay: '4s' }} />
+          <img src="/uiv1.png" alt="" className="absolute top-[80%] left-[20%] w-10 sm:w-20 animate-float-slow" style={{ animationDelay: '6s' }} />
+          <img src="/uiv1.png" alt="" className="absolute top-[2%] left-[50%] w-8 sm:w-16 animate-float-medium" style={{ animationDelay: '1s' }} />
         </div>
       </main>
     </div>

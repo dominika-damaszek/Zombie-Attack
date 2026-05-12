@@ -71,6 +71,13 @@ function getModuleSlides(t) {
         type: 'items',
         title: t('slide_m1_3_title'),
         text: t('slide_m1_3_text'),
+        cardImages: [
+          '/security-patch.png',
+          '/system-boost.png',
+          '/firewall.png',
+          '/security-layer.png',
+          '/hacking-tool.png'
+        ]
       },
       { type: 'scan', icon: Smartphone, title: t('slide_m1_4_title'), text: t('slide_m1_4_text') },
       { type: 'objectives', icon: Target, title: t('slide_m1_5_title'), text: t('slide_m1_5_text') },
@@ -90,7 +97,7 @@ function getModuleSlides(t) {
       { type: 'scan', image: '/cards4.png', title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
       { type: 'info', icon: Users, title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
       { type: 'info', icon: Key, title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
-      { type: 'info', icon: EyeOff, title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
+      { type: 'info', image: '/trade.jpeg', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       {
         type: 'hints', icon: MessageSquare, title: t('slide_m3_5_title'), groups: [
           {
@@ -114,10 +121,10 @@ function getModuleSlides(t) {
     // intro story slide is swapped for a cybersecurity-themed one.
     normal: [
       { type: 'story', icon: Globe, title: t('slide_n0_title'), text: t('slide_n0_text') },
-      { type: 'scan', icon: Smartphone, title: t('slide_n1_title'), text: t('slide_n1_text') },
+      { type: 'scan', image: '/cards4.png', title: t('slide_n1_title'), text: t('slide_n1_text') },
       { type: 'info', icon: Target, title: t('slide_n2_title'), text: t('slide_n2_text') },
       { type: 'info', icon: Key, title: t('slide_n3_title'), text: t('slide_n3_text') },
-      { type: 'info', icon: EyeOff, title: t('slide_n4_title'), text: t('slide_n4_text') },
+      { type: 'info', image: '/trade.jpeg', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       {
         type: 'hints', icon: MessageSquare, title: t('slide_m3_5_title'), groups: [
           {
@@ -134,7 +141,8 @@ function getModuleSlides(t) {
           },
         ]
       },
-      { type: 'final', icon: Zap, title: t('slide_n6_title'), text: t('slide_n6_text') },
+      { type: 'info', icon: HandHelping, title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
+      { type: 'final', icon: Zap, title: t('slide_m3_7_title'), text: t('slide_m3_7_text') },
     ],
   };
 }
@@ -165,7 +173,7 @@ function getInfoSections(t) {
 function RoleReveal({ role, secretWord, passwordHint, gameMode, onContinue, t }) {
   const isZombie = role === 'zombie';
   const cfg = isZombie
-    ? { label: t('game_zombie'), icon: Skull, color: '#d96259ff', border: 'rgba(217, 98, 89, 0.5)', glow: 'rgba(217, 104, 89, 0.3)', desc: t('game_zombie_desc') }
+    ? { label: t('game_zombie'), icon: Skull, color: '#d96259', border: 'rgba(217, 98, 89, 0.5)', glow: 'rgba(217, 104, 89, 0.3)', desc: t('game_zombie_desc') }
     : { label: t('game_survivor'), icon: Shield, color: '#a8c4a0', border: 'rgba(168,196,160,0.5)', glow: 'rgba(168,196,160,0.25)', desc: t('game_survivor_desc') };
 
   return (
@@ -1079,9 +1087,9 @@ const GameScreen = () => {
     if (lastMessage.type === 'GAME_STARTED') { fetchState(); }
     if (lastMessage.type === 'SLIDE_ADVANCED') {
       setLocalSlideReady(false);
-      // For normal mode, also advance the local slide index so players see next instruction
-      if (gameModeRef.current === 'normal' && lastMessage.slide !== undefined) {
-        setLocalNormalSlideIndex(lastMessage.slide);
+      // For normal mode, advance the local slide index so players see next instruction after scanning
+      if (gameModeRef.current === 'normal') {
+        setLocalNormalSlideIndex(prev => prev + 1);
       }
       fetchState();
     }
@@ -1384,9 +1392,7 @@ if (gamePhase === 'module_instructions') {
     ? MODULE_SLIDES.normal
     : (MODULE_SLIDES[gameMode] || MODULE_SLIDES.module_1);
 
-  const slideIndex = isNormalMode
-      ? localNormalSlideIndex
-      : (gameState?.instruction_slide ?? 0);
+  const slideIndex = gameState?.instruction_slide ?? 0;
 
   const slide = slides[Math.min(slideIndex, slides.length - 1)];
   const isLast = slideIndex >= slides.length - 1;
@@ -1402,25 +1408,6 @@ if (gamePhase === 'module_instructions') {
     (gameState?.players?.find(
       p => p.id === playerData?.id
     )?.is_ready ?? false);
-
-  const handleNormalNext = () => {
-    if (isLast) {
-      setLocalSlideReady(true);
-      handleSlideReady();
-    } else {
-      setLocalNormalSlideIndex(i =>
-        Math.min(i + 1, slides.length - 1)
-      );
-    }
-  };
-
-  const handleNormalSkipAll = () => {
-    const scanIdx = slides.findIndex(s => s.type === 'scan');
-
-    setLocalNormalSlideIndex(
-      scanIdx >= 0 ? scanIdx : slides.length - 1
-    );
-  };
 
   return (
     <div className="relative z-10 flex flex-col bg-slate-950 min-h-[calc(100vh-60px)]">
@@ -1661,7 +1648,7 @@ if (gamePhase === 'module_instructions') {
               ) : (
                 <div className="space-y-2">
                   <button
-                    onClick={handleNormalNext}
+                    onClick={handleSlideReady}
                     className="neon-btn w-full py-4 mb-5 sm:py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     style={
                       isLast

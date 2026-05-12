@@ -26,6 +26,7 @@ export default function EndGame() {
   const { t } = useLanguage();
   const { groupId } = location.state || { groupId: localStorage.getItem('endgame_group_id') };
   const [recap, setRecap] = useState(null);
+  const myUsername = (() => { try { return JSON.parse(localStorage.getItem('player_session') || '{}')?.playerData?.username; } catch { return null; } })();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -155,8 +156,8 @@ export default function EndGame() {
 
                 {/* Name + stat pills */}
                 <div className="flex-1 min-w-0">
-                  <p className={`font-bold text-sm truncate ${isTop ? 'text-yellow-300' : 'text-slate-200'}`}>
-                    {entry.username}
+                  <p className={`font-bold text-sm truncate ${entry.username === myUsername ? 'text-cyan-400' : isTop ? 'text-yellow-300' : 'text-slate-200'}`}>
+                    {entry.username}{entry.username === myUsername && <span className="ml-1 text-[10px] text-cyan-500 font-mono">({t('profile_you')})</span>}
                     {entry.is_initial_zombie && <span className="ml-1.5 text-xs font-mono text-rose-400">{t('end_patient_zero')}</span>}
                   </p>
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -200,9 +201,10 @@ export default function EndGame() {
             { icon: '🎯', label: t('end_score_objective'), pts: '+1' },
             { icon: '🏆', label: t('end_score_all_objectives'), pts: '+2' },
             { icon: '🌟', label: t('end_score_final_survivor'), pts: '+5' },
-            { icon: '🕵️', label: 'Caught a zombie', pts: '+3' },
-            { icon: '❌', label: 'Wrong accusation (Skip/Decline)', pts: '-2' },
-            { icon: '⏭️', label: 'Skipped trade', pts: '-2' },
+            { icon: '🧬', label: t('end_score_cascade'), pts: '+1' },
+            { icon: '🥷', label: t('end_score_stealth'), pts: '+3' },
+            { icon: '🕵️', label: t('end_score_caught_zombie'), pts: '+3' },
+            { icon: '❌', label: t('end_score_wrong_report'), pts: '-2' },
           ]).map(({ icon, label, pts }) => (
             <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)', border: '1px solid rgba(109,113,98,0.15)' }}>
               <span className="flex items-center gap-1.5 text-slate-300">{icon} {label}</span>

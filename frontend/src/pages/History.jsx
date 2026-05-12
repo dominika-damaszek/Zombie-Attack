@@ -160,7 +160,7 @@ export default function History() {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-73px)] px-4 py-10">
+    <div className="relative flex flex-col items-center justify-start min-h-[calc(100vh-73px)] px-4 pt-24 pb-10">
       <BackButton />
 
       {/* ── Detail Modal ── */}
@@ -573,7 +573,7 @@ export default function History() {
                           </p>
                           <p className="text-slate-500 text-xs mt-0.5">
                             {game.rounds_played > 0
-                              ? `${game.rounds_played} ${game.rounds_played !== 1 ? t("history_rounds_pl") : t("history_rounds")}`
+                              ? `${Math.min(game.rounds_played, 3)} ${Math.min(game.rounds_played, 3) !== 1 ? t("history_rounds_pl") : t("history_rounds")}`
                               : t("history_no_rounds")}
                             {isRecent &&
                               ` · ${game.rank}/${game.total_players} ${t("end_players")} · ${game.score} ${t("end_pts")}`}

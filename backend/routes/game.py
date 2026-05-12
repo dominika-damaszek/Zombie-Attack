@@ -64,7 +64,7 @@ SLIDES_PER_MODE = {
     "module_1": 7,
     "module_2": 7,
     "module_3": 8,
-    "normal":   7,
+    "normal":   8,
 }
 
 def get_total_slides(mode: str) -> int:
@@ -1081,6 +1081,22 @@ async def toggle_ready(group_id: str, payload: dict, db: DBSession = Depends(get
                 game_started = True
             except Exception as e:
                 print(f"[toggle_ready] auto start_game failed: {e}")
+        elif group.game_state == "module_instructions" and group.game_mode == "normal":
+            try:
+                group.game_state = "round_active"
+                group.current_round = 1
+                group.round_end_time = int(time.time()) + 180
+                for p in group.players:
+                    p.is_ready = False
+                db.commit()
+                await manager.broadcast_to_group(effective_group_id, {
+                    "type": "ROUND_STARTED",
+                    "secret_word": group.secret_word,
+                    "password_hint": _get_password_category(group.secret_word) if group.secret_word else None,
+                })
+                game_started = True
+            except Exception as e:
+                print(f"[toggle_ready] normal mode start round failed: {e}")
 
     return {"message": "Player ready", "game_started": game_started}
 

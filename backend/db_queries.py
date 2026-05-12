@@ -521,10 +521,10 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
       ⭐  Early completion (first round all met,
            survivor only, awarded once):                 +3 × rounds_remaining
 
-    "Rounds remaining" = how many full rounds will follow this one.
-    Completing in round 1 → 2 remaining → +6.
-    Completing in round 2 → 1 remaining → +3.
-    Completing in round 3 (final) → 0 remaining → +0.
+    Zombie bonuses (final round only):
+      🧬  Cascade infection: +1 for each player infected
+           by someone YOU directly infected                +1 each
+      🥷  Stealth bonus: never correctly reported          +3
     """
     group = (
         db.query(models.Group)
@@ -539,8 +539,42 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
     )
 
     current_round = (group.current_round or 0) if group else 0
-    # Total rounds in the game (currently fixed at 3, see _advance_to_next_round).
     TOTAL_ROUNDS = 3
+
+    # ── Pre-compute zombie cascade counts & report detection (final round) ──
+    cascade_counts = {}
+    was_reported = set()
+    if is_final_round:
+        # Build cascade: for each infected player P who was infected by Z,
+        # count how many players were subsequently infected by P.
+        # Those count as cascade points for Z.
+        for p in players:
+            if p.is_infected and p.infected_by_id:
+                infector_id = p.infected_by_id
+                # Count players that P themselves infected (2nd generation for Z)
+                second_gen = sum(
+                    1 for p2 in players
+                    if p2.infected_by_id == p.id
+                )
+                if second_gen > 0:
+                    cascade_counts[infector_id] = (
+                        cascade_counts.get(infector_id, 0) + second_gen
+                    )
+
+        # Detect which zombies were correctly reported by comparing
+        # actual score vs expected score from infections + trades.
+        for p in players:
+            if p.is_infected:
+                infections_caused = sum(
+                    1 for p2 in players if p2.infected_by_id == p.id
+                )
+                trades = db.query(models.Item).filter(
+                    models.Item.current_owner_id == p.id,
+                    models.Item.previous_owner_id != None,
+                ).count()
+                expected_min = infections_caused * 3 + trades
+                if (p.score or 0) < expected_min:
+                    was_reported.add(p.id)
 
     results = []
 
@@ -550,14 +584,18 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
         early_completion = False
 
         if not player.is_infected:
-            # ── Survived this round ────────────────────────────────────────────
+            # ── Survived this round ────────────────────────────────────────
             delta += 2
             breakdown.append({"reason": "Survived round", "pts": 2})
 
-            # ── Count-based objectives progress ────────────────────────────────
+            # ── Count-based objectives progress ────────────────────────────
             owned_counts = get_player_cards_by_type(db, player.id)
-            objectives = _normalize_objectives(_json.loads(player.objectives or '[]'))
-            cards_met, cards_needed = _objectives_progress(objectives, owned_counts)
+            objectives = _normalize_objectives(
+                _json.loads(player.objectives or '[]')
+            )
+            cards_met, cards_needed = _objectives_progress(
+                objectives, owned_counts
+            )
 
             if cards_met > 0:
                 delta += cards_met
@@ -571,7 +609,7 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
                 delta += 2
                 breakdown.append({"reason": "All objectives complete!", "pts": 2})
 
-                # ── Early-completion bonus (first time only) ───────────────────
+                # ── Early-completion bonus (first time only) ───────────────
                 if not player.early_completion_awarded:
                     rounds_remaining = max(0, TOTAL_ROUNDS - current_round)
                     bonus = 3 * rounds_remaining
@@ -582,12 +620,32 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
                             "pts": bonus,
                         })
                     player.early_completion_awarded = True
-                    early_completion = True   # signal frontend to show popup
+                    early_completion = True
 
-            # ── Final-round survivor bonus ─────────────────────────────────────
+            # ── Final-round survivor bonus ─────────────────────────────────
             if is_final_round:
                 delta += 5
                 breakdown.append({"reason": "Final survivor bonus", "pts": 5})
+
+        else:
+            # ── Zombie bonuses (final round only) ──────────────────────────
+            if is_final_round:
+                # Cascade infection bonus: +1 per 2nd-generation infection
+                cascade = cascade_counts.get(player.id, 0)
+                if cascade > 0:
+                    delta += cascade
+                    breakdown.append({
+                        "reason": f"Cascade infections ({cascade} spread)",
+                        "pts": cascade,
+                    })
+
+                # Stealth bonus: +3 if never correctly reported
+                if player.id not in was_reported:
+                    delta += 3
+                    breakdown.append({
+                        "reason": "Stealth bonus (never reported)",
+                        "pts": 3,
+                    })
 
         player.score = (player.score or 0) + delta
         results.append({
@@ -602,3 +660,4 @@ def award_round_points(db: DBSession, group_id: str, is_final_round: bool = Fals
 
     db.commit()
     return results
+

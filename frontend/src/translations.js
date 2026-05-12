@@ -516,6 +516,10 @@ const translations = {
     end_score_objective: 'Per objective met',
     end_score_all_objectives: 'All objectives complete',
     end_score_final_survivor: 'Final survivor bonus',
+    end_score_cascade: 'Cascade infection (zombie)',
+    end_score_stealth: 'Stealth bonus (zombie)',
+    end_score_caught_zombie: 'Caught a zombie',
+    end_score_wrong_report: 'Wrong accusation',
     end_pts: 'pts',
     end_survived_label: 'survived',
 
@@ -1017,6 +1021,10 @@ const translations = {
     end_score_objective: 'Per doel behaald',
     end_score_all_objectives: 'Alle doelen voltooid',
     end_score_final_survivor: 'Bonus laatste overlevende',
+    end_score_cascade: 'Cascade infectie (zombie)',
+    end_score_stealth: 'Stealth bonus (zombie)',
+    end_score_caught_zombie: 'Zombie betrapt',
+    end_score_wrong_report: 'Verkeerde beschuldiging',
     end_pts: 'ptn',
     end_survived_label: 'overleefd',
 
@@ -1512,6 +1520,10 @@ const translations = {
     end_score_objective: 'Par objectif atteint',
     end_score_all_objectives: 'Tous les objectifs atteints',
     end_score_final_survivor: 'Bonus dernier survivant',
+    end_score_cascade: 'Infection en cascade (zombie)',
+    end_score_stealth: 'Bonus furtivité (zombie)',
+    end_score_caught_zombie: 'Zombie attrapé',
+    end_score_wrong_report: 'Fausse accusation',
     end_pts: 'pts',
     end_survived_label: 'survécu',
 
@@ -2007,6 +2019,10 @@ const translations = {
     end_score_objective: 'Pro erfülltem Ziel',
     end_score_all_objectives: 'Alle Ziele abgeschlossen',
     end_score_final_survivor: 'Bonus letzter Überlebender',
+    end_score_cascade: 'Kaskadeninfektionen (Zombie)',
+    end_score_stealth: 'Stealth-Bonus (Zombie)',
+    end_score_caught_zombie: 'Zombie erwischt',
+    end_score_wrong_report: 'Falsche Anschuldigung',
     end_pts: 'Pkt',
     end_survived_label: 'überlebt',
 

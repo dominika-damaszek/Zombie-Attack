@@ -16,7 +16,7 @@ const BackButton = ({ to, label = "Back" }) => {
   return (
     <button
       onClick={handleBack}
-      className="absolute top-[30px] left-[20px] inline-flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700 border border-slate-700/60 px-4 py-2 rounded-xl transition-all text-xs font-semibold tertiary-btn z-10"
+      className="absolute top-[12px] left-[12px] sm:top-[30px] sm:left-[20px] inline-flex items-center gap-1.5 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700 border border-slate-700/60 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl transition-all text-[10px] sm:text-xs font-semibold tertiary-btn z-10"
     >
       <ChevronLeft size={16} />
       {label}
