@@ -614,7 +614,7 @@ const Dashboard = ({ setHasSession }) => {
             </div>
             <button
               onClick={() => startMatchmaking(lobbyGroup.id)}
-              disabled={actionLoading === lobbyGroup.id}
+              disabled={actionLoading === lobbyGroup.id || (groupStats[lobbyGroup.id]?.players?.length ?? lobbyGroup.player_count ?? 0) < 6}
               className="flex items-center gap-2 bg-[var(--neon-cyan-glow)] hover:bg-[var(--neon-cyan-glow)]/60 text-white font-black py-4 px-8 rounded-2xl text-lg transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {actionLoading === lobbyGroup.id ? (
