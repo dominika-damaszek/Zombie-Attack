@@ -97,7 +97,6 @@ function getModuleSlides(t) {
       { type: 'scan', image: '/cards4.png', title: t('slide_m3_1_title'), text: t('slide_m3_1_text') },
       { type: 'info', icon: Users, title: t('slide_m3_2_title'), text: t('slide_m3_2_text') },
       { type: 'info', icon: Key, title: t('slide_m3_3_title'), text: t('slide_m3_3_text') },
-      { type: 'info', image: '/trade.jpeg', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       {
         type: 'hints', icon: MessageSquare, title: t('slide_m3_5_title'), groups: [
           {
@@ -115,6 +114,7 @@ function getModuleSlides(t) {
         ]
       },
       { type: 'info', icon: HandHelping, title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
+      { type: 'info', image: '/trade.jpeg', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       { type: 'final', icon: Skull, title: t('slide_m3_7_title'), text: t('slide_m3_7_text') },
     ],
     // Normal (Full Game) — same slide structure as module_3, only the
@@ -124,7 +124,6 @@ function getModuleSlides(t) {
       { type: 'scan', image: '/cards4.png', title: t('slide_n1_title'), text: t('slide_n1_text') },
       { type: 'info', icon: Target, title: t('slide_n2_title'), text: t('slide_n2_text') },
       { type: 'info', icon: Key, title: t('slide_n3_title'), text: t('slide_n3_text') },
-      { type: 'info', image: '/trade.jpeg', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       {
         type: 'hints', icon: MessageSquare, title: t('slide_m3_5_title'), groups: [
           {
@@ -142,6 +141,7 @@ function getModuleSlides(t) {
         ]
       },
       { type: 'info', icon: HandHelping, title: t('slide_m3_6_title'), text: t('slide_m3_6_text') },
+      { type: 'info', image: '/trade.jpeg', title: t('slide_m3_4_title'), text: t('slide_m3_4_text') },
       { type: 'final', icon: Zap, title: t('slide_m3_7_title'), text: t('slide_m3_7_text') },
     ],
   };
