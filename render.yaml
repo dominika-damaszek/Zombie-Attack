@@ -26,4 +26,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://zombie-attack.onrender.com
+        value: https://zombieware-backend.onrender.com
