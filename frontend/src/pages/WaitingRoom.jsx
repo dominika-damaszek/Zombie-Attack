@@ -286,7 +286,7 @@ const WaitingRoom = () => {
             <button
               onClick={markReady}
               disabled={myReadyState || savingReady}
-              className={`w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-all ${
+              className={`w-full py-4 mb-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-all ${
                 myReadyState
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
                   : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.01] active:scale-[0.99]'
@@ -297,22 +297,22 @@ const WaitingRoom = () => {
             </button>
           )}
 
-          <button
-            onClick={handleLeave}
-            disabled={leaving}
-            className="w-full mt-4 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-all bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-[0.99]"
-          >
-            {leaving ? <Loader2 className="animate-spin" size={18} /> : <LogOut size={18} />}
-            {t('leave_game') || 'Leave Game'}
-          </button>
-
           {isLobby && (
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2 mb-6 mt-2">
               {[0, 1, 2].map(i => (
                 <div key={i} className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           )}
+
+          <button
+            onClick={handleLeave}
+            disabled={leaving}
+            className="w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-all bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-[0.99]"
+          >
+            {leaving ? <Loader2 className="animate-spin" size={18} /> : <LogOut size={18} />}
+            {t('leave_game') || 'Leave Game'}
+          </button>
         </div>
       </div>
     </div>
