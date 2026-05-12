@@ -54,6 +54,7 @@ class Group(Base):
     game_mode = Column(String, default="normal")
     instruction_slide = Column(Integer, default=0)
     last_activity = Column(Integer, nullable=True)
+    secret_word_category = Column(String, nullable=True)
 
     # ── Between-rounds scan / ready gate ─────────────────────────────────────
     # True once every player has scanned their 1 new card during the
