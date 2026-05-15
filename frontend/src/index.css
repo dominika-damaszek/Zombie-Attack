@@ -11,7 +11,7 @@
 /* ── Cyber Virus Palette ─────────────────────────────── */
 :root {
   --neon-green: #0f0;
-  --neon-green-glow: rgba(0, 255, 0, 0.7);
+  --neon-green-glow: rgb(95, 206, 95, 0.7);
   --neon-light-green: rgb(180, 230, 180);
   --neon-light-green-glow: rgba(180, 238, 180, 0.7);
 

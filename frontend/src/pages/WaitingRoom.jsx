@@ -195,7 +195,7 @@ const WaitingRoom = () => {
             : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
         }`}>
           <span>
-            {isLobby ? t('wait_global_lobby') : `✅ ${t('wait_group')} ${currentGroupData.group_number}`}
+            {isLobby ? t('wait_global_lobby') : `${t('wait_group')} ${currentGroupData.group_number}`}
           </span>
           <div className="flex items-center gap-1.5">
             {connected ? (
@@ -208,7 +208,7 @@ const WaitingRoom = () => {
 
         <div className="glass-panel p-6 rounded-3xl border border-slate-700/50">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-black text-white mb-1">
+            <h2 className="text-2xl mb-1">
               {isLobby ? t('wait_waiting_teacher') : `${t('wait_in_group')} ${currentGroupData.group_number}`}
             </h2>
             <p className="text-slate-400 text-sm">
