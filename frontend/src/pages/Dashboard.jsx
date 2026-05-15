@@ -48,7 +48,6 @@ const Dashboard = ({ setHasSession }) => {
   const [note, setNote] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
   const [noteLoading, setNoteLoading] = useState(false);
-  const [quickTestLoading, setQuickTestLoading] = useState(false);
 
   const joinUrlBase = `${window.location.origin}/join/`;
   const token = localStorage.getItem("token");
@@ -224,22 +223,6 @@ const Dashboard = ({ setHasSession }) => {
     }
   };
 
-  const handleQuickTest = async () => {
-    setQuickTestLoading(true);
-    try {
-      const res = await fetch(`${API_URLS.BASE}/api/quicktest?token=${token}`, { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      localStorage.setItem("player_session", JSON.stringify(data.player_session));
-      localStorage.setItem("session_data", JSON.stringify(data.session_data));
-      navigate("/waiting");
-    } catch (e) {
-      alert("Quick test failed: " + e.message);
-    } finally {
-      setQuickTestLoading(false);
-    }
-  };
-
   const saveNote = async () => {
     if (!session?.id) return;
     setNoteLoading(true);
@@ -286,7 +269,7 @@ const Dashboard = ({ setHasSession }) => {
   }, 0);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-4 py-20">
       {/* ── QR fullscreen overlay ── */}
       {qrFullscreen && (
         <div
@@ -314,7 +297,7 @@ const Dashboard = ({ setHasSession }) => {
               <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">
                 {t("dash_join_code")}
               </p>
-              <p className="text-5xl font-mono font-black text-cyan-400 tracking-widest">
+              <p className="text-5xl font-mono font-black text-[var(--neon-cyan)]/80 tracking-widest">
                 {qrFullscreen.code}
               </p>
               <p className="text-slate-500 text-sm mt-3">{qrFullscreen.url}</p>
@@ -532,16 +515,6 @@ const Dashboard = ({ setHasSession }) => {
             </div>
 
             <button
-              onClick={handleQuickTest}
-              disabled={quickTestLoading}
-              className="flex items-center gap-1.5 bg-[var(--neon-cyan-glow)]/20 hover:bg-[var(--neon-cyan-glow)]/35 text-[var(--neon-cyan)] font-semibold py-2.5 px-3 rounded-2xl transition-all border border-[var(--neon-cyan)]/50 text-xs sm:text-sm whitespace-nowrap disabled:opacity-50"
-              title="Create a test session with 5 bot players so you can preview the waiting room and game screens"
-            >
-              <Zap size={14} className="shrink-0" />
-              {quickTestLoading ? "Starting…" : "Quick Test"}
-            </button>
-
-            <button
               onClick={endSession}
               className="flex items-center gap-1.5 bg-[var(--neon-pink-glow)]/40 hover:bg-[var(--neon-pink-glow)]/20 text-[var(--neon-pink)]/80 font-semibold py-2.5 px-3 rounded-2xl transition-all border border-[var(--neon-pink)]/70 text-xs sm:text-sm whitespace-nowrap"
             >
@@ -641,7 +614,12 @@ const Dashboard = ({ setHasSession }) => {
             </div>
             <button
               onClick={() => startMatchmaking(lobbyGroup.id)}
-              disabled={actionLoading === lobbyGroup.id || (groupStats[lobbyGroup.id]?.players?.length ?? lobbyGroup.player_count ?? 0) < 6}
+              disabled={
+                actionLoading === lobbyGroup.id ||
+                (groupStats[lobbyGroup.id]?.players?.length ??
+                  lobbyGroup.player_count ??
+                  0) < 6
+              }
               className="flex items-center gap-2 bg-[var(--neon-cyan-glow)] hover:bg-[var(--neon-cyan-glow)]/60 text-white font-black py-4 px-8 rounded-2xl text-lg transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {actionLoading === lobbyGroup.id ? (

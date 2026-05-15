@@ -183,7 +183,7 @@ function RoleReveal({ role, secretWord, passwordHint, gameMode, onContinue, t })
           <div className="flex justify-center mb-4 animate-zw-float" style={{ color: cfg.color, filter: `drop-shadow(0 0 15px ${cfg.glow})` }}>
             <cfg.icon size={72} />
           </div>
-          <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>{t('game_your_role')}</p>
+          <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono">{t('game_your_role')}</p>
           <h1 className="text-4xl sm:text-5xl mb-3 uppercase" style={{ color: cfg.color, textShadow: `0 0 20px ${cfg.glow}` }}>
             {cfg.label}
           </h1>
@@ -262,7 +262,7 @@ function EarlyCompletionPopup({ onDismiss, t }) {
           }}
         >
           <div className="text-7xl mb-3 animate-bounce">🏆</div>
-          <h2 className="text-3xl font-black mb-2" style={{ color: 'var(--neon-pink)' }}>
+          <h2 className="text-3xl mb-2" style={{ color: 'var(--neon-pink)' }}>
             {t('game_early_complete_title') || 'Objectives Complete!'}
           </h2>
           <p className="text-slate-300 mb-1">
@@ -544,7 +544,7 @@ function TimerBar({ endTime, label }) {
   return (
     <div className="glass-panel rounded-2xl p-4 mb-3">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-xs font-mono uppercase tracking-widest flex items-center gap-1" style={{ color: '#6D7162' }}>
+        <span className="text-xs font-mono uppercase tracking-widest flex items-center gap-1">
           <Timer size={12} /> {label}
         </span>
         <span className={`text-xl font-black font-mono ${urgent ? 'animate-pulse' : ''}`} style={{ color: urgent ? '#d97559' : '#AD9E97' }}>
@@ -573,7 +573,7 @@ function InfoModal({ onClose, t }) {
         <div className="p-6 space-y-6">
           {sections.map(section => (
             <div key={section.title}>
-              <h3 className="text-xs uppercase tracking-widest font-mono mb-3" style={{ color: '#6D7162' }}>{section.title}</h3>
+              <h3 className="text-xs uppercase tracking-widest font-mono mb-3">{section.title}</h3>
               <div className="space-y-2">
                 {section.items.map(item => (
                   <div key={item.label} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: 'rgba(56,44,37,0.5)' }}>
@@ -730,7 +730,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
     return (
       <div className="text-center">
         <HeroVisual />
-        <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" style={{ color: '#6D7162' }}>{t('game_your_role_is')}</p>
+        <p className="text-xs uppercase tracking-[0.3em] mb-1 font-mono" >{t('game_your_role_is')}</p>
         <h2 className="text-4xl sm:text-5xl mb-4 sm:mb-5 uppercase" style={{ color: cfg.color }}>{cfg.label}</h2>
         <div className="rounded-2xl p-4 mb-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
           <p className="text-slate-200 font-semibold text-lg">{text}</p>
@@ -755,7 +755,7 @@ function SlideContent({ slide, playerState, inventory, objectives, t, secretWord
           {groupList.map((group, gi) => (
             <div key={gi}>
               {group.pw && (
-                <p className="text-xs uppercase tracking-widest font-mono mb-2 text-center" style={{ color: '#6D7162' }}>
+                <p className="text-xs uppercase tracking-widest font-mono mb-2 text-center" >
                   {group.pw}
                 </p>
               )}
@@ -1343,7 +1343,7 @@ const GameScreen = () => {
           <div className="flex justify-center mb-4 animate-zw-float text-slate-500">
             <Skull size={64} />
           </div>
-          <p className="font-mono animate-pulse" style={{ color: '#6D7162' }}>{t('game_connecting')}</p>
+          <p className="font-mono animate-pulse">{t('game_connecting')}</p>
         </div>
       </div>
     );
@@ -1846,7 +1846,7 @@ if (gamePhase === 'module_instructions') {
               <h2 className="text-2xl mb-1" style={{ color: 'var(--neon-pink)' }}>
                 {getCardLabel(selectedItem.type)}
               </h2>
-              <p className="text-xs font-mono mb-4" style={{ color: '#6D7162' }}>{selectedItem.code}</p>
+              <p className="text-xs font-mono mb-4" >{selectedItem.code}</p>
               <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(48,26,42,0.5)', border: '1px solid var(--neon-pink-glow)' }}>
                 <p className="text-slate-300 text-sm leading-relaxed">{t((CARD_TYPES[selectedItem.type] || CARD_TYPES.unknown).descKey)}</p>
               </div>
@@ -1882,15 +1882,15 @@ if (gamePhase === 'module_instructions') {
           <div className="flex items-center gap-3">
             <StatusIcon size={36} style={{ color: statusColor }} />
             <div>
-              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-0.5" style={{ color: '#6D7162' }}>{t('game_your_role')}</p>
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-mono mb-0.5" >{t('game_your_role')}</p>
               <p className="text-lg sm:text-2xl uppercase" style={{ color: statusColor }}>{statusLabel}</p>
               {gameMode === 'module_1' && <p className="text-[10px] text-slate-500 mt-0.5">{t('game_module1_survivors_only')}</p>}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] sm:text-xs font-mono mb-0.5" style={{ color: '#6D7162' }}>{t('game_round')}</p>
+            <p className="text-[10px] sm:text-xs font-mono mb-0.5" >{t('game_round')}</p>
             <p className="text-xl sm:text-3xl font-black text-white">{gameState?.current_round || '-'}</p>
-            <p className="text-[10px] sm:text-xs font-mono" style={{ color: '#6D7162' }}>{t('game_of_3')}</p>
+            <p className="text-[10px] sm:text-xs font-mono" >{t('game_of_3')}</p>
           </div>
         </div>
 
@@ -2280,9 +2280,6 @@ if (gamePhase === 'module_instructions') {
 
               <p
                 className="text-xs font-mono font-bold"
-                style={{
-                  color: '#6D7162'
-                }}
               >
                 {readyCount} /{' '}
                 {totalPlayers}{' '}
@@ -2331,8 +2328,7 @@ if (gamePhase === 'module_instructions') {
       </div>
 
       <h3
-        className="font-black text-xl sm:text-2xl mb-1"
-        style={{ color: '#06b6d4' }}
+        className="text-xl sm:text-2xl mb-1 text-[var(--neon-cyan)/90]"
       >
         {isLastTransition
           ? t(
@@ -2482,7 +2478,7 @@ const ReportedPopup = ({ reporterName, onDismiss, t }) => {
             <AlertTriangle size={48} style={{ color: '#d97559', filter: 'drop-shadow(0 0 8px rgba(217,117,89,0.6))' }} />
           </div>
         </div>
-        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
+        <h2 className="text-2xl mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
           {t('game_reported_as_zombie_title')}
         </h2>
         <p className="text-slate-300 text-sm leading-relaxed mb-8">
@@ -2509,7 +2505,7 @@ const AlreadyOwnedPopup = ({ onDismiss, t }) => {
             <Info size={48} style={{ color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 8px var(--neon-pink-glow))' }} />
           </div>
         </div>
-        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
+        <h2 className="text-2xl mb-2 uppercase tracking-tight" style={{ color: 'var(--neon-pink)' }}>
           {t('game_already_in_inventory')}
         </h2>
         <p className="text-slate-300 text-sm leading-relaxed mb-8">

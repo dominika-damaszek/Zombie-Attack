@@ -278,8 +278,8 @@ const WaitingRoom = () => {
         <div
           className={`flex items-center justify-between px-4 py-2 rounded-2xl mb-5 text-sm font-semibold ${
             isLobby
-              ? "bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"
-              : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+              ? "bg-[var(--neon-cyan-glow)]/10 border border-[var(--neon-cyan-glow)]/20 text-[var(--neon-cyan)]/90"
+              : "bg-[var(--neon-cyan-glow)]n/10 border border-[var(--neon-green-glow)]/20 text-[var(--neon-green-glow)]"
           }`}
         >
           <span>
@@ -317,8 +317,8 @@ const WaitingRoom = () => {
             <div
               className="mb-5 rounded-2xl p-4"
               style={{
-                background: "rgba(56,44,37,0.6)",
-                border: "1px solid rgba(109,113,98,0.3)",
+                background: "rgba(180,90,150,0.2)",
+                border: "1px solid rgba(180,90,150,0.6)",
               }}
             >
               <p
@@ -347,13 +347,13 @@ const WaitingRoom = () => {
                     copied
                       ? {
                           background: "rgba(168,196,160,0.2)",
-                          color: "#a8c4a0",
+                          color: "rgba(180,230,180,0.8)",
                           border: "1px solid rgba(168,196,160,0.4)",
                         }
                       : {
-                          background: "rgba(109,113,98,0.2)",
-                          color: "#AD9E97",
-                          border: "1px solid rgba(109,113,98,0.3)",
+                          background: "rgba(180,90,150,0.4)",
+                          color: "rgba(220,150,190,1)",
+                          border: "1px solid rgba(220,150,190,1)",
                         }
                   }
                 >
@@ -374,10 +374,10 @@ const WaitingRoom = () => {
           <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-700/50 mb-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
-                <Users size={16} className="text-emerald-400" />
+                <Users size={16} className="text-[var(--neon-green-glow)]" />
                 {isLobby ? t("wait_students_in_room") : t("wait_group_members")}
               </div>
-              <span className="bg-emerald-500/20 text-emerald-400 font-black px-3 py-0.5 rounded-full text-xs">
+              <span className="bg-[var(--neon-green-glow)]/10 text-[var(--neon-green-glow)] font-black px-3 py-0.5 rounded-full text-xs">
                 {players.length}
               </span>
             </div>
@@ -392,18 +392,21 @@ const WaitingRoom = () => {
                   }`}
                 >
                   <span
-                    className={`font-semibold text-sm ${p.id === playerData?.id ? "text-emerald-300" : "text-slate-300"}`}
+                    className={`font-semibold text-sm ${p.id === playerData?.id ? "text-[var(--neon-green-glow)]/80" : "text-slate-300"}`}
                   >
                     {p.username}
                     {p.id === playerData?.id && (
-                      <span className="ml-2 text-xs text-emerald-500 font-normal">
+                      <span className="ml-2 text-xs text-[var(--neon-cyan-glow)]/80 font-normal">
                         {t("wait_you")}
                       </span>
                     )}
                   </span>
                   {!isLobby &&
                     (p.is_ready ? (
-                      <CheckCircle2 size={16} className="text-emerald-400" />
+                      <CheckCircle2
+                        size={16}
+                        className="text-[var(--neon-cyan-glow)]"
+                      />
                     ) : (
                       <Loader2
                         size={16}
@@ -426,8 +429,8 @@ const WaitingRoom = () => {
               disabled={myReadyState || savingReady}
               className={`w-full py-4 mb-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-all ${
                 myReadyState
-                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default"
-                  : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.01] active:scale-[0.99]"
+                  ? "bg-[var(--neon-green-glow)]/15 border border-[var(--neon-cyan-glow)]/30 cursor-default neon-btn"
+                  : "bg-[var(--neon-cyan-glow)] hover:bg-[var(--neon-cyan-glow)]/50 hover:scale-[1.01] active:scale-[0.99] neon-btn"
               }`}
             >
               {savingReady ? (
