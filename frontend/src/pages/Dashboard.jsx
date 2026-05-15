@@ -48,6 +48,7 @@ const Dashboard = ({ setHasSession }) => {
   const [note, setNote] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
   const [noteLoading, setNoteLoading] = useState(false);
+  const [quickTestLoading, setQuickTestLoading] = useState(false);
 
   const joinUrlBase = `${window.location.origin}/join/`;
   const token = localStorage.getItem("token");
@@ -220,6 +221,22 @@ const Dashboard = ({ setHasSession }) => {
       alert("Could not load stats: " + e.message);
     } finally {
       setStatsLoading(false);
+    }
+  };
+
+  const handleQuickTest = async () => {
+    setQuickTestLoading(true);
+    try {
+      const res = await fetch(`${API_URLS.BASE}/api/quicktest?token=${token}`, { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      localStorage.setItem("player_session", JSON.stringify(data.player_session));
+      localStorage.setItem("session_data", JSON.stringify(data.session_data));
+      navigate("/waiting");
+    } catch (e) {
+      alert("Quick test failed: " + e.message);
+    } finally {
+      setQuickTestLoading(false);
     }
   };
 
@@ -513,6 +530,16 @@ const Dashboard = ({ setHasSession }) => {
                 {totalPlayers}
               </p>
             </div>
+
+            <button
+              onClick={handleQuickTest}
+              disabled={quickTestLoading}
+              className="flex items-center gap-1.5 bg-[var(--neon-cyan-glow)]/20 hover:bg-[var(--neon-cyan-glow)]/35 text-[var(--neon-cyan)] font-semibold py-2.5 px-3 rounded-2xl transition-all border border-[var(--neon-cyan)]/50 text-xs sm:text-sm whitespace-nowrap disabled:opacity-50"
+              title="Create a test session with 5 bot players so you can preview the waiting room and game screens"
+            >
+              <Zap size={14} className="shrink-0" />
+              {quickTestLoading ? "Starting…" : "Quick Test"}
+            </button>
 
             <button
               onClick={endSession}

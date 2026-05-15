@@ -6,7 +6,7 @@ import models
 from database import engine, SessionLocal
 from sqlalchemy import text
 
-from routes import auth, session, player, game
+from routes import auth, session, player, game, quicktest
 from websocket_manager import manager
 
 app = FastAPI(title="Zombieware API", version="0.1.0")
@@ -94,6 +94,7 @@ def run_migrations():
             ("game.groups",        "scan_end_time",         "INTEGER"),
             ("game.groups",        "last_activity",         "INTEGER"),
             ("game.groups",        "scan_phase_complete",   "BOOLEAN DEFAULT FALSE NOT NULL"),
+            ("game.groups",        "secret_word_category",  "VARCHAR"),
             ("game.sessions",      "note",                  "VARCHAR"),
         ]
         for table, col, definition in new_cols:
@@ -209,6 +210,7 @@ app.include_router(auth.router)
 app.include_router(session.router)
 app.include_router(player.router)
 app.include_router(game.router)
+app.include_router(quicktest.router)
 
 @app.get("/")
 def read_root():
