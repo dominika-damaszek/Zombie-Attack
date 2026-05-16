@@ -63,7 +63,8 @@ const HostGame = ({ setHasSession }) => {
             localStorage.setItem('session_id', activeSession.id);
             localStorage.setItem('session_data', JSON.stringify(activeSession));
             if (setHasSession) setHasSession(true);
-            navigate('/dashboard', { state: { session: activeSession } });
+            // We just update the state but do not force redirect.
+            // The banner at the bottom handles navigation to dashboard.
           }
         }
       } catch (e) {
@@ -71,7 +72,7 @@ const HostGame = ({ setHasSession }) => {
       }
     };
     checkActiveSession();
-  }, [navigate, setHasSession]);
+  }, [setHasSession]);
 
   const createSession = async (gameMode) => {
     setLoading(true);
